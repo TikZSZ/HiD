@@ -5,10 +5,10 @@ import { Query } from 'appwrite';
 import { KeyPurpose } from '../keyManager';
 
 
-const userId = "6753c625003aa4c5539e"
-const keyId = "6753c6260011096e03d0"
-const didId = "6753c626002486797493"
-const orgId = "6753c628003c80024d50"
+const userId = "6753cf7600077fe34d48"
+const keyId = "6753cf760019e1ba5124"
+const didId = "6753cf76002a22aecaa3"
+const orgId = "6753cf780005c3687d6f"
 const newUserId = "6753c625003aa4c5539e"
 
 async function runTests ()
@@ -49,7 +49,7 @@ async function runTests ()
 
     // Test 4: Associate Key with DID
     console.log( '\n🔗 Test 4: Associating Key with DID' );
-    await AppwriteService.associateKeyWithDID( did.$id, key.$id );
+    await AppwriteService.associateKeyWithDID( did.$id, key.$id,user.$id );
     console.log( 'Key associated with DID successfully' );
 
     // Test 5: Create Organization
@@ -65,7 +65,7 @@ async function runTests ()
       name: 'Jane Smith',
       email: 'jane.smith@example.com'
     } );
-    await AppwriteService.addOrganizationMember( org.$id, newUser.$id, OrganizationRole.MEMBER );
+    await AppwriteService.addOrganizationMember( org.$id, user.$id,newUser.$id, OrganizationRole.MEMBER );
     console.log( 'New member added to organization successfully' );
 
     // Test 7: Link Organization Key
@@ -95,20 +95,27 @@ async function runTests ()
 
 const main = async () =>
 {
-  // const user = await AppwriteService.getUser( userId )
-  // console.dir( user, { depth: Infinity } )
-  // const keys = await AppwriteService.databases.listDocuments<KeyDocument>(
-  //   conf.appwrtieDBId,
-  //   conf.appwriteKeysCollID,
-  //   [ Query.equal( 'orgId', orgId ) ]
-  // );
-  // console.log( keys )
+  const user = await AppwriteService.getUser( userId )
+  console.dir( user, { depth: Infinity } )
+  const keys = await AppwriteService.databases.listDocuments<KeyDocument>(
+    conf.appwrtieDBId,
+    conf.appwriteKeysCollID,
+    [ Query.equal( 'org', orgId ) ]
+  );
+  console.log( keys )
   const orgs = await AppwriteService.databases.listDocuments<DIDDocument>(
       conf.appwrtieDBId,
       conf.appwriteOrgsCollID,
-      [Query.equal("ownerId",userId)]
+      [Query.equal("owner",userId)]
     );
   console.dir(orgs,{depth:Infinity})
+  const orgMembers = await AppwriteService.databases.listDocuments<DIDDocument>(
+    conf.appwrtieDBId,
+    conf.appwriteUsersCollID,
+    [Query.equal("org",orgs.documents[0].$id)]
+  );
+  console.dir(orgMembers,{depth:Infinity})
+
   // const dids = await AppwriteService.databases.listDocuments<DIDDocument>(
   //   conf.appwrtieDBId,
   //   conf.appwriteDIDsCollID,
