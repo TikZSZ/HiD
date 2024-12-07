@@ -1,5 +1,6 @@
 import { Models } from 'appwrite';
-
+import { Client, Databases, ID, Query, Permission, Role } from 'appwrite';
+import { conf } from '../../conf/conf';
 // Enum Definitions
 export enum KeyType
 {
@@ -8,6 +9,14 @@ export enum KeyType
   ENCRYPTION_AND_SIGNING = 'ENCRYPTION_AND_SIGNING'
 }
 
+export enum KeyPurpose
+{
+  AUTHENTICATION = "authentication",
+  ASSERTION = "assertion",
+  KEY_AGREEMENT = "key_agreement",
+  CAPABILITY_DELEGATION = "capability_delegation",
+  CAPABILITY_INVOCATION = "capability_invocation",
+}
 export enum OrganizationRole
 {
   OWNER = 'OWNER',
@@ -22,7 +31,7 @@ export interface DIDDocument extends Models.Document
 {
   identifier: string;
   owner: UserDocument;
-  keys:KeyDocument[]
+  keys: KeyDocument[]
 }
 
 // Interface for Keys Collection
@@ -36,9 +45,9 @@ export interface KeyDocument extends Models.Document
   keyPurposes: KeyPurpose[]; // More flexible than previous enum
   owner: UserDocument;
   org: OrganizationDocument;
-  dids: DidDocument[];
-  name:string,
-  description?:string
+  dids: DIDDocument[];
+  name: string,
+  description?: string
 }
 
 // Interface for Users Collection
@@ -46,15 +55,15 @@ export interface UserDocument extends Models.Document
 {
   name: string;
   email: string;
-  organizationRole:OrganizationRole
-  org:OrganizationDocument // member of that org
+  organizationRole: OrganizationRole
+  org: OrganizationDocument // member of that org
 }
 
 // Interface for Organizations Collection
 export interface OrganizationDocument extends Models.Document
 {
   name: string;
-  description?:string
+  description?: string
   owner: UserDocument;
 }
 
@@ -68,7 +77,7 @@ interface CreateUserDto
 export interface CreateDIDDto
 {
   identifier: string;
-  // publicKey: string;
+  keyId?:string
 }
 
 export interface CreateKeyDto
@@ -79,13 +88,14 @@ export interface CreateKeyDto
   publicKey: string;
   keyType: KeyType;
   keyPurposes?: string[];
-  name:string;
+  name: string;
   description?: string;
 }
 
 export interface CreateOrganizationDto
 {
   name: string;
+  description?: string;
 }
 
 export interface UpdateUserDto
@@ -122,16 +132,12 @@ export type OrganizationWithRelations = OrganizationDocument & {
   memberDetails?: UserDocument[];
 }
 
-import { Client, Databases, ID, Query, Permission, Role } from 'appwrite';
-import { conf } from '../../conf/conf';
-import { DidDocument } from '../did-sdk';
-import { KeyPurpose } from '../keyManager';
 
 
 class AppwriteService
 {
   private client: Client;
-   databases: Databases;
+  databases: Databases;
 
   constructor()
   {
@@ -235,8 +241,10 @@ class AppwriteService
   async createDID (
     userId: string,
     didData: CreateDIDDto,
-  ): Promise<DIDWithRelations>
+  )
   {
+    const { identifier,keyId} = didData
+    const keys = keyId ? [keyId]:[]
     try
     {
       // Create DID document
@@ -245,9 +253,9 @@ class AppwriteService
         conf.appwriteDIDsCollID,
         ID.unique(),
         {
-          ...didData,
+          identifier:identifier,
           owner: userId,
-          keys: [] // Start with no keys
+          keys: keys // Start with no keys
         },
         // [
         //   Permission.read( Role.user( userId ) ),
@@ -266,10 +274,33 @@ class AppwriteService
     }
   }
 
+  async getDIDs ( ownerId:string )
+  {
+    // Fetch related Keys
+    const dids = await this.databases.listDocuments<DIDDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteKeysCollID,
+      [Query.equal("owner",ownerId)]
+    );
+    return dids.documents
+  }
+
+  async getDID ( ownerId:string,didId:string )
+  {
+    // Fetch related Keys
+    const dids = await this.databases.getDocument<DIDDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteKeysCollID,
+      didId,
+      [Query.equal("owner",ownerId)]
+    );
+    return dids
+  }
+
   async associateKeyWithDID (
     didId: string,
     keyId: string,
-    userId:string
+    userId: string
   ): Promise<void>
   {
     try
@@ -280,14 +311,15 @@ class AppwriteService
         conf.appwriteDIDsCollID,
         didId
       );
-      
+
       // Get current key
       const key = await this.databases.getDocument<KeyDocument>(
         conf.appwrtieDBId,
         conf.appwriteKeysCollID,
         keyId
       );
-      if(key.owner.$id !== userId && did.owner.$id !== userId) throw new Error("Keys or did is not owend by user")
+      console.log(keyId,userId,key)
+      if ( key.owner.$id !== userId && did.owner.$id !== userId ) throw new Error( "Keys or did is not owend by user" )
       // Update DID to include key
       await this.databases.updateDocument<DIDDocument>(
         conf.appwrtieDBId,
@@ -318,8 +350,9 @@ class AppwriteService
   async createKey (
     userId: string,
     keyData: CreateKeyDto
-  ): Promise<KeyWithRelations>
+  ): Promise<KeyDocument>
   {
+    console.log(userId,keyData)
     try
     {
       // Create key document
@@ -350,6 +383,52 @@ class AppwriteService
       throw error;
     }
   }
+
+  async getKeys ( userId: string )
+  {
+    // Fetch related Keys
+    const keys = await this.databases.listDocuments<KeyDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteKeysCollID,
+      [ Query.equal( 'owner', userId ) ]
+    );
+    return keys.documents
+  }
+
+  async getKey ( ownerId:string,keyId: string )
+  {
+    // Fetch related Keys
+    const keys = await this.databases.getDocument<KeyDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteKeysCollID,
+      keyId
+    );
+    return keys
+  }
+
+  async getKeysForOrg ( ownerId:string,orgId: string )
+  {
+    // Fetch related Keys
+    const keys = await this.databases.listDocuments<KeyDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteKeysCollID,
+      [Query.equal("owner",ownerId),Query.equal("org",orgId)]
+    );
+    return keys
+  }
+
+
+  async deleteKey ( userId: string, id: string )
+  {
+    const key = await this.getKey( userId,id )
+    if (!key) throw new Error( "Key doesn't belong to user" )
+    return this.databases.deleteDocument(
+      conf.appwrtieDBId,
+      conf.appwriteKeysCollID,
+      id
+    );
+  }
+
 
   // Organization Operations
   async createOrganization (
@@ -387,7 +466,7 @@ class AppwriteService
 
   async addOrganizationMember (
     orgId: string,
-    ownerId:string,
+    ownerId: string,
     userId: string,
     role: OrganizationRole = OrganizationRole.MEMBER
   ): Promise<void>
@@ -400,7 +479,7 @@ class AppwriteService
         conf.appwriteOrgsCollID,
         orgId
       );
-      if( org.owner.$id !== ownerId) throw new Error("U do not have permission to add users to orgnisation")
+      if ( org.owner.$id !== ownerId ) throw new Error( "U do not have permission to add users to orgnisation" )
 
       // Update user's organization
       await this.databases.updateDocument<UserDocument>(
@@ -422,7 +501,7 @@ class AppwriteService
   async linkOrganizationKey (
     orgId: string,
     keyId: string,
-    userId:string
+    userId: string
   ): Promise<void>
   {
     try
@@ -438,14 +517,14 @@ class AppwriteService
         conf.appwriteUsersCollID,
         userId
       );
-      if((user.org && user.org.$id !== orgId) && org.owner.$id !== userId) throw new Error("User account does not belong to the orgnisation")
+      if ( ( user.org && user.org.$id !== orgId ) && org.owner.$id !== userId ) throw new Error( "User account does not belong to the orgnisation" )
       // Get current key
       const key = await this.databases.getDocument<KeyDocument>(
         conf.appwrtieDBId,
         conf.appwriteKeysCollID,
         keyId
       );
-      if(key.owner.$id !== userId ) throw new Error("Key Doesnt belong to user")
+      if ( key.owner.$id !== userId ) throw new Error( "Key Doesnt belong to user" )
 
       // Update key to include organization
       await this.databases.updateDocument<KeyDocument>(
@@ -461,6 +540,14 @@ class AppwriteService
       console.error( 'Error linking organization key:', error );
       throw error;
     }
+  }
+  async getOrganizationsForKey(ownerId:string,keyId:string){
+    const keys = await this.databases.listDocuments<OrganizationDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteOrgsCollID,
+      [Query.equal("owner",ownerId),Query.equal("org",keyId)]
+    );
+    return keys.documents
   }
 }
 

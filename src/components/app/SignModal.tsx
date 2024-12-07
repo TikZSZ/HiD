@@ -107,13 +107,13 @@ const KeyMetadataDisplay: React.FC<KeyMetadataDisplayProps> = ( {
             <KeyIcon className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">Key Index:</span>
           </div>
-          <span>{keyMetadata.id}</span>
+          <span>{keyMetadata.$id}</span>
 
           <div className="flex items-center space-x-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">Created:</span>
           </div>
-          <span>{formatDate( keyMetadata.createdAt.toString() )}</span>
+          <span>{formatDate( keyMetadata.$createdAt )}</span>
         </div>
 
         <div className="bg-secondary/50 p-3 rounded-lg">
@@ -146,7 +146,7 @@ const SignModal: React.FC<SignModalProps> = ( {
 
   useEffect( () =>
   {
-    const keyMeta = keys.find( ( keyMeta ) => keyMeta.id === keyId )
+    const keyMeta = keys.find( ( keyMeta ) => keyMeta.$id === keyId )
     if(!keyMeta && keyId){
       toast( {
         title: "Key Not Found",
@@ -162,7 +162,6 @@ const SignModal: React.FC<SignModalProps> = ( {
   const handleAction = async () =>
   {
     setLoading( true );
-
     try
     {
       // Retrieve the private key
@@ -237,6 +236,7 @@ const SignModal: React.FC<SignModalProps> = ( {
     if ( !open )
     {
       setPassword( "" );
+      onError?.( new Error( "User Rejected" ) );
     }
   }, [ open ] );
 
@@ -254,7 +254,9 @@ const SignModal: React.FC<SignModalProps> = ( {
             ? `You are about to sign some data for the following purpose: ${purpose}`
             : `Enter your password to retrieve the private key ${keyMetadata?.name}`
           } */}
-          {keyMetadata && (
+          
+        </Dialog.DialogDescription>
+        {keyMetadata && (
             <div className="mt-4">
               <KeyMetadataDisplay
                 keyMetadata={keyMetadata}
@@ -263,8 +265,6 @@ const SignModal: React.FC<SignModalProps> = ( {
               />
             </div>
           )}
-        </Dialog.DialogDescription>
-
         {mode === 'signature' && (
           <div className="mt-4 p-4 bg-secondary rounded-lg">
             <p className="text-sm font-medium">Data to be signed:</p>

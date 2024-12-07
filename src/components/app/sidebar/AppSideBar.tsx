@@ -257,10 +257,10 @@ export function AppSidebar ( { ...props }: React.ComponentProps<typeof Sidebar> 
   } )
   const { user } = useAuth()
 
-  useEffect( () =>
-  {
-    setData( { ...data, navMain: [ { ...data.navMain[ 0 ], items: dids.map( ( did ) => ( { title: did.identifier, url: `#${did.id}` } ) ) }, ...data.navMain.slice( 1 ) ] } )
-  }, [ dids ] )
+  // useEffect( () =>
+  // {
+  //   setData( { ...data, navMain: [ { ...data.navMain[ 0 ], items: dids.map( ( did ) => ( { title: did.identifier, url: `#${did.id}` } ) ) }, ...data.navMain.slice( 1 ) ] } )
+  // }, [ dids ] )
 
   useEffect( () =>
   {

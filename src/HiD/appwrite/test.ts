@@ -1,8 +1,8 @@
 import { conf } from '@/conf/conf';
 import AppwriteService, { DIDDocument, KeyDocument, OrganizationDocument } from './service';
-import { KeyType, OrganizationRole } from './service';
+import { KeyType, OrganizationRole,KeyPurpose } from './service';
 import { Query } from 'appwrite';
-import { KeyPurpose } from '../keyManager';
+
 
 
 const userId = "6753cf7600077fe34d48"

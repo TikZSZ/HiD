@@ -1,6 +1,9 @@
 import { PrivateKey } from "@hashgraph/sdk";
-import localforage from "localforage";
-
+import localforage, { key } from "localforage";
+import AppwriteSerivce, { CreateDIDDto } from "./appwrite/service"
+import  {KeyPurpose,KeyType,OrganizationRole} from "./appwrite/service"
+import { Base64 } from "js-base64";
+export {KeyPurpose,KeyType,OrganizationRole}
 // Helper function to prefix storage keys with userId
 export function getUserScopedKey ( userId: string, id: string ): string
 {
@@ -8,35 +11,18 @@ export function getUserScopedKey ( userId: string, id: string ): string
 }
 
 
-// Key types and associated metadata
-export enum KeyType
-{
-  ENCRYPTION = "encryption",
-  SIGNING = "signing",
-  ENCRYPTION_AND_SIGNING = "encryption & signing",
-}
-
 export interface KeyMetadata
 {
-  id: string; // Unique ID for the key
+  $id:string,
+  $createdAt:string,
   name: string; // Key name
-  type: KeyType; // Key purpose
-  createdAt: Date; // Key creation date
   description?: string; // Optional description
-  associatedDIDs?: string[]; // Associated DIDs
-  associatedOrganizations?: string[]; // Associated organizations
-  purposes?: KeyPurpose[]; // Key purposes
+  keyType: KeyType; // Key purpose
+  keyPurposes?: KeyPurpose[]; // Key purposes
   publicKey:string;
 }
-export type OmmitedKeyMeta = Omit<KeyMetadata, "id" | "createdAt" | "type"|"publicKey">
-export enum KeyPurpose
-{
-  AUTHENTICATION = "authentication",
-  ASSERTION = "assertion",
-  KEY_AGREEMENT = "key_agreement",
-  CAPABILITY_DELEGATION = "capability_delegation",
-  CAPABILITY_INVOCATION = "capability_invocation",
-}
+export type OmmitedKeyMeta = Omit<KeyMetadata,"$id"|"type"|"publicKey"|"$createdAt">
+
 
 const STORAGE_KEY = "key_storage";
 const IV_LENGTH = 12; // Length of initialization vector for AES-GCM
@@ -73,12 +59,17 @@ async function deriveAESKey ( password: string, salt: Uint8Array ): Promise<Cryp
   );
 }
 
+function encodeBase64(input:Uint8Array){
+  return Base64.fromUint8Array(input)
+}
+function decodeBase64(input:string){
+  return Base64.toUint8Array(input)
+}
 // Common function to save keys
 async function saveKey (
   userId: string,
   metadata: KeyMetadata,
-  privateKey: ArrayBuffer,
-  publicKey: ArrayBuffer,
+  privateKey: ArrayBuffer|Uint8Array,
   password: string
 ): Promise<KeyMetadata>
 {
@@ -90,28 +81,22 @@ async function saveKey (
     aesKey,
     privateKey
   );
-  const scopedKey = getUserScopedKey( userId, metadata.id );
-  await storage.setItem( scopedKey, {
-    metadata,
-    encryptedPrivateKey,
-    publicKey,
-    salt,
-    iv,
-  } );
+  
+  const key = await AppwriteSerivce.createKey(userId,{salt:encodeBase64(salt),iv:encodeBase64(iv),encryptedPrivateKey:encodeBase64(new Uint8Array(encryptedPrivateKey)),...metadata})
 
-  return metadata;
+  return key;
 }
 
-async function updateKey (
-  userId: string,
-  metadata: KeyMetadata,
-): Promise<KeyMetadata>
-{
-  const scopedKey = getUserScopedKey( userId, metadata.id );
-  const {metadata:savedMetadata,...rest} = (await storage.getItem<{metadata:KeyMetadata} & Object>(scopedKey))! 
-  await storage.setItem( scopedKey, {...rest,metadata } );
-  return metadata;
-}
+// async function updateKey (
+//   userId: string,
+//   metadata: KeyMetadata,
+// ): Promise<KeyMetadata>
+// {
+//   const scopedKey = getUserScopedKey( userId, metadata.id );
+//   const {metadata:savedMetadata,...rest} = (await storage.getItem<{metadata:KeyMetadata} & Object>(scopedKey))! 
+//   await storage.setItem( scopedKey, {...rest,metadata } );
+//   return metadata;
+// }
 
 // Generate RSA key pair and save it
 export async function generateRSAKey (
@@ -120,8 +105,6 @@ export async function generateRSAKey (
   metadata: OmmitedKeyMeta,
 ): Promise<KeyMetadata>
 {
-  const id = crypto.randomUUID();
-  const createdAt = new Date();
   const textDecoder = new TextDecoder()
   const keyPair = await window.crypto.subtle.generateKey(
     {
@@ -139,9 +122,8 @@ export async function generateRSAKey (
 
   return saveKey(
     userId,
-    { ...metadata, id, createdAt, type: KeyType.ENCRYPTION_AND_SIGNING,publicKey:textDecoder.decode(publicKey) },
+    { ...metadata, keyType: KeyType.ENCRYPTION_AND_SIGNING,publicKey:textDecoder.decode(publicKey)} as any,
     privateKey,
-    publicKey,
     password
   );
 }
@@ -153,9 +135,6 @@ export async function generateEd25519Key (
   metadata: OmmitedKeyMeta
 ): Promise<KeyMetadata>
 {
-  const id = crypto.randomUUID();
-  const createdAt = new Date();
-
   // const keyPair = await window.crypto.subtle.generateKey(
   //   {
   //     name: "Ed25519",
@@ -168,12 +147,10 @@ export async function generateEd25519Key (
   // const privateKey = await window.crypto.subtle.exportKey( "pkcs8", keyPair.privateKey );
   const privateKeyObj = await PrivateKey.generateED25519Async()
   const privateKey = privateKeyObj.toBytesDer()
-  const publicKey = privateKeyObj.publicKey.toBytesDer()
   return saveKey(
     userId,
-    { ...metadata, id, createdAt, type: KeyType.SIGNING,publicKey:privateKeyObj.publicKey.toStringDer() },
+    { ...metadata, keyType: KeyType.SIGNING,publicKey:privateKeyObj.publicKey.toStringDer() } as any,
     privateKey,
-    publicKey,
     password
   );
 }
@@ -181,14 +158,7 @@ export async function generateEd25519Key (
 // Retrieve and decrypt a key
 export async function retrieveKey ( userId: string, id: string, password: string )
 {
-  const scopedKey = getUserScopedKey( userId, id );
-  const storedKey = await storage.getItem<{
-    metadata: KeyMetadata;
-    encryptedPrivateKey: ArrayBuffer;
-    publicKey: ArrayBuffer;
-    salt: Uint8Array;
-    iv: Uint8Array;
-  }>( scopedKey );
+  const storedKey = await AppwriteSerivce.getKey(userId,id)
 
   if ( !storedKey )
   {
@@ -197,12 +167,12 @@ export async function retrieveKey ( userId: string, id: string, password: string
 
   const { encryptedPrivateKey, publicKey, salt, iv } = storedKey;
 
-  const aesKey = await deriveAESKey( password, salt );
+  const aesKey = await deriveAESKey( password, decodeBase64(salt) );
 
   const decryptedPrivateKey = await window.crypto.subtle.decrypt(
-    { name: "AES-GCM", iv },
+    { name: "AES-GCM", iv:decodeBase64(iv) },
     aesKey,
-    encryptedPrivateKey
+    decodeBase64(encryptedPrivateKey)
   );
 
 
@@ -235,201 +205,54 @@ export async function retrieveKey ( userId: string, id: string, password: string
 }
 
 // List all stored keys with metadata
-export async function listKeys ( userId: string ): Promise<KeyMetadata[]>
+export async function listKeys ( userId: string )
 {
-  const keys: KeyMetadata[] = [];
-  // await storage.iterate((value: { metadata: KeyMetadata }) => {
-  //   keys.push(value.metadata);
-  // });
-  await storage.iterate( ( value: { metadata: KeyMetadata }, key: string ) =>
-  {
-    if ( key.startsWith( `${userId}:` ) )
-    {
-      keys.push( value.metadata );
-    }
-  } );
-  return keys;
+  const keys = await AppwriteSerivce.getKeys(userId)
+  return keys
 }
 
 // Delete a key by its ID
-export async function deleteKey ( userId: string, keyId: string ): Promise<void>
+export async function deleteKey ( userId: string, keyId: string )
 {
-  const scopedKey = getUserScopedKey( userId, keyId );
-  await storage.removeItem( scopedKey );
+  return AppwriteSerivce.deleteKey(userId,keyId)
 }
 
-
-export interface DIDKeyAssociation {
-  didId: string;
-  keyId: string;
-  purposes: KeyPurpose[];
-  isPrimary?: boolean;
-}
-
-export interface OrganizationKeyAssociation {
-  orgId: string;
-  keyId: string;
-  roles: OrganizationKeyRole[];
-  isPrimary?: boolean;
-}
-
-export enum OrganizationKeyRole {
-  ISSUER = "issuer",
-  VERIFIER = "verifier",
-  ADMIN = "admin",
-  MEMBER = "member",
-}
-
-// Create separate storage instances for different types of associations
-const didKeyAssociationsStorage = localforage.createInstance({
-  name: "DIDKeyAssociations",
-  storeName: "did-key-associations",
-});
-
-const keyDIDIndexStorage = localforage.createInstance({
-  name: "KeyDIDIndex",
-  storeName: "key-did-index",
-});
-
-const organizationKeyAssociationsStorage = localforage.createInstance({
-  name: "OrganizationKeyAssociations", 
-  storeName: "org-key-associations",
-});
-
-const keyOrganizationIndexStorage = localforage.createInstance({
-  name: "KeyOrganizationIndex",
-  storeName: "key-org-index",
-});
-
-// Upsert DID-Key Association with Improved Indexing
-export async function upsertDIDKeyAssociation(
-  userId: string, 
-  association: DIDKeyAssociation
-): Promise<void> {
-  const didScopedKey = getUserScopedKey(userId, association.didId);
-  const keyScopedKey = getUserScopedKey(userId,association.keyId);
-
-  // Store DID-Key Association
-  const existingDIDAssociations = 
-    (await didKeyAssociationsStorage.getItem<DIDKeyAssociation[]>(didScopedKey)) || [];
-  
-  const updatedDIDAssociations = existingDIDAssociations.map(a => 
-    a.keyId === association.keyId ? association : a
-  );
-  
-  if (!updatedDIDAssociations.find(a => a.keyId === association.keyId)) {
-    updatedDIDAssociations.push(association);
-  }
-  
-  await didKeyAssociationsStorage.setItem(didScopedKey, updatedDIDAssociations);
-
-  // Update Key-DID Index
-  const existingKeyDIDs = 
-    (await keyDIDIndexStorage.getItem<string[]>(keyScopedKey)) || [];
-  
-  if (!existingKeyDIDs.includes(association.didId)) {
-    existingKeyDIDs.push(association.didId);
-    await keyDIDIndexStorage.setItem(keyScopedKey, existingKeyDIDs);
-  }
-}
 
 // Find all DIDs associated with a specific key
-export async function getDIDsForKey(userId:string,keyId: string): Promise<string[]> {
-  const keyScopedKey = getUserScopedKey(userId,keyId);
-  return (await keyDIDIndexStorage.getItem<string[]>(keyScopedKey)) || [];
+export async function getDIDsForKey(userId:string,keyId: string) {
+  return (await AppwriteSerivce.getKey(userId,keyId)).dids
 }
 
 // Retrieve DID-Key Associations
-export async function getDIDKeyAssociations(
+export async function getKeysForDID(
   userId: string, 
   didId: string
-): Promise<DIDKeyAssociation[]> {
-  const scopedKey = getUserScopedKey(userId, didId);
-  return (await didKeyAssociationsStorage.getItem<DIDKeyAssociation[]>(scopedKey)) || [];
+){
+  return (await AppwriteSerivce.getDID(userId,didId)).keys
 }
-
-// Similar pattern for Organization Key Associations
-export async function upsertOrganizationKeyAssociation(
-  userId: string, 
-  association: OrganizationKeyAssociation
-): Promise<void> {
-  const orgScopedKey = getUserScopedKey(userId, association.orgId);
-  const keyScopedKey = getUserScopedKey(userId,association.keyId);
-
-  // Store Organization-Key Association
-  const existingOrgAssociations = 
-    (await organizationKeyAssociationsStorage.getItem<OrganizationKeyAssociation[]>(orgScopedKey)) || [];
-  
-  const updatedOrgAssociations = existingOrgAssociations.map(a => 
-    a.keyId === association.keyId ? association : a
-  );
-  
-  if (!updatedOrgAssociations.find(a => a.keyId === association.keyId)) {
-    updatedOrgAssociations.push(association);
-  }
-  
-  await organizationKeyAssociationsStorage.setItem(orgScopedKey, updatedOrgAssociations);
-
-  // Update Key-Organization Index
-  const existingKeyOrgs = 
-    (await keyOrganizationIndexStorage.getItem<string[]>(keyScopedKey)) || [];
-  
-  if (!existingKeyOrgs.includes(association.orgId)) {
-    existingKeyOrgs.push(association.orgId);
-    await keyOrganizationIndexStorage.setItem(keyScopedKey, existingKeyOrgs);
-  }
-}
-
 // Find all Organizations associated with a specific key
-export async function getOrganizationsForKey(userId:string,keyId: string): Promise<string[]> {
-  const keyScopedKey = getUserScopedKey(userId,keyId);
-  return (await keyOrganizationIndexStorage.getItem<string[]>(keyScopedKey)) || [];
+export async function getOrganizationsForKey(ownerId:string,keyId: string) {
+  return (await AppwriteSerivce.getOrganizationsForKey(ownerId,keyId))
+  
 }
-
 // Get Organization-Key Associations
-export async function getOrganizationKeyAssociations(
+export async function getKeysForOrg(
   userId: string, 
   orgId: string
-): Promise<OrganizationKeyAssociation[]> {
-  const scopedKey = getUserScopedKey(userId, orgId);
-  return (await organizationKeyAssociationsStorage.getItem<OrganizationKeyAssociation[]>(scopedKey)) || [];
+) {
+  return (await AppwriteSerivce.getKeysForOrg(userId,orgId)).documents
 }
 
-const STORAGE_KEYY = "DB_STORAGE";
-const DID_KEY = "dids"
-
-function getDIDKey(userId:string){
-  return DID_KEY+ "/"+userId
+export async function associateKeyWithDID(userId:string,didId:string,keyId:string){
+  return AppwriteSerivce.associateKeyWithDID(didId,keyId,userId)
 }
-
-const db = localforage.createInstance({driver:localforage.INDEXEDDB,storeName:STORAGE_KEY})
-
-export interface IDID {
-  id:string,
-  identifier:string,
-  publicKey:string,
-  keyId:string
+export async function linkOrganizationKey(userId:string,orgId:string,keyId:string) {
+  return AppwriteSerivce.linkOrganizationKey(orgId,keyId,userId)
 }
-
 export async function getDIDs(userId:string) {
-  const DIDs:IDID[] = []
-  await db.iterate( ( value: IDID, key: string ) =>
-    {
-      if ( key.startsWith( `${userId}:` ) )
-      {
-        DIDs.push( value );
-      }
-    } );
-  // return db.getItem<DID[]>(getDIDKey((userId)))
-  return DIDs
+  return AppwriteSerivce.getDIDs(userId)
 }
 
-export async function upsertDID(userId:string,did:IDID) {
-  const scopedKey = getUserScopedKey(userId,did.id)
-  const dids = await db.getItem<IDID>(scopedKey)
-  if(!dids){
-    db.setItem<IDID>(scopedKey,did)
-    return
-  }
-  db.setItem<IDID>(scopedKey,did)
+export async function upsertDID(userId:string,did:CreateDIDDto) {
+  return AppwriteSerivce.createDID(userId,did)
 }

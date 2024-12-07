@@ -27,7 +27,7 @@ function getFormmatedPubKey(publicKey:string){
 }
 export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { open, setOpen } ) =>
 {
-  const { keys, generateKey, deleteKey,getAssociations,orgAssociations,didAssociations } = useKeyContext();
+  const { keys, generateKey, deleteKey } = useKeyContext();
 
   // Form states
   const [ keyType, setKeyType ] = useState<"RSA" | "Ed25519">( "Ed25519" );
@@ -169,7 +169,7 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
             <ul className="space-y-2">
               {keys.map( ( key ) => (
                 <li
-                  key={key.id}
+                  key={key.$id}
                   className="border rounded-lg p-4 space-y-2"
                 >
                   <div className="flex items-center justify-between">
@@ -181,7 +181,7 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDeleteKey( key.id )}
+                      onClick={() => handleDeleteKey( key.$id )}
                       disabled={loading}
                     >
                       Delete
@@ -197,15 +197,15 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
                         <h5 className="text-xs font-medium text-muted-foreground">
                           DIDs:
                         </h5>
-                        {didAssociations[key.id] && didAssociations[key.id].length > 0 ? (
+                        {key.dids.length > 0 ? (
                           <ul className="list-disc list-inside">
-                            {didAssociations[key.id].map( ( did ) => (
-                              <li key={did} className="flex justify-between">
-                                <span>{did}</span>
+                            {key.dids.map( ( did ) => (
+                              <li key={did.$id} className="flex justify-between">
+                                <span>{did.identifier}</span>
                                 <Button
                                   variant="link"
                                   size="sm"
-                                  onClick={() => viewDIDAssociations( key.id, did )}
+                                  onClick={() => viewDIDAssociations( key.$id, did.$id )}
                                 >
                                   View Associations
                                 </Button>
@@ -218,7 +218,7 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
                       </div>
 
                       {/* Organizations */}
-                      <div>
+                      {/* <div>
                         <h5 className="text-xs font-medium text-muted-foreground">
                           Organizations:
                         </h5>
@@ -240,7 +240,7 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
                         ) : (
                           <p className="text-xs text-muted-foreground">No associated organizations</p>
                         )}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </li>

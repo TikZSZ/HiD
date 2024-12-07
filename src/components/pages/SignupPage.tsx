@@ -26,7 +26,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { AppwriteException } from "appwrite";
-
+import AppwriteService from "@/HiD/appwrite/service"
 const formSchema = z.object({
   email: z.string().trim().toLowerCase().email("Please enter a valid email address."),
   name: z.string().min(1, "Name cant be empty"),
@@ -50,6 +50,7 @@ export function SignupPage() {
     setIsSubmitting(true);
     try {
       const user = await signup(values.name, values.email, values.password);
+      await AppwriteService.createUser({name:values.name,email:values.email},user!.$id)
       console.log(user);
       navigate("/")
       // Handle successful signup (e.g., redirect to dashboard)

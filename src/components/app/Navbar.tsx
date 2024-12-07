@@ -59,9 +59,9 @@ export const Navbar = () => {
     state,
   } = useWallet();
 
-  // useEffect(() => {
-  //   init();
-  // }, []);
+  useEffect(() => {
+    init();
+  }, []);
 
   const handleLogout = async () => {
     try {

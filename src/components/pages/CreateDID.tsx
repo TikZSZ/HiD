@@ -14,14 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { useSignModal } from "@/components/app/SignModal"; // The context we just created
 import { PrivateKey, PublicKey } from "@hashgraph/sdk";
-import { getUserScopedKey, KeyMetadata, KeyPurpose, upsertDIDKeyAssociation } from '@/HiD/keyManager';
+import { getUserScopedKey, KeyMetadata, KeyPurpose, associateKeyWithDID } from '@/HiD/keyManager';
 import { createDidDocument, registerDidDocument } from '@/did';
 import { useWallet } from '@/contexts/hashconnect';
-import { IDID } from '@/HiD/db';
 
 export const DIDCreatePage: React.FC = () =>
 {
-  const { keys, userId, addAssociation,upsertDID } = useKeyContext();
+  const { keys, userId, addAssociation, upsertDID } = useKeyContext();
   const { openSignModal } = useSignModal();
   const { toast } = useToast();
   const { getSigner, isConnected } = useWallet()
@@ -47,7 +46,7 @@ export const DIDCreatePage: React.FC = () =>
     setIsCreating( true );
 
     openSignModal(
-      selectedKey!.id,
+      selectedKey!.$id,
       "key-retrieval",
       {
         purpose: 'DID Creation',
@@ -61,6 +60,8 @@ export const DIDCreatePage: React.FC = () =>
         {
           // Handle signature error
           console.error( 'Signing failed', error );
+          setIsCreating( false );
+
         }
       }
     );
@@ -78,18 +79,13 @@ export const DIDCreatePage: React.FC = () =>
       console.log( signer )
       didDocument = await registerDidDocument( didDocument )
       console.log( didDocument.getIdentifier() )
-      const id = crypto.randomUUID()
-      // Prepare DID object
-      const didObject: IDID = {
-        id: id,
-        identifier: didDocument.getIdentifier(),
-        publicKey: selectedKey!.publicKey,
-        keyId: getUserScopedKey( userId, selectedKey!.id )
-      };
-
-      await upsertDID( didObject )
-      await addAssociation( 'DID', { didId: id, keyId: selectedKey!.id, purposes: [ KeyPurpose.AUTHENTICATION, KeyPurpose.ASSERTION ], isPrimary: true } )
+      const did = await upsertDID( { identifier: didDocument.getIdentifier() } )
+      await addAssociation( 'DID', did.$id, selectedKey!.$id )
       // Open sign modal to confirm DID creation
+      toast( {
+        title: "Success",
+        description: "DID Created Sucessfully"
+      } );
     } catch ( error )
     {
       // Handle general errors
@@ -101,6 +97,7 @@ export const DIDCreatePage: React.FC = () =>
       console.error( error );
       setIsCreating( false );
     }
+    setIsCreating( false );
   }
 
   return (
@@ -117,7 +114,7 @@ export const DIDCreatePage: React.FC = () =>
             <Select
               onValueChange={( keyId ) =>
               {
-                const key = keys.find( k => k.id === keyId );
+                const key = keys.find( k => k.$id === keyId );
                 setSelectedKey( key! );
               }}
             >
@@ -126,8 +123,8 @@ export const DIDCreatePage: React.FC = () =>
               </SelectTrigger>
               <SelectContent>
                 {keys.map( ( key ) => (
-                  <SelectItem key={key.id} value={key.id}>
-                    {key.name} - {key.id.slice( 0, 10 )}...
+                  <SelectItem key={key.$id} value={key.$id}>
+                    {key.name} - {key.$id.slice( 0, 10 )}...
                   </SelectItem>
                 ) )}
               </SelectContent>
@@ -148,7 +145,7 @@ export const DIDCreatePage: React.FC = () =>
                 <strong>Selected Key:</strong> {selectedKey.name}
               </p>
               <p className="text-xs text-muted-foreground break-words">
-                Public Key: {PublicKey.fromString(selectedKey.publicKey).toStringRaw()}
+                Public Key: {PublicKey.fromString( selectedKey.publicKey ).toStringRaw()}
               </p>
             </div>
           )}

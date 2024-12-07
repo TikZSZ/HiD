@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import { HcsDidCreateDidDocumentEvent } from "../identity/hcs/did/event/document/hcs-did-create-did-document-event";
 
 const IPFS_IO_HTTP_PROXY = "https://ipfs.io/ipfs/";
