@@ -58,6 +58,7 @@ export interface UserDocument extends Models.Document
   email: string;
   organizationRole: OrganizationRole
   org: OrganizationDocument // member of that org
+  orgs:OrganizationDocument[]
 }
 
 // Interface for Organizations Collection
@@ -66,6 +67,7 @@ export interface OrganizationDocument extends Models.Document
   name: string;
   description?: string
   owner: UserDocument;
+  members:UserDocument[]
 }
 
 interface CreateUserDto
@@ -98,6 +100,12 @@ export interface CreateOrganizationDto
 {
   name: string;
   description?: string;
+}
+
+export interface AddOrganizationMemberDto
+{
+  memberId:string,
+  orgId:string
 }
 
 export interface UpdateUserDto
@@ -191,7 +199,7 @@ class AppwriteService
     }
   }
   // Promise<UserWithRelations>
-  async getUser ( userId: string ): Promise<any>
+  async getUser ( userId: string )
   {
     try
     {
@@ -200,38 +208,8 @@ class AppwriteService
         conf.appwriteUsersCollID,
         userId
       );
-      // console.log(user)
-      // // Fetch related DIDs
-      // const dids = await this.databases.listDocuments<DIDDocument>(
-      //   conf.appwrtieDBId,
-      //   conf.appwriteDIDsCollID,
-      //   [ Query.equal( 'ownerId', userId ) ]
-      // );
 
-      // // Fetch related Keys
-      // const keys = await this.databases.listDocuments<KeyDocument>(
-      //   conf.appwrtieDBId,
-      //   conf.appwriteKeysCollID,
-      //   [ Query.equal( 'ownerId', userId ) ]
-      // );
-
-      // // Fetch organization if exists
-      // let organization = null;
-      // if ( user.orgId )
-      // {
-      //   organization = await this.databases.getDocument<OrganizationDocument>(
-      //     conf.appwrtieDBId,
-      //     conf.appwriteOrgsCollID,
-      //     user.orgId
-      //   );
-      // }
-
-      return {
-        ...user,
-        // dids: dids.documents,
-        // keys: keys.documents,
-        // organization
-      };
+      return user;
     } catch ( error )
     {
       console.error( 'Error fetching user:', error );
@@ -266,9 +244,7 @@ class AppwriteService
         // ]
       );
 
-      return {
-        ...didDocument,
-      };
+      return didDocument;
     } catch ( error )
     {
       console.error( 'Error creating DID:', error );
@@ -375,10 +351,7 @@ class AppwriteService
         // ]
       );
 
-      return {
-        ...keyDocument,
-        // owner: user
-      };
+      return keyDocument;
     } catch ( error )
     {
       console.error( 'Error creating key:', error );
@@ -448,6 +421,7 @@ class AppwriteService
         {
           ...orgData,
           owner: userId,
+          
         },
         [
           // Permission.read( Role.users() ),
@@ -485,7 +459,7 @@ class AppwriteService
   async addOrganizationMember (
     orgId: string,
     ownerId: string,
-    userId: string,
+    memberId: string,
     role: OrganizationRole = OrganizationRole.MEMBER
   ): Promise<void>
   {
@@ -499,14 +473,26 @@ class AppwriteService
       );
       if ( org.owner.$id !== ownerId ) throw new Error( "U do not have permission to add users to orgnisation" )
 
+      // Update organizations memebrs
+      await this.databases.updateDocument<OrganizationDocument>(
+        conf.appwrtieDBId,
+        conf.appwriteOrgsCollID,
+        orgId,
+        {
+          members: [ ...new Set( [ ...( org.members || [] ), memberId ] ) ]
+        }
+      );
+      this.databases.getDocument("","",Query.equal("id",["d"]))
+      console.log("fetching the user",memberId)
+      const user = await this.getUser(memberId)
       // Update user's organization
       await this.databases.updateDocument<UserDocument>(
         conf.appwrtieDBId,
         conf.appwriteUsersCollID,
-        userId,
+        memberId,
         {
-          org: orgId,
-          organizationRole: role
+          organizationRole: role,
+          orgs: [ ...new Set( [ ...( user.orgs || [] ), orgId ] ) ]
         }
       );
     } catch ( error )

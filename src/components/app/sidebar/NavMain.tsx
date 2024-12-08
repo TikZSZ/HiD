@@ -43,7 +43,7 @@ export function NavMain ( {
   const location = useLocation()
   useEffect( () =>
   {
-    console.log( location )
+    // console.log( location )
     // matchPath()
   }, [ location ] )
   return (

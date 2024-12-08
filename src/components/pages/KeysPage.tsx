@@ -12,6 +12,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormModal } from "../app/FormModal";
 import { PageHeader } from "./PageHeader";
+import { Loader2 } from "lucide-react";
 function getFormmatedPubKey ( publicKey: string )
 {
   const pK = PublicKey.fromString( publicKey ).toStringRaw()
@@ -33,11 +34,14 @@ export const KeyManagementOverlay: React.FC = () =>
   // Form states
   const [ loading, setLoading ] = useState<boolean>( false );
   const [ isModalOpen, setIsModalOpen ] = useState( false );
+  const [ isCreating, setIsCreating ] = useState( false );
+
   const toggleModal = () => setIsModalOpen( !isModalOpen );
 
   const handleGenerateKey = async ( { keyType, name, description, password }: KeyFormValues ) =>
   {
     setLoading( true );
+    setIsCreating(true)
     try
     {
       await generateKey( keyType, { name, description }, password );
@@ -48,6 +52,7 @@ export const KeyManagementOverlay: React.FC = () =>
     } finally
     {
       setLoading( false );
+      setIsCreating(false)
     }
   };
 
@@ -101,13 +106,14 @@ export const KeyManagementOverlay: React.FC = () =>
     <div className="relative h-full flex flex-col p-4 min-h-[90vh]">
       {/* Header */}
     <PageHeader title="Key Manager" description="Manage cryptographic keys." onClick={toggleModal}/>
+
       {/* Existing Keys List */}
-      <div className="mt-6 space-y-4 overflow-auto">
+      <div className="flex-grow overflow-auto">
         <h3 className="text-lg font-semibold">
           Existing Keys ({keys.length})
         </h3>
         {keys.length > 0 ? (
-          <ul className="space-y-2">
+          <ul className="space-y-2 mt-6">
             {keys.map( ( key ) => (
               <li
                 key={key.$id}
@@ -189,7 +195,7 @@ export const KeyManagementOverlay: React.FC = () =>
             ) )}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">No keys available.</p>
+          <p className="text-center text-muted-foreground mt-4">No keys available.</p>
         )}
       </div>
 
@@ -267,12 +273,11 @@ export const KeyManagementOverlay: React.FC = () =>
                 </FormItem>
               )}
             />
-
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
               <Button variant="outline" onClick={() => setIsModalOpen( false )} type="reset">
                 Cancel
               </Button>
-              <Button type="submit">Create</Button>
+              <Button type="submit" disabled={isCreating}>{isCreating ?<Loader2 className="h-4 w-4 animate-spin" /> : "Create"}</Button>
             </div>
           </form>
         </Form>

@@ -17,34 +17,46 @@ type OrganizationFormValues = z.infer<typeof organizationSchema>;
 import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { PageHeader } from "./PageHeader";
 import { FormModal } from "../app/FormModal";
+import { Loader2 } from "lucide-react";
 
 const OrganizationsPage: React.FC = () =>
 {
   const { upsertOrg, orgs } = useKeyContext()
-  
+
   // Open/Close Modal
   const [ isModalOpen, setIsModalOpen ] = useState( false );
   const toggleModal = () => setIsModalOpen( !isModalOpen );
+  const [ isCreating, setIsCreating ] = useState( false );
 
   // Create Organization
-  const handleCreateOrganization = async (data:OrganizationFormValues) =>
+  const handleCreateOrganization = async ( data: OrganizationFormValues ) =>
   {
-    if ( !data.name ) return; // Basic validation
-    const org = await upsertOrg( data );
-    toggleModal();
+    setIsCreating( true )
+    try
+    {
+      const org = await upsertOrg( data );
+      toggleModal();
+    } catch ( err )
+    {
+      console.error( err )
+    } finally
+    {
+      setIsCreating( false )
+    }
   };
 
-  const form = useForm<OrganizationFormValues>({
-    resolver: zodResolver(organizationSchema),
+  const form = useForm<OrganizationFormValues>( {
+    resolver: zodResolver( organizationSchema ),
     defaultValues: {
       name: "",
       description: "",
     },
-  });
+  } );
 
-  const onSubmit = (data: OrganizationFormValues) => {
-    handleCreateOrganization(data); // Pass validated data to parent function
-     // Close modal on success
+  const onSubmit = ( data: OrganizationFormValues ) =>
+  {
+    handleCreateOrganization( data ); // Pass validated data to parent function
+    // Close modal on success
   };
 
   return (
@@ -54,8 +66,11 @@ const OrganizationsPage: React.FC = () =>
 
       {/* Organizations List */}
       <div className="flex-grow overflow-auto">
+        <h3 className="text-lg font-semibold">
+          Existing Orgs ({orgs.length})
+        </h3>
         {orgs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
             {orgs.map( ( org ) => (
               <Card key={org.$id} className="w-full">
                 <CardHeader>
@@ -108,12 +123,12 @@ const OrganizationsPage: React.FC = () =>
                 </FormItem>
               )}
             />
-
+            {/* Submit Button */}
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-              <Button variant="outline" onClick={toggleModal} type="reset">
+              <Button variant="outline" onClick={toggleModal} type="reset" >
                 Cancel
               </Button>
-              <Button type="submit">Create</Button>
+              <Button type="submit" disabled={isCreating}>{isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}</Button>
             </div>
           </form>
         </Form>

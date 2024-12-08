@@ -43,6 +43,7 @@ async function runTests ()
     console.log( '\n🆔 Test 3: Creating DID' );
     const did = await AppwriteService.createDID( user.$id, {
       identifier: 'did:example:' + Math.random().toString( 36 ).substring( 7 ),
+      name:"example DID"
       // publicKey: 'sample-public-key-' + Math.random().toString(36).substring(7), 
     } );
     console.log( 'DID created successfully:', did.$id );
@@ -58,6 +59,7 @@ async function runTests ()
       name: 'Test Organization'
     } );
     console.log( 'Organization created successfully:', org.$id );
+    await AppwriteService.addOrganizationMember( org.$id, user.$id,user.$id, OrganizationRole.OWNER );
 
     // Test 6: Add Organization Member
     console.log( '\n👥 Test 6: Adding Organization Member' );
@@ -95,6 +97,10 @@ async function runTests ()
 
 const main = async () =>
 {
+  const queries = Query.equal("$id",["67560d0e003562681c99","67561a3e00190615bce0","6756191b0014efe75296"])
+  const userss = await AppwriteService.databases.listDocuments(conf.appwrtieDBId,conf.appwriteUsersCollID,[queries])
+  console.log(userss)
+  process.exit()
   const user = await AppwriteService.getUser( userId )
   console.dir( user, { depth: Infinity } )
   const keys = await AppwriteService.databases.listDocuments<KeyDocument>(

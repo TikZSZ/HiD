@@ -11,7 +11,7 @@ import { getUserScopedKey, KeyMetadata, KeyPurpose, associateKeyWithDID } from '
 import { createDidDocument, registerDidDocument } from '@/did';
 import { useWallet } from '@/contexts/hashconnect';
 import { motion } from "framer-motion";
-import { XIcon } from "lucide-react";
+import { Loader2, XIcon } from "lucide-react";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -96,8 +96,10 @@ export const DIDCreatePage: React.FC = () =>
         console.error( "Signing failed", error );
         setIsCreating( false );
       },
-      onClose: () => {
-        setIsCreating( false )
+      onClose: () =>
+      {
+        console.error( "Signing failed", "User Rejected" );
+        setIsCreating( false );
       },
     } );
   };
@@ -236,17 +238,19 @@ export const DIDCreatePage: React.FC = () =>
               <Button variant="outline" onClick={toggleModal} type="reset" >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isCreating}>{isCreating ? "Creating DID..." : "Create DID"}</Button>
+              <Button type="submit" disabled={isCreating}>{isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}</Button>
             </div>
           </form>
         </Form>
       </FormModal>
 
       {/* DID List View */}
-      <div className="">
-        <h4 className="text-lg font-semibold mb-4">Existing DIDs</h4>
+      <div className=" flex-grow overflow-auto">
+        <h3 className="text-lg font-semibold">
+          Existing DIDs ({dids.length})
+        </h3>
         {dids && dids.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-4 mt-6">
             {dids.map( ( did ) => (
               <Card key={did.identifier} className="p-4 bg-card rounded-md shadow-md">
                 <CardHeader>
@@ -267,7 +271,7 @@ export const DIDCreatePage: React.FC = () =>
             ) )}
           </div>
         ) : (
-          <div>No DIDs Found</div>
+          <p className="text-center text-muted-foreground mt-4">No DIDs Found</p>
         )}
       </div>
 
