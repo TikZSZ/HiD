@@ -15,8 +15,10 @@ ReactDOM.createRoot( document.getElementById( "root" )! ).render(
   <AuthProvider>
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <HashConnectProvider>
-        {/* <QueryClientProvider client={queryClient}> */}
+        <Suspense>
           <RouterProvider router={router} />
+        </Suspense>
+        {/* <QueryClientProvider client={queryClient}> */}
           {/* <ReactQueryDevtools initialIsOpen={false} /> */}
         {/* </QueryClientProvider> */}
       </HashConnectProvider>

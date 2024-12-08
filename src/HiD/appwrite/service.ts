@@ -32,6 +32,7 @@ export interface DIDDocument extends Models.Document
   identifier: string;
   owner: UserDocument;
   keys: KeyDocument[]
+  name:string
 }
 
 // Interface for Keys Collection
@@ -78,6 +79,7 @@ export interface CreateDIDDto
 {
   identifier: string;
   keyId?:string
+  name:string
 }
 
 export interface CreateKeyDto
@@ -243,7 +245,7 @@ class AppwriteService
     didData: CreateDIDDto,
   )
   {
-    const { identifier,keyId} = didData
+    const {keyId,...rest} = didData
     const keys = keyId ? [keyId]:[]
     try
     {
@@ -253,7 +255,7 @@ class AppwriteService
         conf.appwriteDIDsCollID,
         ID.unique(),
         {
-          identifier:identifier,
+          ...rest,
           owner: userId,
           keys: keys // Start with no keys
         },
@@ -279,7 +281,7 @@ class AppwriteService
     // Fetch related Keys
     const dids = await this.databases.listDocuments<DIDDocument>(
       conf.appwrtieDBId,
-      conf.appwriteKeysCollID,
+      conf.appwriteDIDsCollID,
       [Query.equal("owner",ownerId)]
     );
     return dids.documents
@@ -434,7 +436,7 @@ class AppwriteService
   async createOrganization (
     userId: string,
     orgData: CreateOrganizationDto
-  ): Promise<OrganizationWithRelations>
+  )
   {
     try
     {
@@ -454,14 +456,30 @@ class AppwriteService
         ]
       );
 
-      return {
-        ...orgDocument,
-      };
+      return orgDocument
     } catch ( error )
     {
       console.error( 'Error creating organization:', error );
       throw error;
     }
+  }
+
+  async getOrgnisations(userId:string){
+    const orgs = await this.databases.listDocuments<OrganizationDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteOrgsCollID,
+      [ Query.equal( 'owner', userId ) ]
+    );
+    return orgs.documents
+  }
+
+  async getOrgMembers(orgId:string){
+    const members = await this.databases.listDocuments<UserDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteUsersCollID,
+      [ Query.equal( 'org',orgId ) ]
+    );
+    return members.documents
   }
 
   async addOrganizationMember (

@@ -27,12 +27,13 @@ interface SignModalContextType
       signData?: string,
       purpose?: string,
       onSuccess?: ( result: Uint8Array | PrivateKey ) => void,
-      onError?: ( error: Error ) => void
+      onError?: ( error: Error ) => void,
+      onClose?: () => void;
     }
   ) => void;
 }
 
-interface SignModalProps
+export interface SignModalProps
 {
   open: boolean;
   setOpen: ( open: boolean ) => void;
@@ -42,6 +43,7 @@ interface SignModalProps
   purpose?: string;
   onSuccess?: ( result: Uint8Array | PrivateKey ) => void;
   onError?: ( error: Error ) => void;
+  onClose?: () => void;
 }
 
 // Create the context
@@ -135,7 +137,8 @@ const SignModal: React.FC<SignModalProps> = ( {
   signData,
   purpose,
   onSuccess,
-  onError
+  onError,
+  onClose
 } ) =>
 {
   const { retrieveKey, keys } = useKeyContext();
@@ -236,7 +239,6 @@ const SignModal: React.FC<SignModalProps> = ( {
     if ( !open )
     {
       setPassword( "" );
-      onError?.( new Error( "User Rejected" ) );
     }
   }, [ open ] );
 
@@ -286,7 +288,7 @@ const SignModal: React.FC<SignModalProps> = ( {
           <div className="flex justify-end space-x-4 mt-4">
             <Button
               variant="secondary"
-              onClick={() => setOpen( false )}
+              onClick={() => {setOpen( false ); onClose?.()}}
               disabled={loading}
             >
               Cancel
@@ -324,6 +326,7 @@ export const SignModalProvider: React.FC<{ children: React.ReactNode }> = ( { ch
       purpose?: string,
       onSuccess?: ( result: Uint8Array | PrivateKey ) => void,
       onError?: ( error: Error ) => void
+      onClose?: () => void;
     }
   ) =>
   {

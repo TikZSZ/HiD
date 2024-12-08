@@ -2,24 +2,26 @@ import { createBrowserRouter } from "react-router-dom";
 import Home from "@/components/pages/Home";
 import App from "./App";
 import { lazy } from "react";
-import { DIDCreatePage } from "./components/pages/CreateDID";
+import { DIDCreatePage } from "./components/pages/DIDsPage";
+import OrganizationsPage from "./components/pages/OrgsPage";
 
 
-const LoginPage = lazy(() => import("@/components/pages/LoginPage"));
-const ProtectedLayout = lazy(() => import("@/components/pages/AuthLayout"));
-const SignupPage = lazy(() => import("@/components/pages/SignupPage"));
-const RouterErrorPage = lazy(() => import("@/components/pages/ErrorPage"));
-const DashboardLayout = lazy(() => import("@/components/pages/DashboardLayout"));
-const DashboardPage = lazy(() => import("@/components/pages/Dashboard"));
-
-const PageWrapper = ({ children }: { children: React.ReactNode }) => (
+const LoginPage = lazy( () => import( "@/components/pages/LoginPage" ) );
+const ProtectedLayout = lazy( () => import( "@/components/pages/AuthLayout" ) );
+const SignupPage = lazy( () => import( "@/components/pages/SignupPage" ) );
+const RouterErrorPage = lazy( () => import( "@/components/pages/ErrorPage" ) );
+const DashboardLayout = lazy( () => import( "@/components/pages/DashboardLayout" ) );
+const DashboardPage = lazy( () => import( "@/components/pages/Dashboard" ) );
+const KeysPage = lazy( () => import( "@/components/pages/KeysPage" ) );
+const DIDsPage = lazy( () => import( "@/components/pages/DIDsPage" ) );
+const PageWrapper = ( { children }: { children: React.ReactNode } ) => (
   <div className="w-full transition-all duration-300 ease-in-out transform">
     {children}
   </div>
 );
 
 
-export const router = createBrowserRouter([
+export const router = createBrowserRouter( [
   {
     path: "/",
     element: <App />,
@@ -49,21 +51,40 @@ export const router = createBrowserRouter([
         path: "/dashboard",
         element: (
           <ProtectedLayout authentication>
-            <DashboardLayout/>
+            <DashboardLayout />
           </ProtectedLayout>
         ),
         children: [
           {
-            index:true,
+            index: true,
             element: (
               <PageWrapper>
-                <DashboardPage/>
+                <DashboardPage />
               </PageWrapper>
             ),
           },
           {
-            path:"/dashboard/create-did",
-            element:<PageWrapper> <DIDCreatePage /> </PageWrapper>
+            path: "/dashboard/create-did",
+            element: <PageWrapper> <DIDCreatePage /> </PageWrapper>
+          },
+          {
+            path: "/dashboard/wallet/keys",
+            index:true,
+            element: <PageWrapper>
+              <KeysPage />
+            </PageWrapper>,
+          },
+          {
+            path: "/dashboard/wallet/dids",
+            element: <PageWrapper>
+              <DIDsPage />
+            </PageWrapper>,
+          },
+          {
+            path: "/dashboard/orgs",
+            element: <PageWrapper>
+              <OrganizationsPage />
+            </PageWrapper>,
           },
           // {
           //   path:"/dashboard/tokens",
@@ -75,7 +96,7 @@ export const router = createBrowserRouter([
           //     {
           //       path: ":tokenId",
           //       element: <PageWrapper><TokenDetailPage /></PageWrapper>,
-                
+
           //     },
           //   ]
           // },
@@ -92,4 +113,4 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+] );

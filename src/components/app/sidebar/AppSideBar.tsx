@@ -9,9 +9,11 @@ import
     Coins,
     Command,
     Frame,
+    KeyIcon,
     LifeBuoy,
     Map,
     PieChart,
+    PlusIcon,
     Send,
     Settings2,
     SquareTerminal,
@@ -127,36 +129,39 @@ import { useKeyContext } from "@/contexts/keyManagerCtx"
 const dataa = {
   navMain: [
     {
-      title: "Manage DIDs",
-      url: "#",
+      title: "Wallet",
+      url: "/dashboard/wallet/keys",
       icon: Badge,
       isActive: true,
       items: [
         {
-          title: "Create",
-          url: "/dashboard/create-did"
+          title: "Keys",
+          url: "/dashboard/wallet/keys",
+          icon:KeyIcon
+
         },
         {
-          title: "DID1",
-          url: "#",
+          title: "DIDs",
+          url: "/dashboard/wallet/dids",
+          icon:PlusIcon
         },
-        {
-          title: "DID2",
-          url: "#",
-        },
-        {
-          title: "DID3",
-          url: "#",
-        },
+        // {
+        //   title: "DID2",
+        //   url: "#",
+        // },
+        // {
+        //   title: "DID3",
+        //   url: "#",
+        // },
       ],
     },
     {
-      title: "Manage Credentials",
-      url: "#",
+      title: "Organizations",
+      url: "/dashboard/orgs",
       icon: Bot,
       items: [
         {
-          title: "Credentials",
+          title: "Members",
           url: "#",
         },
         {
@@ -257,11 +262,6 @@ export function AppSidebar ( { ...props }: React.ComponentProps<typeof Sidebar> 
   } )
   const { user } = useAuth()
 
-  // useEffect( () =>
-  // {
-  //   setData( { ...data, navMain: [ { ...data.navMain[ 0 ], items: dids.map( ( did ) => ( { title: did.identifier, url: `#${did.id}` } ) ) }, ...data.navMain.slice( 1 ) ] } )
-  // }, [ dids ] )
-
   useEffect( () =>
   {
     ( async () =>
@@ -296,7 +296,7 @@ export function AppSidebar ( { ...props }: React.ComponentProps<typeof Sidebar> 
       </SidebarHeader>
       <SidebarContent className="bg-background">
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
         {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
 

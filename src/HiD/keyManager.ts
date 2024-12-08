@@ -1,6 +1,6 @@
 import { PrivateKey } from "@hashgraph/sdk";
 import localforage, { key } from "localforage";
-import AppwriteSerivce, { CreateDIDDto } from "./appwrite/service"
+import AppwriteSerivce, { CreateDIDDto, CreateOrganizationDto } from "./appwrite/service"
 import  {KeyPurpose,KeyType,OrganizationRole} from "./appwrite/service"
 import { Base64 } from "js-base64";
 export {KeyPurpose,KeyType,OrganizationRole}
@@ -241,6 +241,10 @@ export async function getKeysForOrg(
   orgId: string
 ) {
   return (await AppwriteSerivce.getKeysForOrg(userId,orgId)).documents
+}
+
+export async function createOrg(userId:string,data:CreateOrganizationDto){
+  return AppwriteSerivce.createOrganization(userId,data)
 }
 
 export async function associateKeyWithDID(userId:string,didId:string,keyId:string){

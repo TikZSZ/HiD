@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { SignModalProvider } from "../app/SignModal";
 import { Sidebar } from "@/components/app/sidebar/Sidebar";
 import { Outlet } from "react-router-dom";
+import DIDWalletManager from "../app/DIDWallet/DIDWalletManager";
 
 
 // const Sidebar = () => {
@@ -52,6 +53,26 @@ import { Outlet } from "react-router-dom";
 //   );
 // };
 
+{/* <header className="flex h-16 shrink-0 items-center gap-2">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="#">
+                      Building Your Application
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          <Outlet /> */}
 
 const DashboardLayout = () =>
 {
@@ -60,7 +81,10 @@ const DashboardLayout = () =>
     <KeyProvider userId={user!.$id} >
       <SignModalProvider>
         <Sidebar>
+          <div>
+          <DIDWalletManager/>
           <Outlet />
+          </div>
         </Sidebar>
       </SignModalProvider>
     </KeyProvider>

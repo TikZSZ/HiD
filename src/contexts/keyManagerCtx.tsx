@@ -1,14 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as KeyManager from '@/HiD/keyManager';
 import { PrivateKey, PublicKey } from '@hashgraph/sdk';
-import {DIDDocument,OrganizationDocument,KeyDocument,CreateDIDDto, KeyType} from "@/HiD/appwrite/service"
+import AppwriteService,{DIDDocument,OrganizationDocument,KeyDocument,CreateDIDDto, KeyType, CreateOrganizationDto} from "@/HiD/appwrite/service"
 // Types for context
 interface KeyContextType
 {
   userId: string;
   keys: KeyDocument[];
   dids: DIDDocument[]
+  orgs:OrganizationDocument[]
+  isOpen:boolean;
+  setIsOpen:(val:boolean) => void
   getDIDs (): Promise<void>
+  getOrgs (): Promise<void>
+  upsertOrg ( did: CreateOrganizationDto ): Promise<OrganizationDocument>
   upsertDID ( did: CreateDIDDto ): Promise<DIDDocument>
   // didAssociations: { [ key: string ]: string[] };
   // orgAssociations: { [ key: string ]: string[] };
@@ -19,6 +24,8 @@ interface KeyContextType
   getAssociations: ( type: 'DID' | 'Organization', keyId: string ) => Promise<void>;
   addAssociation: ( type: 'DID' | 'Organization', toId: string,withId:string ) => Promise<void>;
   deleteAssociation: ( type: 'DID' | 'Organization', id: string, keyId: string ) => Promise<void>;
+  openDIDWalletManager: () => void;
+  closeDIDWalletManager: () => void;
 }
 
 // Initial context
@@ -38,6 +45,7 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
   // const [ didAssociations, setDIDAssociations ] = useState<{ [ key: string ]: DIDDocument[] }>( {} );
   // const [ orgAssociations, setOrgAssociations ] = useState<{ [ key: string ]: OrganizationDocument[] }>( {} );
   const [ dids, setDIDs ] = useState<DIDDocument[]>( [] )
+  const [ orgs, setOrgs ] = useState<OrganizationDocument[]>( [] )
 
   const listKeys = async () =>
   {
@@ -45,7 +53,9 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
     setKeys( userKeys );
   };
 
-
+  const [isOpen, setIsOpen] = useState(false);
+  const openDIDWalletManager = () => setIsOpen(true);
+  const closeDIDWalletManager = () => setIsOpen(false);
 
   const generateKey = async ( type: 'RSA' | 'Ed25519', metadata: Omit<KeyManager.OmmitedKeyMeta,"keyType">, password: string ) =>
   {
@@ -114,17 +124,30 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
     setDIDs( dids )
   }
 
+  async function getOrgs ()
+  {
+    const orgs = await AppwriteService.getOrgnisations( userId )
+    setOrgs( orgs )
+  }
+
+  async function upsertOrg(data:CreateOrganizationDto){
+    const org = await AppwriteService.createOrganization( userId,data )
+    setOrgs([...orgs,org])
+    return org
+  }
+
   async function upsertDID ( did: DIDDocument )
   {
     const didd = await KeyManager.upsertDID( userId, did )
-    await getDIDs()
+    setDIDs([...dids,didd])
     return didd
   }
 
   useEffect( () =>
   {
     listKeys();
-    getDIDs()
+    getDIDs();
+    getOrgs();
   }, [ userId ] );
 
   // useEffect( () =>
@@ -144,15 +167,22 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
       userId,
       keys,
       dids,
+      orgs,
+      isOpen,
       listKeys,
       generateKey,
       deleteKey,
       getAssociations,
       getDIDs,
       upsertDID,
+      getOrgs,
+      upsertOrg,
       addAssociation,
       deleteAssociation,
       retrieveKey,
+      setIsOpen,
+      openDIDWalletManager,
+      closeDIDWalletManager 
     }}>
       {children}
     </KeyContext.Provider>

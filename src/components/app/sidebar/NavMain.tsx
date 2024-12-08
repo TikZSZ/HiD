@@ -2,12 +2,14 @@
 
 import { ChevronRight, type LucideIcon } from "lucide-react"
 
-import {
+import
+{
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import {
+import
+{
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
@@ -18,9 +20,11 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { Link } from "react-router-dom"
+import { Link, NavLink, useLocation, matchPath } from "react-router-dom"
+import { cn } from "@/lib/utils"
+import { useEffect } from "react"
 
-export function NavMain({
+export function NavMain ( {
   items,
 }: {
   items: {
@@ -31,21 +35,33 @@ export function NavMain({
     items?: {
       title: string
       url: string
+      icon?: LucideIcon
     }[]
   }[]
-}) {
+} )
+{
+  const location = useLocation()
+  useEffect( () =>
+  {
+    console.log( location )
+    // matchPath()
+  }, [ location ] )
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
+        {items.map( ( item ) => (
           <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={item.title}>
-                <Link to={item.url}>
+                <NavLink to={item.url} >
                   <item.icon />
                   <span>{item.title}</span>
-                </Link>
+                </NavLink>
+                {/* <div>
+                  <item.icon />
+                  <span>{item.title}</span>
+                </div> */}
               </SidebarMenuButton>
               {item.items?.length ? (
                 <>
@@ -57,22 +73,24 @@ export function NavMain({
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
+                      {item.items?.map( ( subItem ) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton asChild>
-                            <a href={subItem.url}>
+                            <NavLink to={subItem.url} key={subItem.url} className={location.pathname && matchPath( subItem.url, location.pathname ) ? " bg-secondary " : " "}
+                            >
+                              {subItem.icon && <subItem.icon />}
                               <span>{subItem.title}</span>
-                            </a>
+                            </NavLink>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
-                      ))}
+                      ) )}
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </>
               ) : null}
             </SidebarMenuItem>
           </Collapsible>
-        ))}
+        ) )}
       </SidebarMenu>
     </SidebarGroup>
   )

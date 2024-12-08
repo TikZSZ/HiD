@@ -8,22 +8,7 @@ import { Button } from '../ui/button';
 
 const Dashboard = () =>
 {
-  const { keys, retrieveKey } = useKeyContext()
-  useEffect( () =>
-  {
-    ( async () =>
-    {
-      console.log( keys )
-      if ( keys.length > 0 )
-      {
-        const key = await retrieveKey( keys[ 0 ].id, "9918180888" )
-        console.log( key )
-        const data = new Uint8Array([0,1,5])
-        const signature = key.privateKey.sign(data)
-        console.log(key.publicKey.verify(data,signature))
-      }
-    } )()
-  }, [ keys ] )
+
   const dashboardItems = [
     { title: 'Total Topics', icon: MessageCircle, value: '15' },
     { title: 'Total Tokens', icon: Coins, value: '5' },
@@ -46,34 +31,52 @@ const Dashboard = () =>
     { name: 'Aug 14', balance: 950 },
     { name: 'Aug 15', balance: 1000 },
   ];
-  const [modalOpen, setModalOpen] = useState(false);
-  const [keyId, setKeyId] = useState("61ec6d97-2de7-4d5c-83e8-7f34d99230fe");
-  const signData = "Data that needs to be signed";
-  const purpose = "Authentication"; // You can customize this purpose
+
+  // const { keys, retrieveKey } = useKeyContext()
+  // useEffect( () =>
+  // {
+  //   ( async () =>
+  //   {
+  //     console.log( keys )
+  //     if ( keys.length > 0 )
+  //     {
+  //       const key = await retrieveKey( keys[ 0 ].$id, "9918180888" )
+  //       console.log( key )
+  //       const data = new Uint8Array([0,1,5])
+  //       const signature = key.privateKey.sign(data)
+  //       console.log(key.publicKey.verify(data,signature))
+  //     }
+  //   } )()
+  // }, [ keys ] )
+
+  // const [modalOpen, setModalOpen] = useState(false);
+  // const [keyId, setKeyId] = useState("61ec6d97-2de7-4d5c-83e8-7f34d99230fe");
+  // const signData = "Data that needs to be signed";
+  // const purpose = "Authentication"; // You can customize this purpose
   
-  const { openSignModal } = useSignModal();
-  const handleSignDocument = () => {
-    openSignModal(
-      "ccf50f96-3d86-4b2b-84f9-ef5bd2d1f7b2", 
-      "key-retrieval",
-      {
-      signData:'Data that needs to be signed', 
-      purpose:'Authentication',
-      onSuccess:(signature) => {
-        // Handle successful signature
-        console.log('Signed successfully', signature);
-      },
-      onError:(error) => {
-        // Handle signature error
-        console.error('Signing failed', error);
-      }
-      }
-    );
-  };
+  // const { openSignModal } = useSignModal();
+  // const handleSignDocument = () => {
+  //   openSignModal(
+  //     "ccf50f96-3d86-4b2b-84f9-ef5bd2d1f7b2", 
+  //     "key-retrieval",
+  //     {
+  //     signData:'Data that needs to be signed', 
+  //     purpose:'Authentication',
+  //     onSuccess:(signature) => {
+  //       // Handle successful signature
+  //       console.log('Signed successfully', signature);
+  //     },
+  //     onError:(error) => {
+  //       // Handle signature error
+  //       console.error('Signing failed', error);
+  //     }
+  //     }
+  //   );
+  // };
   return (
     <div className="space-y-6">
       <div>
-      <Button onClick={() => handleSignDocument()}>Sign Data</Button>
+      {/* <Button onClick={() => handleSignDocument()}>Sign Data</Button> */}
     
       </div>
       <h1 className="text-3xl font-bold">Dashboard</h1>

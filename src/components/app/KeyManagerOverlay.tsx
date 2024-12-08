@@ -201,7 +201,8 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
                           <ul className="list-disc list-inside">
                             {key.dids.map( ( did ) => (
                               <li key={did.$id} className="flex justify-between">
-                                <span>{did.identifier}</span>
+                                <span className="break-all text-sm">{did.identifier.split("_")[1]}-{did.name}</span>
+                                
                                 <Button
                                   variant="link"
                                   size="sm"
@@ -218,29 +219,29 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
                       </div>
 
                       {/* Organizations */}
-                      {/* <div>
+                      <div>
                         <h5 className="text-xs font-medium text-muted-foreground">
                           Organizations:
                         </h5>
-                        {orgAssociations[key.id] && orgAssociations[key.id].length > 0 ? (
+                        {key.org ? (
                           <ul className="list-disc list-inside">
-                            {orgAssociations[key.id].map( ( org ) => (
-                              <li key={org} className="flex justify-between">
-                                <span>{org}</span>
+                            {
+                              <li key={key.org.$id} className="flex justify-between">
+                                <span>{key.$id}</span>
                                 <Button
                                   variant="link"
                                   size="sm"
-                                  onClick={() => viewOrgAssociations( key.id, org )}
+                                  onClick={() => viewOrgAssociations( key.$id, key.$id )}
                                 >
                                   View Associations
                                 </Button>
                               </li>
-                            ) )}
+                            }
                           </ul>
                         ) : (
                           <p className="text-xs text-muted-foreground">No associated organizations</p>
                         )}
-                      </div> */}
+                      </div>
                     </div>
                   </div>
                 </li>
