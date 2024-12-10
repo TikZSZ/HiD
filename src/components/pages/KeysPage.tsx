@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useKeyContext } from "@/contexts/keyManagerCtx";
+import { useKeyContext } from "@/contexts/keyManagerCtx.2";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { PublicKey } from "@hashgraph/sdk";
@@ -29,7 +29,7 @@ type KeyFormValues = z.infer<typeof keySchema>;
 
 export const KeyManagementOverlay: React.FC = () =>
 {
-  const { keys, generateKey, deleteKey } = useKeyContext();
+  const { keys, generateKey, deleteKey,listKeys } = useKeyContext();
 
   // Form states
   const [ loading, setLoading ] = useState<boolean>( false );
@@ -101,6 +101,10 @@ export const KeyManagementOverlay: React.FC = () =>
     console.log( "Form Submitted:", data );
     handleGenerateKey( data )
   };
+
+  useEffect(()=>{
+    listKeys()
+  },[])
 
   return (
     <div className="relative h-full flex flex-col p-4 min-h-[90vh]">

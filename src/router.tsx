@@ -2,8 +2,6 @@ import { createBrowserRouter } from "react-router-dom";
 import Home from "@/components/pages/Home";
 import App from "./App";
 import { lazy } from "react";
-import { DIDCreatePage } from "./components/pages/DIDsPage";
-import OrganizationsPage from "./components/pages/OrgsPage";
 
 
 const LoginPage = lazy( () => import( "@/components/pages/LoginPage" ) );
@@ -14,6 +12,9 @@ const DashboardLayout = lazy( () => import( "@/components/pages/DashboardLayout"
 const DashboardPage = lazy( () => import( "@/components/pages/Dashboard" ) );
 const KeysPage = lazy( () => import( "@/components/pages/KeysPage" ) );
 const DIDsPage = lazy( () => import( "@/components/pages/DIDsPage" ) );
+const OrganizationsPage = lazy(()=>import("./components/pages/OrgsPage"))
+const ManageOrganizationPage = lazy(()=>import("./components/pages/ManageOrganizationPage"))
+
 const PageWrapper = ( { children }: { children: React.ReactNode } ) => (
   <div className="w-full transition-all duration-300 ease-in-out transform">
     {children}
@@ -64,10 +65,6 @@ export const router = createBrowserRouter( [
             ),
           },
           {
-            path: "/dashboard/create-did",
-            element: <PageWrapper> <DIDCreatePage /> </PageWrapper>
-          },
-          {
             path: "/dashboard/wallet/keys",
             index:true,
             element: <PageWrapper>
@@ -84,6 +81,12 @@ export const router = createBrowserRouter( [
             path: "/dashboard/orgs",
             element: <PageWrapper>
               <OrganizationsPage />
+            </PageWrapper>,
+          },
+          {
+            path: "/dashboard/orgs/:orgId",
+            element: <PageWrapper>
+              <ManageOrganizationPage />
             </PageWrapper>,
           },
           // {

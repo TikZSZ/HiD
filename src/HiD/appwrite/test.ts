@@ -58,8 +58,8 @@ async function runTests ()
     const org = await AppwriteService.createOrganization( user.$id, {
       name: 'Test Organization'
     } );
-    console.log( 'Organization created successfully:', org.$id );
-    await AppwriteService.addOrganizationMember( org.$id, user.$id,user.$id, OrganizationRole.OWNER );
+    // console.log( 'Organization created successfully:', org.$id );
+    // await AppwriteService.addOrganizationMember( org.$id, user.$id,user.$id, OrganizationRole.OWNER );
 
     // Test 6: Add Organization Member
     console.log( '\n👥 Test 6: Adding Organization Member' );
@@ -67,7 +67,7 @@ async function runTests ()
       name: 'Jane Smith',
       email: 'jane.smith@example.com'
     } );
-    await AppwriteService.addOrganizationMember( org.$id, user.$id,newUser.$id, OrganizationRole.MEMBER );
+    await AppwriteService.upsertOrganizationMember( org.$id, user.$id,newUser.email, [OrganizationRole.MEMBER,OrganizationRole.VERIFIER ]);
     console.log( 'New member added to organization successfully' );
 
     // Test 7: Link Organization Key
@@ -150,5 +150,5 @@ const main = async () =>
   // }
 }
 // Run the tests
-// runTests();
-main()
+runTests();
+// main()

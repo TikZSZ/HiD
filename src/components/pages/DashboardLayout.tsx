@@ -1,6 +1,6 @@
 
 // import { KeyManagementProvider } from "@/contexts/keyManager";
-import { KeyProvider } from "@/contexts/keyManagerCtx";
+import { KeyProvider } from "@/contexts/keyManagerCtx.2";
 import { useAuth } from "@/hooks/useAuth";
 import { SignModalProvider } from "../app/SignModal";
 import { Sidebar } from "@/components/app/sidebar/Sidebar";
@@ -82,7 +82,7 @@ const DashboardLayout = () =>
       <SignModalProvider>
         <Sidebar>
           <div>
-          <DIDWalletManager/>
+          {/* <DIDWalletManager/> */}
           <Outlet />
           </div>
         </Sidebar>

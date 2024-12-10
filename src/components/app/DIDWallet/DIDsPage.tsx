@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useKeyContext } from "@/contexts/keyManagerCtx";
+import { useKeyContext } from "@/contexts/keyManagerCtx.2";
 import { useSignModal } from "@/components/app/SignModal"; // The context we just created
 import { PrivateKey, PublicKey } from "@hashgraph/sdk";
 import { getUserScopedKey, KeyMetadata, KeyPurpose, associateKeyWithDID } from '@/HiD/keyManager';

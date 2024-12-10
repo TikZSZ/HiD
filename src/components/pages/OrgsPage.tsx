@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,14 +14,15 @@ const organizationSchema = z.object( {
 
 type OrganizationFormValues = z.infer<typeof organizationSchema>;
 
-import { useKeyContext } from "@/contexts/keyManagerCtx";
+import { useKeyContext } from "@/contexts/keyManagerCtx.2";
 import { PageHeader } from "./PageHeader";
 import { FormModal } from "../app/FormModal";
 import { Loader2 } from "lucide-react";
+import OrganizationTable from "../OrganizationTable";
 
 const OrganizationsPage: React.FC = () =>
 {
-  const { upsertOrg, orgs } = useKeyContext()
+  const { upsertOrg, orgs,getOrgs } = useKeyContext()
 
   // Open/Close Modal
   const [ isModalOpen, setIsModalOpen ] = useState( false );
@@ -59,6 +60,10 @@ const OrganizationsPage: React.FC = () =>
     // Close modal on success
   };
 
+  useEffect(()=>{
+    getOrgs()
+  },[])
+
   return (
     <div className="relative h-full flex flex-col p-4 min-h-[90vh]">
       {/* Header */}
@@ -66,21 +71,12 @@ const OrganizationsPage: React.FC = () =>
 
       {/* Organizations List */}
       <div className="flex-grow overflow-auto">
-        <h3 className="text-lg font-semibold">
+        {/* <h3 className="text-lg font-semibold">
           Existing Orgs ({orgs.length})
-        </h3>
+        </h3> */}
         {orgs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-            {orgs.map( ( org ) => (
-              <Card key={org.$id} className="w-full">
-                <CardHeader>
-                  <CardTitle>{org.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{org.description || "No description provided"}</p>
-                </CardContent>
-              </Card>
-            ) )}
+          <div className="">
+            <OrganizationTable organizations={orgs} />
           </div>
         ) : (
           <p className="text-center text-muted-foreground mt-4">No organizations created yet.</p>

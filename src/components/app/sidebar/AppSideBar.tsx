@@ -38,7 +38,7 @@ import
 import { Link } from "react-router-dom"
 import { NavMain } from "@/components/app/sidebar/NavMain"
 import { useAuth } from "@/hooks/useAuth"
-import { useKeyContext } from "@/contexts/keyManagerCtx"
+import { useKeyContext } from "@/contexts/keyManagerCtx.2"
 // navMain: [
 //   {
 //     title: "Playground",
@@ -254,7 +254,6 @@ const dataa = {
 export function AppSidebar ( { ...props }: React.ComponentProps<typeof Sidebar> )
 {
   const [ data, setData ] = useState( dataa )
-  const { dids, getDIDs } = useKeyContext()
   const [ userData, setUserData ] = useState( {
     name: "shadcn",
     email: "m@example.com",
@@ -271,7 +270,6 @@ export function AppSidebar ( { ...props }: React.ComponentProps<typeof Sidebar> 
         setUserData( {
           ...userData, name: user.name, email: user.email
         } )
-        getDIDs()
       }
     } )()
   }, [ user ] )
@@ -286,7 +284,7 @@ export function AppSidebar ( { ...props }: React.ComponentProps<typeof Sidebar> 
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Acme Inc</span>
+                  <span className="truncate font-semibold">HiD Inc</span>
                   <span className="truncate text-xs">Dashboard</span>
                 </div>
               </Link>

@@ -32,7 +32,14 @@ export interface DIDDocument extends Models.Document
   identifier: string;
   owner: UserDocument;
   keys: KeyDocument[]
-  name:string
+  name: string
+}
+
+export interface RoleDocument extends Models.Document
+{
+  userId: string
+  orgId: string
+  roles: OrganizationRole[]
 }
 
 // Interface for Keys Collection
@@ -56,9 +63,6 @@ export interface UserDocument extends Models.Document
 {
   name: string;
   email: string;
-  organizationRole: OrganizationRole
-  org: OrganizationDocument // member of that org
-  orgs:OrganizationDocument[]
 }
 
 // Interface for Organizations Collection
@@ -66,8 +70,6 @@ export interface OrganizationDocument extends Models.Document
 {
   name: string;
   description?: string
-  owner: UserDocument;
-  members:UserDocument[]
 }
 
 interface CreateUserDto
@@ -80,8 +82,8 @@ interface CreateUserDto
 export interface CreateDIDDto
 {
   identifier: string;
-  keyId?:string
-  name:string
+  keyId?: string
+  name: string
 }
 
 export interface CreateKeyDto
@@ -104,8 +106,8 @@ export interface CreateOrganizationDto
 
 export interface AddOrganizationMemberDto
 {
-  memberId:string,
-  orgId:string
+  memberId: string,
+  orgId: string
 }
 
 export interface UpdateUserDto
@@ -136,10 +138,12 @@ export type KeyWithRelations = KeyDocument & {
   associatedOrg?: OrganizationDocument;
 }
 
-export type OrganizationWithRelations = OrganizationDocument & {
-  owner?: UserDocument;
-  associatedKeys?: KeyDocument[];
-  memberDetails?: UserDocument[];
+export type OrganizationWithRoles = OrganizationDocument & {
+  roles:OrganizationRole[]
+}
+
+export type MembersWithRoles = UserDocument & {
+  roles:OrganizationRole[]
 }
 
 
@@ -223,8 +227,8 @@ class AppwriteService
     didData: CreateDIDDto,
   )
   {
-    const {keyId,...rest} = didData
-    const keys = keyId ? [keyId]:[]
+    const { keyId, ...rest } = didData
+    const keys = keyId ? [ keyId ] : []
     try
     {
       // Create DID document
@@ -252,25 +256,25 @@ class AppwriteService
     }
   }
 
-  async getDIDs ( ownerId:string )
+  async getDIDs ( ownerId: string )
   {
     // Fetch related Keys
     const dids = await this.databases.listDocuments<DIDDocument>(
       conf.appwrtieDBId,
       conf.appwriteDIDsCollID,
-      [Query.equal("owner",ownerId)]
+      [ Query.equal( "owner", ownerId ) ]
     );
     return dids.documents
   }
 
-  async getDID ( ownerId:string,didId:string )
+  async getDID ( ownerId: string, didId: string )
   {
     // Fetch related Keys
     const dids = await this.databases.getDocument<DIDDocument>(
       conf.appwrtieDBId,
       conf.appwriteKeysCollID,
       didId,
-      [Query.equal("owner",ownerId)]
+      [ Query.equal( "owner", ownerId ) ]
     );
     return dids
   }
@@ -296,7 +300,7 @@ class AppwriteService
         conf.appwriteKeysCollID,
         keyId
       );
-      console.log(keyId,userId,key)
+      console.log( keyId, userId, key )
       if ( key.owner.$id !== userId && did.owner.$id !== userId ) throw new Error( "Keys or did is not owend by user" )
       // Update DID to include key
       await this.databases.updateDocument<DIDDocument>(
@@ -330,7 +334,7 @@ class AppwriteService
     keyData: CreateKeyDto
   ): Promise<KeyDocument>
   {
-    console.log(userId,keyData)
+    console.log( userId, keyData )
     try
     {
       // Create key document
@@ -370,7 +374,7 @@ class AppwriteService
     return keys.documents
   }
 
-  async getKey ( ownerId:string,keyId: string )
+  async getKey ( ownerId: string, keyId: string )
   {
     // Fetch related Keys
     const keys = await this.databases.getDocument<KeyDocument>(
@@ -381,22 +385,13 @@ class AppwriteService
     return keys
   }
 
-  async getKeysForOrg ( ownerId:string,orgId: string )
-  {
-    // Fetch related Keys
-    const keys = await this.databases.listDocuments<KeyDocument>(
-      conf.appwrtieDBId,
-      conf.appwriteKeysCollID,
-      [Query.equal("owner",ownerId),Query.equal("org",orgId)]
-    );
-    return keys
-  }
+  
 
 
   async deleteKey ( userId: string, id: string )
   {
-    const key = await this.getKey( userId,id )
-    if (!key) throw new Error( "Key doesn't belong to user" )
+    const key = await this.getKey( userId, id )
+    if ( !key ) throw new Error( "Key doesn't belong to user" )
     return this.databases.deleteDocument(
       conf.appwrtieDBId,
       conf.appwriteKeysCollID,
@@ -409,7 +404,7 @@ class AppwriteService
   async createOrganization (
     userId: string,
     orgData: CreateOrganizationDto
-  )
+  ):Promise<OrganizationWithRoles>
   {
     try
     {
@@ -420,8 +415,7 @@ class AppwriteService
         ID.unique(),
         {
           ...orgData,
-          owner: userId,
-          
+          // owner: userId,
         },
         [
           // Permission.read( Role.users() ),
@@ -429,8 +423,10 @@ class AppwriteService
           // Permission.delete( Role.user( userId ) )
         ]
       );
-
-      return orgDocument
+      const ownerRoles = [ OrganizationRole.OWNER, OrganizationRole.MEMBER, OrganizationRole.ADMIN, OrganizationRole.VERIFIER ]
+      // link owner to org as owner 
+      await this.databases.createDocument<RoleDocument>( conf.appwrtieDBId, conf.appwriteRolesCollID, ID.unique(), { userId, orgId: orgDocument.$id, roles:ownerRoles  } )
+      return {...orgDocument,roles:ownerRoles}
     } catch ( error )
     {
       console.error( 'Error creating organization:', error );
@@ -438,63 +434,111 @@ class AppwriteService
     }
   }
 
-  async getOrgnisations(userId:string){
+  async getOrgnisations ( userId: string ):Promise<OrganizationWithRoles[]>
+  {
+    const roles = await this.databases.listDocuments<RoleDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteRolesCollID,
+      [ Query.equal( 'userId', userId ) ]
+    );
     const orgs = await this.databases.listDocuments<OrganizationDocument>(
       conf.appwrtieDBId,
       conf.appwriteOrgsCollID,
-      [ Query.equal( 'owner', userId ) ]
+      [ Query.equal( '$id', roles.documents.map( ( role ) => role.orgId ) ) ]
     );
-    return orgs.documents
+    
+    return orgs.documents.map((document,i) => ({...document,roles:roles.documents[i].roles}))
   }
 
-  async getOrgMembers(orgId:string){
+  async getOrgMembers ( orgId: string ):Promise<MembersWithRoles[]>
+  {
+    const roles = await this.databases.listDocuments<RoleDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteRolesCollID,
+      [ Query.equal( 'orgId', orgId ) ]
+    );
+    if(roles.documents.length < 1) return []
     const members = await this.databases.listDocuments<UserDocument>(
       conf.appwrtieDBId,
       conf.appwriteUsersCollID,
-      [ Query.equal( 'org',orgId ) ]
+      [ Query.equal( '$id', roles.documents.map( ( role ) => role.userId ) ) ]
     );
-    return members.documents
+    console.log(members,roles.documents.map( ( role ) => role.userId ) )
+    return members.documents.map((document,i) => ({...document,roles:roles.documents[i].roles}))
   }
 
-  async addOrganizationMember (
+  async upsertOrganizationMember (
     orgId: string,
     ownerId: string,
-    memberId: string,
-    role: OrganizationRole = OrganizationRole.MEMBER
+    email: string,
+    roles: OrganizationRole[] = [OrganizationRole.MEMBER,OrganizationRole.VERIFIER]
   ): Promise<void>
   {
     try
     {
-      // Get current organization
-      const org = await this.databases.getDocument<OrganizationDocument>(
+      // check if requester owns the ORG
+      const rolesDocument = await this.databases.listDocuments<RoleDocument>(
         conf.appwrtieDBId,
-        conf.appwriteOrgsCollID,
-        orgId
+        conf.appwriteRolesCollID,
+        [ Query.equal( 'orgId', orgId ),Query.equal("userId",ownerId) ]
       );
-      if ( org.owner.$id !== ownerId ) throw new Error( "U do not have permission to add users to orgnisation" )
+      if(!(rolesDocument.documents.length > 0 && (rolesDocument.documents[0].roles.includes(OrganizationRole.OWNER) || rolesDocument.documents[0].roles.includes(OrganizationRole.ADMIN)))) throw new Error( "U do not have permission to add users to orgnisation" )
 
-      // Update organizations memebrs
-      await this.databases.updateDocument<OrganizationDocument>(
+      // check if user exists 
+      const users = (await this.databases.listDocuments<UserDocument>(conf.appwrtieDBId,conf.appwriteUsersCollID,[Query.equal("email",email)])).documents
+      if(users.length < 1) throw new Error("Invalid Email user does not exist")
+
+      // check if user is already a member
+      const userRolesDocument = (await this.databases.listDocuments<RoleDocument>(
         conf.appwrtieDBId,
-        conf.appwriteOrgsCollID,
-        orgId,
-        {
-          members: [ ...new Set( [ ...( org.members || [] ), memberId ] ) ]
-        }
-      );
-      this.databases.getDocument("","",Query.equal("id",["d"]))
-      console.log("fetching the user",memberId)
-      const user = await this.getUser(memberId)
-      // Update user's organization
-      await this.databases.updateDocument<UserDocument>(
+        conf.appwriteRolesCollID,
+        [ Query.equal( 'orgId', orgId ),Query.equal("userId",users[0].$id) ]
+      )).documents;
+      // create roles
+      if(userRolesDocument.length < 1){
+        await this.databases.createDocument<RoleDocument>( conf.appwrtieDBId, conf.appwriteRolesCollID, ID.unique(), { userId:users[0].$id, orgId, roles:roles } )
+        return
+      }
+      // create update
+      await this.databases.updateDocument<RoleDocument>( conf.appwrtieDBId, conf.appwriteRolesCollID, userRolesDocument[0].$id, {roles:roles} )
+    } catch ( error )
+    {
+      console.error( 'Error adding organization member:', error );
+      throw error;
+    }
+  }
+
+  async removeOrganizationMember (
+    orgId: string,
+    ownerId: string,
+    userId: string,
+  ): Promise<void>
+  {
+    try
+    {
+      // check if requester owns the ORG
+      const rolesDocument = await this.databases.listDocuments<RoleDocument>(
         conf.appwrtieDBId,
-        conf.appwriteUsersCollID,
-        memberId,
-        {
-          organizationRole: role,
-          orgs: [ ...new Set( [ ...( user.orgs || [] ), orgId ] ) ]
-        }
+        conf.appwriteRolesCollID,
+        [ Query.equal( 'orgId', orgId ),Query.equal("userId",ownerId) ]
       );
+      if(!(rolesDocument.documents.length > 0 && (rolesDocument.documents[0].roles.includes(OrganizationRole.OWNER) || rolesDocument.documents[0].roles.includes(OrganizationRole.ADMIN)))) throw new Error( "U do not have permission to remove users from orgnisation" )
+
+      // check if user exists 
+      const users = (await this.databases.getDocument<UserDocument>(conf.appwrtieDBId,conf.appwriteUsersCollID,userId))
+      if(users.length < 1) throw new Error("User does not exist")
+
+      // check if user is already a member
+      const userRolesDocument = (await this.databases.listDocuments<RoleDocument>(
+        conf.appwrtieDBId,
+        conf.appwriteRolesCollID,
+        [ Query.equal( 'orgId', orgId ),Query.equal("userId",users.$id) ]
+      )).documents;
+      // delete roles document if it exists
+      if(userRolesDocument.length > 0){
+        await this.databases.deleteDocument( conf.appwrtieDBId, conf.appwriteRolesCollID, userRolesDocument[0].$id)
+        return
+      }
     } catch ( error )
     {
       console.error( 'Error adding organization member:', error );
@@ -545,11 +589,32 @@ class AppwriteService
       throw error;
     }
   }
-  async getOrganizationsForKey(ownerId:string,keyId:string){
+  async getOrganizationsForKey ( ownerId: string, keyId: string )
+  {
     const keys = await this.databases.listDocuments<OrganizationDocument>(
       conf.appwrtieDBId,
       conf.appwriteOrgsCollID,
-      [Query.equal("owner",ownerId),Query.equal("org",keyId)]
+      [ Query.equal( "owner", ownerId ), Query.equal( "org", keyId ) ]
+    );
+    return keys.documents
+  }
+
+  async getKeysForOrgAndUser ( ownerId: string, orgId: string )
+  {
+    // Fetch related Keys
+    const keys = await this.databases.listDocuments<KeyDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteKeysCollID,
+      [ Query.equal( "owner", ownerId ), Query.equal( "org", orgId ) ]
+    );
+    return keys
+  }
+  async getKeysForOrganization ( orgId: string )
+  {
+    const keys = await this.databases.listDocuments<KeyDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteKeysCollID,
+      [ Query.equal( "org", orgId ) ]
     );
     return keys.documents
   }

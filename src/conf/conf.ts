@@ -1,5 +1,5 @@
-import dotenv from "dotenv"
-dotenv.config()
+// import dotenv from "dotenv"
+// dotenv.config()
 const [dids,users,keys,orgs,roles] = String(import.meta.env["VITE_APPWRITE_COLLECTION_ID"]).split(",")
 
 export const conf = {

@@ -214,7 +214,8 @@ export async function listKeys ( userId: string )
 // Delete a key by its ID
 export async function deleteKey ( userId: string, keyId: string )
 {
-  return AppwriteSerivce.deleteKey(userId,keyId)
+  await AppwriteSerivce.deleteKey(userId,keyId)
+  return
 }
 
 
@@ -240,7 +241,7 @@ export async function getKeysForOrg(
   userId: string, 
   orgId: string
 ) {
-  return (await AppwriteSerivce.getKeysForOrg(userId,orgId)).documents
+  return (await AppwriteSerivce.getKeysForOrgAndUser(userId,orgId)).documents
 }
 
 export async function createOrg(userId:string,data:CreateOrganizationDto){
