@@ -121,9 +121,9 @@ export class HcsDid
                 const topicId = ( await txId.getReceiptWithSigner( this.signer ) ).topicId;
 
                 this.topicId = topicId;
-                console.log(topicId?.toString())
+                // console.log(topicId?.toString())
                 this.network = this.signer.ledgerId.toString();
-                console.log(this.network)
+                // console.log(this.network)
                 this.identifier = this.buildIdentifier( this.privateKey.publicKey );
             } else
             {
@@ -229,10 +229,6 @@ export class HcsDid
             throw new DidError( "DID is not registered" );
         }
 
-        if ( !this.client && !this.signer )
-        {
-            throw new DidError( "Client configuration is missing" );
-        }
 
         return new Promise( ( resolve, reject ) =>
         {
@@ -257,7 +253,7 @@ export class HcsDid
                     reject( err );
                 } )
                 if(this.client) msgResolver.execute( this.client )
-                else if(this.signer) msgResolver.execute()
+                else msgResolver.execute()
         } );
     }
 

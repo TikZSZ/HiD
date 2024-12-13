@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useKeyContext } from "@/contexts/keyManagerCtx.2";
+import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { PublicKey } from "@hashgraph/sdk";
 
 interface KeyManagementOverlayProps
@@ -27,7 +27,10 @@ function getFormmatedPubKey(publicKey:string){
 }
 export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { open, setOpen } ) =>
 {
-  const { keys, generateKey, deleteKey } = useKeyContext();
+  const { useKeysList, useGenerateKey, useDeleteKey } = useKeyContext();
+  const {data:keys} = useKeysList()
+  const generateKey = useGenerateKey()
+  const deleteKey = useDeleteKey()
 
   // Form states
   const [ keyType, setKeyType ] = useState<"RSA" | "Ed25519">( "Ed25519" );
@@ -43,7 +46,7 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
     setLoading( true );
     try
     {
-      await generateKey( keyType, metadata, password );
+      await generateKey.mutateAsync( {type:keyType, metadata, password} );
       setMetadata( { name: "", description: "" } );
       setPassword( "" );
       setOpen( false ); // Close dialog on success
@@ -61,7 +64,7 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
     setLoading( true );
     try
     {
-      await deleteKey( keyId );
+      await deleteKey.mutateAsync( keyId );
     } catch ( error )
     {
       console.error( "Error deleting key:", error );
@@ -163,9 +166,9 @@ export const KeyManagementOverlay: React.FC<KeyManagementOverlayProps> = ( { ope
         {/* List of existing keys */}
         <div className="mt-6 space-y-4 overflow-auto max-h-[40vh]">
           <h3 className="text-lg font-semibold">
-            Existing Keys ({keys.length})
+            Existing Keys ({keys && keys.length > 0 ? keys.length : 0})
           </h3>
-          {keys.length > 0 ? (
+          {keys && keys.length > 0 ? (
             <ul className="space-y-2">
               {keys.map( ( key ) => (
                 <li

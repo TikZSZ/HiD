@@ -14,7 +14,7 @@ const organizationSchema = z.object( {
 
 type OrganizationFormValues = z.infer<typeof organizationSchema>;
 
-import { useKeyContext } from "@/contexts/keyManagerCtx.2";
+import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { PageHeader } from "./PageHeader";
 import { FormModal } from "../app/FormModal";
 import { Loader2 } from "lucide-react";
@@ -22,9 +22,10 @@ import OrganizationTable from "../OrganizationTable";
 
 const OrganizationsPage: React.FC = () =>
 {
-  const { upsertOrg, orgs,getOrgs } = useKeyContext()
-
+  const { useUpsertOrg,useOrgsList } = useKeyContext()
+  const upsertOrg = useUpsertOrg()
   // Open/Close Modal
+  const {data:orgs,isLoading,} = useOrgsList()
   const [ isModalOpen, setIsModalOpen ] = useState( false );
   const toggleModal = () => setIsModalOpen( !isModalOpen );
   const [ isCreating, setIsCreating ] = useState( false );
@@ -35,7 +36,7 @@ const OrganizationsPage: React.FC = () =>
     setIsCreating( true )
     try
     {
-      const org = await upsertOrg( data );
+      const org = await upsertOrg.mutateAsync( data );
       toggleModal();
     } catch ( err )
     {
@@ -60,9 +61,9 @@ const OrganizationsPage: React.FC = () =>
     // Close modal on success
   };
 
-  useEffect(()=>{
-    getOrgs()
-  },[])
+  // useEffect(()=>{
+  //   getOrgs()
+  // },[])
 
   return (
     <div className="relative h-full flex flex-col p-4 min-h-[90vh]">
@@ -74,7 +75,7 @@ const OrganizationsPage: React.FC = () =>
         {/* <h3 className="text-lg font-semibold">
           Existing Orgs ({orgs.length})
         </h3> */}
-        {orgs.length > 0 ? (
+        {orgs && orgs.length > 0 ? (
           <div className="">
             <OrganizationTable organizations={orgs} />
           </div>

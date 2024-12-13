@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useKeyContext } from "@/contexts/keyManagerCtx.2";
+import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { useSignModal } from "@/components/app/SignModal"; // The context we just created
 import { PrivateKey, PublicKey } from "@hashgraph/sdk";
 import { getUserScopedKey, KeyMetadata, KeyPurpose, associateKeyWithDID } from '@/HiD/keyManager';
@@ -31,7 +31,10 @@ const formSchema = z.object( {
 
 export const DIDCreatePage: React.FC = () =>
 {
-  const { keys, upsertDID, addAssociation, dids,getDIDs } = useKeyContext();
+  const { useKeysList, useUpsertDID, addAssociation,useDIDsList } = useKeyContext();
+  const {data:dids,isLoading} = useDIDsList()
+  const {data:keys} = useKeysList()
+  const upsertDID = useUpsertDID()
   const { openSignModal } = useSignModal();
   const { getSigner, isConnected } = useWallet();
   const { toast } = useToast();
@@ -57,7 +60,7 @@ export const DIDCreatePage: React.FC = () =>
       return;
     }
 
-    const selectedKey = keys.find( ( key ) => key.$id === data.selectedKey );
+    const selectedKey = keys && keys.find( ( key ) => key.$id === data.selectedKey );
     if ( !selectedKey ) return;
 
     setIsCreating( true );
@@ -73,7 +76,7 @@ export const DIDCreatePage: React.FC = () =>
           let didDocument = createDidDocument( { privateKey: privateKey as PrivateKey, signer: signer! } );
           didDocument = await registerDidDocument( didDocument );
 
-          const did = await upsertDID( {
+          const did = await upsertDID.mutateAsync( {
             identifier: didDocument.getIdentifier(),
             name: data.DIDName,
           } );
@@ -104,92 +107,15 @@ export const DIDCreatePage: React.FC = () =>
     } );
   };
   
-  useEffect(()=>{
-    getDIDs()
-  },[])
+  // useEffect(()=>{
+  //   getDIDs()
+  // },[])
 
   return (
     <div className="relative h-full p-4 min-h-[90vh]" >
       {/* Full Page Overlay for DID Creation Form */}
       {/* Header */}
       <PageHeader title="DIDs" description="Manage DIDs" onClick={toggleModal} />
-
-      {/* {showForm && (
-        <motion.div
-          ref={formRef}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
-        >
-          <div className="relative w-full max-w-lg bg-background p-6 rounded-lg shadow-lg">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowForm( false )}
-              className='absolute top-4 right-4'
-            >
-              <XIcon className="h-5 w-5" />
-            </Button>
-            <h4 className="text-lg font-semibold mb-4">Create Decentralized Identifier (DID)</h4>
-            <div className="space-y-4">
-              {keys && keys.length > 0 ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Name For DID</label>
-                    <Input
-                      onChange={( e ) => setDIDName( e.target.value )}
-                      placeholder="DID Name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Key for DID</label>
-                    <Select
-                      onValueChange={( keyId ) =>
-                      {
-                        const key = keys.find( ( k ) => k.$id === keyId );
-                        setSelectedKey( key! );
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a key" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {keys.map( ( key ) => (
-                          <SelectItem key={key.$id} value={key.$id}>
-                            {key.name} - {key.$id.slice( 0, 10 )}...
-                          </SelectItem>
-                        ) )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    onClick={handleCreateDID}
-                    disabled={!selectedKey || isCreating}
-                    className="w-full"
-                  >
-                    {isCreating ? "Creating DID..." : "Create DID"}
-                  </Button>
-                </div>
-              ) : (
-                <div>No Keys Found</div>
-              )}
-
-              {selectedKey && (
-                <div className="mt-4 p-3 bg-secondary rounded-lg">
-                  <p className="text-sm">
-                    <strong>Selected Key:</strong> {selectedKey.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground break-words">
-                    Public Key: {PublicKey.fromString( selectedKey.publicKey ).toStringRaw()}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      )} */}
       <FormModal title="Create DID" isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}>
         <Form {...form}>
           <form onSubmit={form.handleSubmit( handleCreateDID )} className="space-y-4">
@@ -224,7 +150,7 @@ export const DIDCreatePage: React.FC = () =>
                         <SelectValue placeholder="Select a key" />
                       </SelectTrigger>
                       <SelectContent>
-                        {keys.map( ( key ) => (
+                        {keys && keys.map( ( key ) => (
                           <SelectItem key={key.$id} value={key.$id}>
                             {key.name} - {key.$id.slice( 0, 10 )}...
                           </SelectItem>
@@ -251,7 +177,7 @@ export const DIDCreatePage: React.FC = () =>
       {/* DID List View */}
       <div className=" flex-grow overflow-auto">
         <h3 className="text-lg font-semibold">
-          Existing DIDs ({dids.length})
+          {dids && dids.length > 0 && `Existing DIDs ${dids.length}`}
         </h3>
         {dids && dids.length > 0 ? (
           <div className="space-y-4 mt-6">

@@ -7,7 +7,7 @@ import { Table, TableHeader, TableRow, TableCell, TableBody } from "@/components
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "./PageHeader";
 import { FormModal } from "../app/FormModal";
-import { useKeyContext } from "@/contexts/keyManagerCtx.2";
+import { useKeyContext } from "@/contexts/keyManagerCtx";
 import AppwriteService,{ KeyDocument, MembersWithRoles, } from "@/HiD/appwrite/service";
 import { Badge } from "../ui/badge";
 import { roleColors } from "../OrganizationTable";

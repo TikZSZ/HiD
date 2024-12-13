@@ -12,8 +12,12 @@ const DashboardLayout = lazy( () => import( "@/components/pages/DashboardLayout"
 const DashboardPage = lazy( () => import( "@/components/pages/Dashboard" ) );
 const KeysPage = lazy( () => import( "@/components/pages/KeysPage" ) );
 const DIDsPage = lazy( () => import( "@/components/pages/DIDsPage" ) );
-const OrganizationsPage = lazy(()=>import("./components/pages/OrgsPage"))
-const ManageOrganizationPage = lazy(()=>import("./components/pages/ManageOrganizationPage"))
+const OrganizationsPage = lazy( () => import( "./components/pages/OrgsPage" ) )
+const ManageOrganizationPage = lazy( () => import( "./components/pages/ManageOrganizationPage" ) )
+const OrgVCsPage = lazy( () => import( "./components/pages/VCsPage" ) )
+const VCViewPage = lazy( () => import( "./components/pages/VCViewPage" ) )
+
+
 
 const PageWrapper = ( { children }: { children: React.ReactNode } ) => (
   <div className="w-full transition-all duration-300 ease-in-out transform">
@@ -28,6 +32,7 @@ export const router = createBrowserRouter( [
     element: <App />,
     errorElement: <RouterErrorPage />,
     children: [
+      
       {
         path: "/",
         element: <Home />,
@@ -55,6 +60,8 @@ export const router = createBrowserRouter( [
             <DashboardLayout />
           </ProtectedLayout>
         ),
+        
+        errorElement: <RouterErrorPage />,
         children: [
           {
             index: true,
@@ -65,30 +72,48 @@ export const router = createBrowserRouter( [
             ),
           },
           {
-            path: "/dashboard/wallet/keys",
-            index:true,
+            path: "wallet/keys",
+            index: true,
             element: <PageWrapper>
               <KeysPage />
             </PageWrapper>,
           },
           {
-            path: "/dashboard/wallet/dids",
+            path: "wallet/dids",
             element: <PageWrapper>
               <DIDsPage />
             </PageWrapper>,
           },
           {
-            path: "/dashboard/orgs",
+            path: "orgs",
             element: <PageWrapper>
               <OrganizationsPage />
             </PageWrapper>,
           },
           {
-            path: "/dashboard/orgs/:orgId",
+            path: "orgs/:orgId?/manage",
             element: <PageWrapper>
               <ManageOrganizationPage />
             </PageWrapper>,
           },
+          {
+            path: "orgs/:orgId?/vcs",
+            element: <PageWrapper>
+              <OrgVCsPage />
+            </PageWrapper>,
+          },
+          {
+            path: "orgs/:orgId?/vcs/:vcId",
+            element: <PageWrapper>
+              <VCViewPage />
+            </PageWrapper>,
+          },
+          // {
+          //   path: "orgs/manage",
+          //   element: <PageWrapper>
+          //     <ManageOrganizationPage />
+          //   </PageWrapper>,
+          // },
           // {
           //   path:"/dashboard/tokens",
           //   children:[

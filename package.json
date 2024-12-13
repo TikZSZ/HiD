@@ -10,6 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@digitalbazaar/bbs-2023-cryptosuite": "^2.0.1",
+    "@digitalbazaar/data-integrity": "^2.5.0",
+    "@digitalbazaar/data-integrity-context": "^2.0.1",
+    "@digitalbazaar/ecdsa-rdfc-2019-cryptosuite": "^1.2.0",
+    "@digitalbazaar/ecdsa-sd-2023-cryptosuite": "^3.4.1",
+    "@digitalbazaar/ed25519-signature-2020": "^5.4.0",
+    "@digitalbazaar/multikey-context": "^2.0.1",
+    "@digitalbazaar/security-document-loader": "^3.0.0",
+    "@digitalbazaar/vc": "^7.1.0",
     "@hashgraph/sdk": "^2.54.2",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-avatar": "^1.1.1",
@@ -45,6 +54,7 @@
     "long": "^5.2.3",
     "lucide-react": "^0.464.0",
     "multiformats": "^13.3.1",
+    "rdf-canonize": "^4.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.0",

@@ -1,6 +1,7 @@
 import { Models } from 'appwrite';
-import { Client, Databases, ID, Query, Permission, Role } from 'appwrite';
+import { Client, Databases, ID, Query, Permission, Role, Storage } from 'appwrite';
 import { conf } from '../../conf/conf';
+import { string } from '@ucanto/core/schema';
 // Enum Definitions
 export enum KeyType
 {
@@ -25,6 +26,35 @@ export enum OrganizationRole
   VERIFIER = 'VERIFIER'
 }
 
+export enum VCStoreType
+{
+  CLOUD = "CLOUD", //default
+  IPFS = "IPFS",
+  HEDERA_TOPIC = "HEDERA_TOPIC",
+  HEDERA_FILE = "HEDERA_FILE"
+}
+
+export enum StoredByEnum
+{
+  ORG = "ORG",
+  USER = "USER",
+}
+
+export interface VCDocument extends Models.Document
+{
+  identifier: string;
+  holder?: UserDocument;
+  issuer: OrganizationDocument;
+  signedBy: KeyDocument;
+}
+
+export interface VCStoreDocument extends Models.Document
+{
+  vcId: string;
+  location: string;
+  storageType: VCStoreType
+  storedBy: StoredByEnum
+}
 
 // Interface for DIDs Collection
 export interface DIDDocument extends Models.Document
@@ -126,6 +156,21 @@ export interface KeyAssociationDto
   role?: OrganizationRole;
 }
 
+export interface CreateVCDTO
+{
+  vcData: string,
+  holderId?: string
+  identifier: string
+}
+
+export interface CreateVCStoreDTO
+{
+  vcId: string,
+  location: string
+  storageType: VCStoreType,
+}
+
+
 // Utility Types for Complex Queries and Transformations
 export type DIDWithRelations = DIDDocument & {
   owner?: UserDocument;
@@ -139,11 +184,11 @@ export type KeyWithRelations = KeyDocument & {
 }
 
 export type OrganizationWithRoles = OrganizationDocument & {
-  roles:OrganizationRole[]
+  roles: OrganizationRole[]
 }
 
 export type MembersWithRoles = UserDocument & {
-  roles:OrganizationRole[]
+  roles: OrganizationRole[]
 }
 
 
@@ -152,7 +197,7 @@ class AppwriteService
 {
   private client: Client;
   databases: Databases;
-
+  storage: Storage
   constructor()
   {
     this.client = new Client()
@@ -160,6 +205,7 @@ class AppwriteService
       .setProject( conf.appwrtieProjectId );
 
     this.databases = new Databases( this.client );
+    this.storage = new Storage( this.client )
   }
 
   // User Operations
@@ -300,8 +346,7 @@ class AppwriteService
         conf.appwriteKeysCollID,
         keyId
       );
-      console.log( keyId, userId, key )
-      if ( key.owner.$id !== userId && did.owner.$id !== userId ) throw new Error( "Keys or did is not owend by user" )
+      if ( key.owner.$id !== userId && did.owner.$id !== userId ) throw new Error( "Keys or did is not owned by user" )
       // Update DID to include key
       await this.databases.updateDocument<DIDDocument>(
         conf.appwrtieDBId,
@@ -385,7 +430,7 @@ class AppwriteService
     return keys
   }
 
-  
+
 
 
   async deleteKey ( userId: string, id: string )
@@ -404,7 +449,7 @@ class AppwriteService
   async createOrganization (
     userId: string,
     orgData: CreateOrganizationDto
-  ):Promise<OrganizationWithRoles>
+  ): Promise<OrganizationWithRoles>
   {
     try
     {
@@ -425,8 +470,8 @@ class AppwriteService
       );
       const ownerRoles = [ OrganizationRole.OWNER, OrganizationRole.MEMBER, OrganizationRole.ADMIN, OrganizationRole.VERIFIER ]
       // link owner to org as owner 
-      await this.databases.createDocument<RoleDocument>( conf.appwrtieDBId, conf.appwriteRolesCollID, ID.unique(), { userId, orgId: orgDocument.$id, roles:ownerRoles  } )
-      return {...orgDocument,roles:ownerRoles}
+      await this.databases.createDocument<RoleDocument>( conf.appwrtieDBId, conf.appwriteRolesCollID, ID.unique(), { userId, orgId: orgDocument.$id, roles: ownerRoles } )
+      return { ...orgDocument, roles: ownerRoles }
     } catch ( error )
     {
       console.error( 'Error creating organization:', error );
@@ -434,7 +479,7 @@ class AppwriteService
     }
   }
 
-  async getOrgnisations ( userId: string ):Promise<OrganizationWithRoles[]>
+  async getOrgnisations ( userId: string ): Promise<OrganizationWithRoles[]>
   {
     const roles = await this.databases.listDocuments<RoleDocument>(
       conf.appwrtieDBId,
@@ -446,32 +491,32 @@ class AppwriteService
       conf.appwriteOrgsCollID,
       [ Query.equal( '$id', roles.documents.map( ( role ) => role.orgId ) ) ]
     );
-    
-    return orgs.documents.map((document,i) => ({...document,roles:roles.documents[i].roles}))
+
+    return orgs.documents.map( ( document, i ) => ( { ...document, roles: roles.documents[ i ].roles } ) )
   }
 
-  async getOrgMembers ( orgId: string ):Promise<MembersWithRoles[]>
+  async getOrgMembers ( orgId: string ): Promise<MembersWithRoles[]>
   {
     const roles = await this.databases.listDocuments<RoleDocument>(
       conf.appwrtieDBId,
       conf.appwriteRolesCollID,
       [ Query.equal( 'orgId', orgId ) ]
     );
-    if(roles.documents.length < 1) return []
+    if ( roles.documents.length < 1 ) return []
     const members = await this.databases.listDocuments<UserDocument>(
       conf.appwrtieDBId,
       conf.appwriteUsersCollID,
       [ Query.equal( '$id', roles.documents.map( ( role ) => role.userId ) ) ]
     );
-    console.log(members,roles.documents.map( ( role ) => role.userId ) )
-    return members.documents.map((document,i) => ({...document,roles:roles.documents[i].roles}))
+    console.log( members, roles.documents.map( ( role ) => role.userId ) )
+    return members.documents.map( ( document, i ) => ( { ...document, roles: roles.documents[ i ].roles } ) )
   }
 
   async upsertOrganizationMember (
     orgId: string,
     ownerId: string,
     email: string,
-    roles: OrganizationRole[] = [OrganizationRole.MEMBER,OrganizationRole.VERIFIER]
+    roles: OrganizationRole[] = [ OrganizationRole.MEMBER, OrganizationRole.VERIFIER ]
   ): Promise<void>
   {
     try
@@ -480,27 +525,28 @@ class AppwriteService
       const rolesDocument = await this.databases.listDocuments<RoleDocument>(
         conf.appwrtieDBId,
         conf.appwriteRolesCollID,
-        [ Query.equal( 'orgId', orgId ),Query.equal("userId",ownerId) ]
+        [ Query.and( [ Query.equal( 'orgId', orgId ), Query.equal( "userId", ownerId ) ] ) ]
       );
-      if(!(rolesDocument.documents.length > 0 && (rolesDocument.documents[0].roles.includes(OrganizationRole.OWNER) || rolesDocument.documents[0].roles.includes(OrganizationRole.ADMIN)))) throw new Error( "U do not have permission to add users to orgnisation" )
+      if ( !( rolesDocument.documents.length > 0 && ( rolesDocument.documents[ 0 ].roles.includes( OrganizationRole.OWNER ) || rolesDocument.documents[ 0 ].roles.includes( OrganizationRole.ADMIN ) ) ) ) throw new Error( "U do not have permission to add users to orgnisation" )
 
       // check if user exists 
-      const users = (await this.databases.listDocuments<UserDocument>(conf.appwrtieDBId,conf.appwriteUsersCollID,[Query.equal("email",email)])).documents
-      if(users.length < 1) throw new Error("Invalid Email user does not exist")
+      const users = ( await this.databases.listDocuments<UserDocument>( conf.appwrtieDBId, conf.appwriteUsersCollID, [ Query.equal( "email", email ) ] ) ).documents
+      if ( users.length < 1 ) throw new Error( "Invalid Email user does not exist" )
 
       // check if user is already a member
-      const userRolesDocument = (await this.databases.listDocuments<RoleDocument>(
+      const userRolesDocument = ( await this.databases.listDocuments<RoleDocument>(
         conf.appwrtieDBId,
         conf.appwriteRolesCollID,
-        [ Query.equal( 'orgId', orgId ),Query.equal("userId",users[0].$id) ]
-      )).documents;
+        [ Query.equal( 'orgId', orgId ), Query.equal( "userId", users[ 0 ].$id ) ]
+      ) ).documents;
       // create roles
-      if(userRolesDocument.length < 1){
-        await this.databases.createDocument<RoleDocument>( conf.appwrtieDBId, conf.appwriteRolesCollID, ID.unique(), { userId:users[0].$id, orgId, roles:roles } )
+      if ( userRolesDocument.length < 1 )
+      {
+        await this.databases.createDocument<RoleDocument>( conf.appwrtieDBId, conf.appwriteRolesCollID, ID.unique(), { userId: users[ 0 ].$id, orgId, roles: roles } )
         return
       }
       // create update
-      await this.databases.updateDocument<RoleDocument>( conf.appwrtieDBId, conf.appwriteRolesCollID, userRolesDocument[0].$id, {roles:roles} )
+      await this.databases.updateDocument<RoleDocument>( conf.appwrtieDBId, conf.appwriteRolesCollID, userRolesDocument[ 0 ].$id, { roles: roles } )
     } catch ( error )
     {
       console.error( 'Error adding organization member:', error );
@@ -520,23 +566,20 @@ class AppwriteService
       const rolesDocument = await this.databases.listDocuments<RoleDocument>(
         conf.appwrtieDBId,
         conf.appwriteRolesCollID,
-        [ Query.equal( 'orgId', orgId ),Query.equal("userId",ownerId) ]
+        [ Query.and( [ Query.equal( 'orgId', orgId ), Query.equal( "userId", ownerId ) ] ) ]
       );
-      if(!(rolesDocument.documents.length > 0 && (rolesDocument.documents[0].roles.includes(OrganizationRole.OWNER) || rolesDocument.documents[0].roles.includes(OrganizationRole.ADMIN)))) throw new Error( "U do not have permission to remove users from orgnisation" )
-
-      // check if user exists 
-      const users = (await this.databases.getDocument<UserDocument>(conf.appwrtieDBId,conf.appwriteUsersCollID,userId))
-      if(users.length < 1) throw new Error("User does not exist")
+      if ( !( rolesDocument.documents.length > 0 && ( rolesDocument.documents[ 0 ].roles.includes( OrganizationRole.OWNER ) || rolesDocument.documents[ 0 ].roles.includes( OrganizationRole.ADMIN ) ) ) ) throw new Error( "U do not have permission to remove users from orgnisation" )
 
       // check if user is already a member
-      const userRolesDocument = (await this.databases.listDocuments<RoleDocument>(
+      const userRolesDocument = ( await this.databases.listDocuments<RoleDocument>(
         conf.appwrtieDBId,
         conf.appwriteRolesCollID,
-        [ Query.equal( 'orgId', orgId ),Query.equal("userId",users.$id) ]
-      )).documents;
+        [ Query.and( [ Query.equal( 'orgId', orgId ), Query.equal( "userId", userId ) ] ) ]
+      ) ).documents;
       // delete roles document if it exists
-      if(userRolesDocument.length > 0){
-        await this.databases.deleteDocument( conf.appwrtieDBId, conf.appwriteRolesCollID, userRolesDocument[0].$id)
+      if ( userRolesDocument.length > 0 )
+      {
+        await this.databases.deleteDocument( conf.appwrtieDBId, conf.appwriteRolesCollID, userRolesDocument[ 0 ].$id )
         return
       }
     } catch ( error )
@@ -554,25 +597,22 @@ class AppwriteService
   {
     try
     {
-      // Get current organization
-      const org = await this.databases.getDocument<OrganizationDocument>(
-        conf.appwrtieDBId,
-        conf.appwriteOrgsCollID,
-        orgId
-      );
-      const user = await this.databases.getDocument<UserDocument>(
-        conf.appwrtieDBId,
-        conf.appwriteUsersCollID,
-        userId
-      );
-      if ( ( user.org && user.org.$id !== orgId ) && org.owner.$id !== userId ) throw new Error( "User account does not belong to the orgnisation" )
-      // Get current key
+      // check if user owns the key
       const key = await this.databases.getDocument<KeyDocument>(
         conf.appwrtieDBId,
         conf.appwriteKeysCollID,
         keyId
       );
-      if ( key.owner.$id !== userId ) throw new Error( "Key Doesnt belong to user" )
+
+      if ( key.owner.$id !== userId ) throw new Error( "Key Doesn't belong to user" )
+      if ( key.org ) throw new Error( "A key can only belong to one orgnisation" )
+      // check if user belongs to org
+      const roles = ( await this.databases.listDocuments<RoleDocument>(
+        conf.appwrtieDBId,
+        conf.appwriteRolesCollID,
+        [ Query.equal( 'orgId', orgId ), Query.equal( "userId", userId ) ]
+      ) ).documents;
+      if ( roles.length < 0 ) throw new Error( "User does not belong to the organization" )
 
       // Update key to include organization
       await this.databases.updateDocument<KeyDocument>(
@@ -589,6 +629,7 @@ class AppwriteService
       throw error;
     }
   }
+
   async getOrganizationsForKey ( ownerId: string, keyId: string )
   {
     const keys = await this.databases.listDocuments<OrganizationDocument>(
@@ -602,12 +643,12 @@ class AppwriteService
   async getKeysForOrgAndUser ( ownerId: string, orgId: string )
   {
     // Fetch related Keys
-    const keys = await this.databases.listDocuments<KeyDocument>(
+    const keys = (await this.databases.listDocuments<KeyDocument>(
       conf.appwrtieDBId,
       conf.appwriteKeysCollID,
       [ Query.equal( "owner", ownerId ), Query.equal( "org", orgId ) ]
-    );
-    return keys
+    ))
+    return keys.documents
   }
   async getKeysForOrganization ( orgId: string )
   {
@@ -617,6 +658,159 @@ class AppwriteService
       [ Query.equal( "org", orgId ) ]
     );
     return keys.documents
+  }
+
+  async issueCredential ( data: CreateVCDTO,orgId:string,memberId:string,keyId:string )
+  {
+    try
+    {
+      // Verify that the keyId is authorized for the given organization
+      const keyDoc = await this.getKey( memberId, keyId )
+      if ( !keyDoc ) throw new Error( "Invalid or unauthorized key for this organization." );
+
+      if ( keyDoc.org.$id !== orgId ) throw new Error( "Key Does not belong to organization." );
+
+      if ( keyDoc.owner.$id !== memberId ) throw new Error( "Key Does not belong to member." );
+
+      // Save the VCDocument in the database
+      const result = await this.databases.createDocument<VCDocument>(
+        conf.appwrtieDBId,
+        conf.appwriteVCsCollID,
+        ID.unique(), // Generate a unique ID
+        {
+          issuer: orgId,
+          holder: data.holderId || null,
+          signedBy: keyId,
+          identifier: data.identifier
+        }
+      );
+      const blob = new Blob([data.vcData], { type: "application/json" }); // Create Blob
+      // save VCObj to a file and add store type
+      const {url} = await this.uploadFile(new File([blob],"vcObj"))
+      // add VCStore
+      await this.databases.createDocument<VCStoreDocument>(
+        conf.appwrtieDBId,
+        conf.appwriteVCStoresCollID,
+        ID.unique(), // Generate a unique ID
+        {storageType:VCStoreType.CLOUD,location:url,vcId:result.$id,storedBy:StoredByEnum.ORG}
+      );
+      return result;
+    } catch ( error )
+    {
+      console.error( "Error issuing credential:", error );
+      throw error;
+    }
+  }
+
+  async getVCDoc(vcId:string):Promise<VCDocument>{
+    const result = await this.databases.getDocument<VCDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteVCsCollID,
+      vcId
+    );
+    return result
+  }
+
+  async getCredentialsForOrg(orgId:string,memberId:string):Promise<VCDocument[]>{
+    // check if user is a member of org
+    const rolesDocument = (await this.databases.listDocuments<RoleDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteRolesCollID,
+      [ Query.and( [ Query.equal( 'orgId', orgId ), Query.equal( "userId", memberId ) ] ) ]
+    )).documents;
+    if(rolesDocument.length < 1) throw new Error("Unauthorized.")
+
+    const result = await this.databases.listDocuments<VCDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteVCsCollID,
+      [Query.equal("issuer",orgId)]
+    );
+    return result.documents
+  }
+
+  async getCredentialsForUser(userId?:string,identifier?:string):Promise<VCDocument[]>{
+    if(!userId && !identifier) throw new Error("invalid Request")
+    const result = await this.databases.listDocuments<VCDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteVCsCollID,
+      // @ts-ignore
+      identifier ? [Query.equal("identifier",identifier),] : [Query.equal("holder",userId)]
+    );
+    return result.documents
+  }
+
+  async addStore ( data: CreateVCStoreDTO, storedBy: StoredByEnum, creatorId: string )
+  {
+    try
+    {
+      // Ensure the storage type is valid (enum check)
+      const validStorageTypes = [ "CLOUD", "IPFS", "HEDERA_TOPIC", "HEDERA_FILE" ];
+      if ( !validStorageTypes.includes( data.storageType ) )
+      {
+        throw new Error( `Invalid storage type: ${data.storageType}` );
+      }
+      const VC = ( await this.databases.listDocuments<VCDocument>(
+        conf.appwrtieDBId,
+        conf.appwriteVCsCollID,
+        [ Query.equal( '$id', data.vcId ) ]
+      ) ).documents;
+      if ( VC.length < 1 ) throw new Error( "VC does not exist" )
+
+      if ( storedBy === StoredByEnum.USER )
+      {
+        if ( VC[ 0 ].holder && VC[ 0 ].holder.$id !== creatorId ) throw new Error( "You are not allowed to add store type" )
+      }
+      if ( storedBy === StoredByEnum.ORG )
+      {
+        // check if member belongs to the org
+        const roleDocument = ( await this.databases.listDocuments( conf.appwrtieDBId, conf.appwriteRolesCollID, [ Query.and( [ Query.equal( "orgId", VC[ 0 ].issuer.$id ), Query.equal( "userId", creatorId ) ] ) ] ) ).documents
+        if ( roleDocument.length < 1 ) throw new Error( "You are not allowed to add store type" )
+      }
+      // Save the storage location in the database
+      const result = await this.databases.createDocument<VCStoreDocument>(
+        conf.appwrtieDBId,
+        conf.appwriteVCStoresCollID,
+        ID.unique(), // Generate a unique ID
+        {
+          ...data,
+          storedBy
+        }
+      );
+      return result;
+    } catch ( error )
+    {
+      console.error( "Error adding storage:", error );
+      throw error;
+    }
+  }
+
+
+  async uploadFile ( fileData: File )
+  {
+    const uploadedFile = await this.storage.createFile( conf.appwriteBucketId, ID.unique(), fileData )
+    return { uploadedFile, url: `https://cloud.appwrite.io/v1/storage/buckets/${conf.appwriteBucketId}/files/${uploadedFile.$id}/view?project=${conf.appwrtieProjectId}` }
+  }
+
+  /**
+   * Lists all storage locations for a given VC.
+   * @param vcId - The VC ID.
+   */
+  async listVCStores ( vcId: string )
+  {
+    try
+    {
+      const result = await this.databases.listDocuments<VCStoreDocument>(
+        conf.appwrtieDBId,
+        conf.appwriteVCStoresCollID,
+        [ Query.equal( "vcId", vcId ) ]
+      );
+
+      return result.documents;
+    } catch ( error )
+    {
+      console.error( "Error listing storage locations:", error );
+      throw error;
+    }
   }
 }
 

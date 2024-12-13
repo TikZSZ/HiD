@@ -79,7 +79,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ( { organizations } 
                   </div>
                 </TableCell>
                 <TableCell>
-                  <NavLink to={`/dashboard/orgs/${org.$id}`}>
+                  <NavLink to={`/dashboard/orgs/${org.$id}/manage`}>
                     <Button variant="secondary" size="sm">
                       More Info
                     </Button>

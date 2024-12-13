@@ -4,6 +4,8 @@ import { DidError } from "../../../../did-error";
 import { HcsDidEvent } from "../hcs-did-event";
 import { HcsDidEventTargetName } from "../hcs-did-event-target-name";
 import { VerificationMethodSupportedKeyType } from "./types";
+import { Ed25519PubCodec } from "@/HiD/did-sdk/utils/ed25519PubCodec";
+import {} from "../../../../../utils/ed25519PubCodec"
 
 export class HcsDidCreateVerificationMethodEvent extends HcsDidEvent {
     public readonly targetName = HcsDidEventTargetName.VERIFICATION_METHOD;
@@ -48,6 +50,13 @@ export class HcsDidCreateVerificationMethodEvent extends HcsDidEvent {
 
     public getPublicKeyBase58() {
         return Hashing.base58.encode(this.getPublicKey().toBytes());
+    }
+
+    public getMultiPublicKey() {
+        if(this.type === "Ed25519VerificationKey2018"){
+            Hashing.multibase.decode
+            return Hashing.base58.encode(this.getPublicKey().toBytes());
+        }
     }
 
     public getVerificationMethodDef() {

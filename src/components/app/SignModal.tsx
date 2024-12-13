@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, useCallback, useEffect } fr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useKeyContext } from "@/contexts/keyManagerCtx.2";
+import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { PrivateKey } from "@hashgraph/sdk";
 import * as Dialog from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -141,15 +141,16 @@ const SignModal: React.FC<SignModalProps> = ( {
   onClose
 } ) =>
 {
-  const { retrieveKey, keys } = useKeyContext();
+  const { retrieveKey, useKeysList } = useKeyContext();
   const { toast } = useToast();
+  const {data:keys} = useKeysList()
   const [ password, setPassword ] = useState<string>( "" );
   const [ loading, setLoading ] = useState<boolean>( false );
   const [ keyMetadata, setKeyMetadata ] = useState<KeyMetadata>()
 
   useEffect( () =>
   {
-    const keyMeta = keys.find( ( keyMeta ) => keyMeta.$id === keyId )
+    const keyMeta = keys && keys.find( ( keyMeta ) => keyMeta.$id === keyId )
     if(!keyMeta && keyId){
       toast( {
         title: "Key Not Found",

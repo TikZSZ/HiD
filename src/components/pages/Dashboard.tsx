@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, Coins, User, Activity, Clock } from "lucide-react";
-import { useKeyContext } from '@/contexts/keyManagerCtx.2';
+import { useKeyContext } from '@/contexts/keyManagerCtx';
 import SignModal, { useSignModal } from '../app/SignModal';
 import { Button } from '../ui/button';
 // import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';

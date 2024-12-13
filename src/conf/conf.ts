@@ -1,6 +1,6 @@
 // import dotenv from "dotenv"
 // dotenv.config()
-const [dids,users,keys,orgs,roles] = String(import.meta.env["VITE_APPWRITE_COLLECTION_ID"]).split(",")
+const [dids,users,keys,orgs,roles,vcs,vcStores] = String(import.meta.env["VITE_APPWRITE_COLLECTION_ID"]).split(",")
 
 export const conf = {
   appwriteEndpoint:String(import.meta.env["VITE_APPWRITE_ENDPOINT"]),
@@ -12,6 +12,8 @@ export const conf = {
   appwriteKeysCollID:keys,
   appwriteOrgsCollID:orgs,
   appwriteRolesCollID:roles,
+  appwriteVCsCollID:vcs,
+  appwriteVCStoresCollID:vcStores,
   appwriteBucketId:String(import.meta.env["VITE_APPWRITE_BUCKET_ID"]),
   appwriteFunctionId:String(import.meta.env["VITE_APPWRITE_FUNCTION_ID"])
 }

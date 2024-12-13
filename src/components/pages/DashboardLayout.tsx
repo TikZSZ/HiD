@@ -1,6 +1,6 @@
 
 // import { KeyManagementProvider } from "@/contexts/keyManager";
-import { KeyProvider } from "@/contexts/keyManagerCtx.2";
+import { KeyProvider,KeyProviderWrapper } from "@/contexts/keyManagerCtx";
 import { useAuth } from "@/hooks/useAuth";
 import { SignModalProvider } from "../app/SignModal";
 import { Sidebar } from "@/components/app/sidebar/Sidebar";
@@ -78,7 +78,7 @@ const DashboardLayout = () =>
 {
   const { user } = useAuth()
   return (
-    <KeyProvider userId={user!.$id} >
+    <KeyProviderWrapper userId={user!.$id} >
       <SignModalProvider>
         <Sidebar>
           <div>
@@ -87,7 +87,7 @@ const DashboardLayout = () =>
           </div>
         </Sidebar>
       </SignModalProvider>
-    </KeyProvider>
+    </KeyProviderWrapper>
   );
 };
 

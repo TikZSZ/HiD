@@ -38,7 +38,7 @@ import
 import { Link } from "react-router-dom"
 import { NavMain } from "@/components/app/sidebar/NavMain"
 import { useAuth } from "@/hooks/useAuth"
-import { useKeyContext } from "@/contexts/keyManagerCtx.2"
+import { useKeyContext } from "@/contexts/keyManagerCtx"
 // navMain: [
 //   {
 //     title: "Playground",
@@ -161,12 +161,13 @@ const dataa = {
       icon: Bot,
       items: [
         {
-          title: "Members",
-          url: "#",
+          title: "Manage",
+          url: "/dashboard/orgs/manage",
+
         },
         {
-          title: "Presentations",
-          url: "#",
+          title: "Credentials",
+          url: "/dashboard/orgs/vcs",
         },
         {
           title: "Security",

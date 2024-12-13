@@ -27,9 +27,9 @@ type d = UseMutationResult<{
 // Types for context
 interface KeyContextType {
   userId: string;
-  keys: KeyDocument[];
-  dids: DIDDocument[];
-  orgs: OrganizationWithRoles[];
+  // keys: KeyDocument[];
+  // dids: DIDDocument[];
+  // orgs: OrganizationWithRoles[];
   isOpen: boolean;
   setIsOpen: (val: boolean) => void;
   
@@ -51,7 +51,7 @@ interface KeyContextType {
   
   useUpsertOrg: () => UseMutationResult<OrganizationWithRoles, Error, CreateOrganizationDto, unknown>
   
-  useUpsertDID: () => UseMutationResult<DIDDocument, Error, DIDDocument, unknown>;
+  useUpsertDID: () => UseMutationResult<DIDDocument, Error, CreateDIDDto, unknown>;
   
   // Existing methods
   openDIDWalletManager: () => void;
@@ -178,7 +178,7 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
 
   const useUpsertDID = () => {
     return useMutation({
-      mutationFn: (did: DIDDocument) => 
+      mutationFn: (did: CreateDIDDto) => 
         KeyManager.upsertDID(userId, did),
       onSuccess: (newDID) => {
         // Update the DIDs query cache
@@ -193,9 +193,9 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
   return (
     <KeyContext.Provider value={{
       userId,
-      keys: useKeysList().data || [],
-      dids: useDIDsList().data || [],
-      orgs: useOrgsList().data || [],
+      // keys: useKeysList().data || [],
+      // dids: useDIDsList().data || [],
+      // orgs: useOrgsList().data || [],
       isOpen,
       setIsOpen,
       

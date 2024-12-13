@@ -29,6 +29,10 @@ export function createDidDocument(params: CreateDidParams) {
   return new HcsDid(params as any);
 }
 
+export function resolveDID(identifier:string){
+  return new HcsDid({identifier}).resolve()
+}
+
 export function registerDidDocument(document: HcsDid) {
   return document.register();
 }

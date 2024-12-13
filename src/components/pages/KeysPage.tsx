@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useKeyContext } from "@/contexts/keyManagerCtx.2";
+import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { PublicKey } from "@hashgraph/sdk";
@@ -29,8 +29,10 @@ type KeyFormValues = z.infer<typeof keySchema>;
 
 export const KeyManagementOverlay: React.FC = () =>
 {
-  const { keys, generateKey, deleteKey,listKeys } = useKeyContext();
-
+  const { useKeysList, useGenerateKey, useDeleteKey } = useKeyContext();
+  const { data: keys } = useKeysList()
+  const generateKey = useGenerateKey()
+  const deleteKey = useDeleteKey()
   // Form states
   const [ loading, setLoading ] = useState<boolean>( false );
   const [ isModalOpen, setIsModalOpen ] = useState( false );
@@ -41,10 +43,10 @@ export const KeyManagementOverlay: React.FC = () =>
   const handleGenerateKey = async ( { keyType, name, description, password }: KeyFormValues ) =>
   {
     setLoading( true );
-    setIsCreating(true)
+    setIsCreating( true )
     try
     {
-      await generateKey( keyType, { name, description }, password );
+      await generateKey.mutateAsync( { type: keyType, metadata: { name, description }, password } );
       toggleModal()
     } catch ( error )
     {
@@ -52,7 +54,7 @@ export const KeyManagementOverlay: React.FC = () =>
     } finally
     {
       setLoading( false );
-      setIsCreating(false)
+      setIsCreating( false )
     }
   };
 
@@ -61,7 +63,7 @@ export const KeyManagementOverlay: React.FC = () =>
     setLoading( true );
     try
     {
-      await deleteKey( keyId );
+      await deleteKey.mutateAsync( keyId );
     } catch ( error )
     {
       console.error( "Error deleting key:", error );
@@ -102,21 +104,21 @@ export const KeyManagementOverlay: React.FC = () =>
     handleGenerateKey( data )
   };
 
-  useEffect(()=>{
-    listKeys()
-  },[])
+  // useEffect(()=>{
+  //   listKeys()
+  // },[])
 
   return (
     <div className="relative h-full flex flex-col p-4 min-h-[90vh]">
       {/* Header */}
-    <PageHeader title="Key Manager" description="Manage cryptographic keys." onClick={toggleModal}/>
+      <PageHeader title="Key Manager" description="Manage cryptographic keys." onClick={toggleModal} />
 
       {/* Existing Keys List */}
       <div className="flex-grow overflow-auto">
         <h3 className="text-lg font-semibold">
-          Existing Keys ({keys.length})
+          {keys && keys.length ? `Existing Keys ${keys.length}` : null}
         </h3>
-        {keys.length > 0 ? (
+        {keys && keys.length > 0 ? (
           <ul className="space-y-2 mt-6">
             {keys.map( ( key ) => (
               <li
@@ -178,7 +180,7 @@ export const KeyManagementOverlay: React.FC = () =>
                         <ul className="list-disc list-inside">
                           {
                             <li key={key.org.$id} className="flex justify-between">
-                              <span>{key.$id}</span>
+                              <span className="break-all text-sm">{key.org.name}#{`${key.org.$id.substring(0,10)}....`}</span>
                               <Button
                                 variant="link"
                                 size="sm"
@@ -281,7 +283,7 @@ export const KeyManagementOverlay: React.FC = () =>
               <Button variant="outline" onClick={() => setIsModalOpen( false )} type="reset">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isCreating}>{isCreating ?<Loader2 className="h-4 w-4 animate-spin" /> : "Create"}</Button>
+              <Button type="submit" disabled={isCreating}>{isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}</Button>
             </div>
           </form>
         </Form>
