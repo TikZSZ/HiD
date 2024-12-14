@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormModal } from "../app/FormModal";
 import { PageHeader } from "./PageHeader";
 import { Loader2 } from "lucide-react";
+import { KeyAlgorithm } from "@/HiD/keyManager";
 function getFormmatedPubKey ( publicKey: string )
 {
   const pK = PublicKey.fromString( publicKey ).toStringRaw()
@@ -20,7 +21,7 @@ function getFormmatedPubKey ( publicKey: string )
 }
 // Validation schema
 const keySchema = z.object( {
-  keyType: z.enum( [ "RSA", "Ed25519" ], { required_error: "Key type is required." } ),
+  keyType: z.nativeEnum( KeyAlgorithm, { required_error: "Key type is required." } ).default( KeyAlgorithm.ED25519 ),
   name: z.string().min( 3, { message: "Name must be at least 3 characters." } ),
   description: z.string().optional(),
   password: z.string().min( 8, { message: "Password must be at least 8 characters." } ),
@@ -46,7 +47,7 @@ export const KeyManagementOverlay: React.FC = () =>
     setIsCreating( true )
     try
     {
-      await generateKey.mutateAsync( { type: keyType, metadata: { name, description }, password } );
+      await generateKey.mutateAsync( { type: keyType, metadata: { name, description, keyAlgorithm: keyType }, password } );
       toggleModal()
     } catch ( error )
     {
@@ -180,7 +181,7 @@ export const KeyManagementOverlay: React.FC = () =>
                         <ul className="list-disc list-inside">
                           {
                             <li key={key.org.$id} className="flex justify-between">
-                              <span className="break-all text-sm">{key.org.name}#{`${key.org.$id.substring(0,10)}....`}</span>
+                              <span className="break-all text-sm">{key.org.name}#{`${key.org.$id.substring( 0, 10 )}....`}</span>
                               <Button
                                 variant="link"
                                 size="sm"
@@ -226,8 +227,11 @@ export const KeyManagementOverlay: React.FC = () =>
                         <SelectValue placeholder="Select Key Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Ed25519">Ed25519</SelectItem>
-                        <SelectItem value="RSA">RSA</SelectItem>
+                        {Object.values( KeyAlgorithm ).map( ( type ) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ) )}
                       </SelectContent>
                     </Select>
                   </FormControl>

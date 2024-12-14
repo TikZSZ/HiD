@@ -42,7 +42,7 @@ interface KeyContextType {
   
   // Mutation hooks
   useGenerateKey: () => UseMutationResult<KeyManager.KeyMetadata, Error, {
-    type: "RSA" | "Ed25519";
+    type: KeyManager.KeyAlgorithm;
     metadata: Omit<KeyManager.OmmitedKeyMeta, "keyType">;
     password: string;
 }, unknown>
@@ -130,19 +130,31 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
   const useGenerateKey = () => {
     return useMutation({
       mutationFn: ({ type, metadata, password }: {
-        type: 'RSA' | 'Ed25519',
+        type: KeyManager.KeyAlgorithm,
         metadata: Omit<KeyManager.OmmitedKeyMeta, "keyType">,
         password: string
       }) => {
-        if (type === 'RSA') {
+        if (type === KeyManager.KeyAlgorithm.RSA_4096) {
           return KeyManager.generateRSAKey(userId, password, {
             ...metadata,
-            keyType: KeyType.ENCRYPTION_AND_SIGNING
+            keyType: [KeyType.ENCRYPTION,KeyType.SIGNING],
+            keyAlgorithm:type
           });
         }
+        // else if (type === KeyManager.KeyAlgorithm.ED25519){
+        //   return KeyManager.generateEd25519Key(userId, password, {
+        //     ...metadata,
+        //     keyType: [KeyType.SIGNING],
+        //     keyAlgorithm:type
+        //   });
+        // }
+        // else {
+          
+        // }
         return KeyManager.generateEd25519Key(userId, password, {
           ...metadata,
-          keyType: KeyType.SIGNING
+          keyType: [KeyType.SIGNING],
+          keyAlgorithm:type
         });
       },
       onSuccess: () => {

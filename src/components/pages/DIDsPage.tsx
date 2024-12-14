@@ -71,7 +71,9 @@ export const DIDCreatePage: React.FC = () =>
       {
         try
         {
+          console.log((privateKey as PrivateKey).toStringDer())
           const signer = getSigner();
+          console.log(signer)
           // @ts-ignore
           let didDocument = createDidDocument( { privateKey: privateKey as PrivateKey, signer: signer! } );
           didDocument = await registerDidDocument( didDocument );
@@ -87,7 +89,7 @@ export const DIDCreatePage: React.FC = () =>
           toggleModal()
         } catch ( error )
         {
-          toast( { title: "Error", description: "An error occurred while creating the DID.", variant: "destructive" } );
+          toast( { title: "Error", description: "An error occurred while creating the DID." + " " +error.message, variant: "destructive" } );
           console.error( error );
         } finally
         {

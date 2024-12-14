@@ -275,7 +275,11 @@ const SignModal: React.FC<SignModalProps> = ( {
           </div>
         )}
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-4" onKeyDown={(e)=>{
+          if(e.key && e.key === "Enter"){
+            handleAction()
+          }
+        }}>
           <Input
             type="password"
             // label="Enter Password"

@@ -79,7 +79,7 @@ export const DIDCreatePage: React.FC = () =>
 
   async function createDid ( privateKey: PrivateKey )
   {
-    c
+    
 
     try
     {

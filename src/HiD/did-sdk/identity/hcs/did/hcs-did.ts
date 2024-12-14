@@ -116,12 +116,14 @@ export class HcsDid
                     .setSubmitKey( this.privateKey.publicKey )
                     .freezeWithSigner( this.signer )
 
+                console.log(this.signer)
                 const sigTx = await topicCreateTransaction.sign( this.privateKey );
                 const txId = await sigTx.executeWithSigner( this.signer );
-                const topicId = ( await txId.getReceiptWithSigner( this.signer ) ).topicId;
+                console.log(this.signer)
 
+                const topicId = ( await txId.getReceiptWithSigner( this.signer ) ).topicId;
                 this.topicId = topicId;
-                // console.log(topicId?.toString())
+                // console.log(topicId?.toString(),this.signer)
                 this.network = this.signer.ledgerId.toString();
                 // console.log(this.network)
                 this.identifier = this.buildIdentifier( this.privateKey.publicKey );
@@ -229,6 +231,10 @@ export class HcsDid
             throw new DidError( "DID is not registered" );
         }
 
+        // if ( !this.client && !this.signer )
+        // {
+        //     throw new DidError( "Client configuration is missing" );
+        // }
 
         return new Promise( ( resolve, reject ) =>
         {
@@ -252,8 +258,9 @@ export class HcsDid
                     // console.error(err);
                     reject( err );
                 } )
-                if(this.client) msgResolver.execute( this.client )
-                else msgResolver.execute()
+                // if(this.client) msgResolver.execute( this.client )
+                // else 
+                msgResolver.execute()
         } );
     }
 
@@ -638,7 +645,8 @@ export class HcsDid
                         } )
                         .execute( undefined,this.signer );
                 } );
-        }else {
+        }
+        else {
             return new Promise( ( resolve, reject ) =>
                 {
                     transaction

@@ -8,13 +8,7 @@ const secretKeyMultibase = 'z488x5kHU9aUe1weTqaf2sGFPgQS1HhunREFwB9bFeFwLch5';
 export const controller = `did:key:${publicKeyMultibase}`;
 const keyId = `${controller}#${publicKeyMultibase}`;
 
-export const publicBls12381Multikey = {
-  '@context': 'https://w3id.org/security/multikey/v1',
-  type: 'Multikey',
-  controller,
-  id: keyId,
-  publicKeyMultibase
-};
+
 export const ecdsaController = "did:hedera:testnet:zDnaeWmwriNYv7jE3pVZZuyne4u7dUVghZpJTEQgeNVxEp7Sm"
 export const ecdsaKeyId = `${ecdsaController}#root-key`
 export const publicECDSAMultikey = {
@@ -51,6 +45,14 @@ export const bls12381MultikeyKeyPair = {
   secretKeyMultibase
 };
 
+export const publicBls12381Multikey = {
+  '@context': 'https://w3id.org/security/multikey/v1',
+  type: 'Multikey',
+  controller,
+  id: keyId,
+  publicKeyMultibase
+};
+
 export const controllerDocBls12381Multikey = {
   '@context': [
     'https://www.w3.org/ns/did/v1',
@@ -59,6 +61,7 @@ export const controllerDocBls12381Multikey = {
   id: controller,
   assertionMethod: [publicBls12381Multikey]
 };
+
 
 export const alumniCredential = {
   '@context': [

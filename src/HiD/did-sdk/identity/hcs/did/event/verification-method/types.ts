@@ -1,1 +1,1 @@
-export type VerificationMethodSupportedKeyType = "Ed25519VerificationKey2018"| "Multikey";
+export type VerificationMethodSupportedKeyType = "Ed25519VerificationKey2018";

@@ -7,9 +7,13 @@ export enum KeyType
 {
   ENCRYPTION = 'ENCRYPTION',
   SIGNING = 'SIGNING',
-  ENCRYPTION_AND_SIGNING = 'ENCRYPTION_AND_SIGNING'
+  SELECTIVE_DISCLOSURE = "SELECTIVE_DISCLOSURE"
 }
-
+export enum KeyAlgorithm {
+  RSA_4096= "RSA_4096",
+  BBS_2023="BBS_2023",
+  ED25519="ED25519"
+}
 export enum KeyPurpose
 {
   AUTHENTICATION = "authentication",
@@ -79,7 +83,8 @@ export interface KeyDocument extends Models.Document
   iv: string;
   encryptedPrivateKey: string;
   publicKey: string;
-  keyType: KeyType;
+  keyType: KeyType[];
+  keyAlgorithm:KeyAlgorithm;
   keyPurposes: KeyPurpose[]; // More flexible than previous enum
   owner: UserDocument;
   org: OrganizationDocument;
@@ -122,7 +127,8 @@ export interface CreateKeyDto
   iv: string;
   encryptedPrivateKey: string;
   publicKey: string;
-  keyType: KeyType;
+  keyType: KeyType[];
+  keyAlgorithm:KeyAlgorithm
   keyPurposes?: string[];
   name: string;
   description?: string;

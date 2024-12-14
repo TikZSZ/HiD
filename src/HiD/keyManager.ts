@@ -1,9 +1,10 @@
 import { PrivateKey } from "@hashgraph/sdk";
 import localforage, { key } from "localforage";
 import AppwriteSerivce, { CreateDIDDto, CreateOrganizationDto } from "./appwrite/service"
-import  {KeyPurpose,KeyType,OrganizationRole} from "./appwrite/service"
+import  {KeyPurpose,KeyType,OrganizationRole,KeyAlgorithm} from "./appwrite/service"
 import { Base64 } from "js-base64";
-export {KeyPurpose,KeyType,OrganizationRole}
+// import * as Bls12381Multikey from "@digitalbazaar/bls12-381-multikey"
+export {KeyPurpose,KeyType,OrganizationRole,KeyAlgorithm}
 // Helper function to prefix storage keys with userId
 export function getUserScopedKey ( userId: string, id: string ): string
 {
@@ -17,7 +18,8 @@ export interface KeyMetadata
   $createdAt:string,
   name: string; // Key name
   description?: string; // Optional description
-  keyType: KeyType; // Key purpose
+  keyType: KeyType[]; // Key purpose
+  keyAlgorithm:KeyAlgorithm;
   keyPurposes?: KeyPurpose[]; // Key purposes
   publicKey:string;
 }
@@ -27,11 +29,6 @@ export type OmmitedKeyMeta = Omit<KeyMetadata,"$id"|"type"|"publicKey"|"$created
 const STORAGE_KEY = "key_storage";
 const IV_LENGTH = 12; // Length of initialization vector for AES-GCM
 
-// Initialize IndexedDB storage
-const storage = localforage.createInstance( {
-  name: "KeyStorage",
-  storeName: STORAGE_KEY,
-} );
 
 // Derive an AES key from a password
 async function deriveAESKey ( password: string, salt: Uint8Array ): Promise<CryptoKey>
@@ -122,7 +119,7 @@ export async function generateRSAKey (
 
   return saveKey(
     userId,
-    { ...metadata, keyType: KeyType.ENCRYPTION_AND_SIGNING,publicKey:textDecoder.decode(publicKey)} as any,
+    { ...metadata, keyType: [KeyType.ENCRYPTION,KeyType.SIGNING],publicKey:textDecoder.decode(publicKey)} as any,
     privateKey,
     password
   );
@@ -149,11 +146,12 @@ export async function generateEd25519Key (
   const privateKey = privateKeyObj.toBytesDer()
   return saveKey(
     userId,
-    { ...metadata, keyType: KeyType.SIGNING,publicKey:privateKeyObj.publicKey.toStringDer() } as any,
+    { ...metadata, keyType: [KeyType.SIGNING],publicKey:privateKeyObj.publicKey.toStringDer() } as any,
     privateKey,
     password
   );
 }
+
 
 // Retrieve and decrypt a key
 export async function retrieveKey ( userId: string, id: string, password: string )
@@ -241,7 +239,7 @@ export async function getKeysForOrg(
   userId: string, 
   orgId: string
 ) {
-  return (await AppwriteSerivce.getKeysForOrgAndUser(userId,orgId)).documents
+  return (await AppwriteSerivce.getKeysForOrgAndUser(userId,orgId))
 }
 
 export async function createOrg(userId:string,data:CreateOrganizationDto){
