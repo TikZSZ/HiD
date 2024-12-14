@@ -1,50 +1,58 @@
 /*!
  * Copyright (c) 2023-2024 Digital Bazaar, Inc. All rights reserved.
  */
-import {
-  bls12381MultikeyKeyPair,
-  controllerDocBls12381Multikey,
-  publicBls12381Multikey,
-  controllerDocECDSAMultikey,ecdsaController,publicECDSAMultikey
-} from './mock-data';
-import {
-  controllerDoc as testVectorControllerDoc,
-  publicKey as testVectorPublicKey
-} from './test-vectors.js';
+import
+  {
+    bls12381MultikeyKeyPair,
+    controllerDocBls12381Multikey,
+    publicBls12381Multikey,
+    controllerDocECDSAMultikey, ecdsaController, publicECDSAMultikey
+  } from './mock-data';
+import
+  {
+    controllerDoc as testVectorControllerDoc,
+    publicKey as testVectorPublicKey
+  } from './test-vectors.js';
 import dataIntegrityContext from '@digitalbazaar/data-integrity-context';
 import multikeyContext from '@digitalbazaar/multikey-context';
-import {securityLoader} from '@digitalbazaar/security-document-loader';
+import { securityLoader } from '@digitalbazaar/security-document-loader';
 
 export const loader = securityLoader();
 
 loader.addStatic(
   bls12381MultikeyKeyPair.controller,
-  controllerDocBls12381Multikey);
-loader.addStatic(
-  publicBls12381Multikey.id,
-  publicBls12381Multikey);
+  controllerDocBls12381Multikey );
+controllerDocBls12381Multikey.assertionMethod.map( ( assrMethod ) =>
+{
+  loader.addStatic(
+    assrMethod.id,
+    assrMethod );
+} )
+// loader.addStatic(
+//   publicBls12381Multikey.id,
+//   publicBls12381Multikey);
 loader.addStatic(
   ecdsaController,
-  controllerDocECDSAMultikey);
+  controllerDocECDSAMultikey );
 loader.addStatic(
   publicECDSAMultikey.id,
-  publicECDSAMultikey);
+  publicECDSAMultikey );
 loader.addStatic(
   testVectorControllerDoc.id,
-  testVectorControllerDoc);
+  testVectorControllerDoc );
 loader.addStatic(
   testVectorPublicKey.id,
-  testVectorPublicKey);
+  testVectorPublicKey );
 
 loader.addStatic(
   dataIntegrityContext.constants.CONTEXT_URL,
   dataIntegrityContext.contexts.get(
-    dataIntegrityContext.constants.CONTEXT_URL));
+    dataIntegrityContext.constants.CONTEXT_URL ) );
 
 loader.addStatic(
   multikeyContext.constants.CONTEXT_URL,
   multikeyContext.contexts.get(
-    multikeyContext.constants.CONTEXT_URL));
+    multikeyContext.constants.CONTEXT_URL ) );
 
 // add VC 2.0 context
 loader.addStatic(
@@ -239,8 +247,8 @@ loader.addStatic(
           "type": "@type",
 
           "jsonSchema": {
-              "@id": "https://w3.org/2018/credentials#jsonSchema",
-              "@type": "@json"
+            "@id": "https://w3.org/2018/credentials#jsonSchema",
+            "@type": "@json"
           }
         }
       },
@@ -381,4 +389,4 @@ loader.addStatic(
       "@vocab": "https://www.w3.org/ns/credentials/examples#"
     }
     /* eslint-enable */
-  });
+  } );

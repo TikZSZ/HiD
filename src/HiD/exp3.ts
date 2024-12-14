@@ -37,7 +37,7 @@ async function main ()
       },
     ],
   } )
-  console.log(alice.verify(proof.data.,proof.data.signature))
+  // console.log(alice.verify(proof.data,proof.data.signature))
   process.exit()
   const aboutBob = Client.invoke( {
     issuer: bob,

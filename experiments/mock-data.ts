@@ -62,6 +62,7 @@ export const controllerDocBls12381Multikey = {
   assertionMethod: [publicBls12381Multikey]
 };
 
+// https://blabla/issuers/2564515/keys/51256112
 
 export const alumniCredential = {
   '@context': [

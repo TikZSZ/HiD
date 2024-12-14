@@ -17,21 +17,21 @@ export default defineConfig( {
       "@": path.resolve( __dirname, "./src" ),
     },
   },
-  // build: {
-  //   rollupOptions: {
-  //     output: {
-  //       manualChunks: {
-  //         "@hashgraph": [
-  //           "@hashgraph/sdk",
-  //           "@hashgraph/proto",
-  //           "@hashgraph/hedera-wallet-connect",
-  //           "@hashgraph/cryptography",
-  //         ],
-  //         hashConnect: [
-  //           "hashconnect",
-  //         ],
-  //       }
-  //     }
-  //   }
-  // }
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "@hashgraph": [
+            "@hashgraph/sdk",
+            "@hashgraph/proto",
+            "@hashgraph/hedera-wallet-connect",
+            "@hashgraph/cryptography",
+          ],
+          hashConnect: [
+            "hashconnect",
+          ],
+        }
+      }
+    }
+  }
 } )
