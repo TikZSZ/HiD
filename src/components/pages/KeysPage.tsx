@@ -16,7 +16,8 @@ import { Loader2 } from "lucide-react";
 import { KeyAlgorithm } from "@/HiD/keyManager";
 function getFormmatedPubKey ( publicKey: string )
 {
-  const pK = PublicKey.fromString( publicKey ).toStringRaw()
+  // const pK = PublicKey.fromString( publicKey ).toStringRaw()
+  const pK = publicKey
   return `${pK.slice( 0, 20 )}....${pK.slice( -20 )}`
 }
 // Validation schema
@@ -47,7 +48,7 @@ export const KeyManagementOverlay: React.FC = () =>
     setIsCreating( true )
     try
     {
-      await generateKey.mutateAsync( { type: keyType, metadata: { name, description, keyAlgorithm: keyType }, password } );
+      await generateKey.mutateAsync( { metadata: { name, description, keyAlgorithm: keyType }, password } );
       toggleModal()
     } catch ( error )
     {

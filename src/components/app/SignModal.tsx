@@ -13,7 +13,7 @@ import
   Calendar,
   User
 } from "lucide-react";
-import { KeyMetadata } from '@/HiD/keyManager';
+import { KeyAlgorithm, KeyMetadata, KeyPair } from '@/HiD/keyManager';
 
 // Enhanced types to support multiple use cases
 type ModalMode = 'signature' | 'key-retrieval';
@@ -26,7 +26,7 @@ interface SignModalContextType
     options?: {
       signData?: string,
       purpose?: string,
-      onSuccess?: ( result: Uint8Array | PrivateKey ) => void,
+      onSuccess?: ( result: Uint8Array | KeyPair ) => void,
       onError?: ( error: Error ) => void,
       onClose?: () => void;
     }
@@ -41,7 +41,7 @@ export interface SignModalProps
   mode: ModalMode;
   signData?: string;
   purpose?: string;
-  onSuccess?: ( result: Uint8Array | PrivateKey ) => void;
+  onSuccess?: ( result: Uint8Array | KeyPair ) => void;
   onError?: ( error: Error ) => void;
   onClose?: () => void;
 }
@@ -143,7 +143,7 @@ const SignModal: React.FC<SignModalProps> = ( {
 {
   const { retrieveKey, useKeysList } = useKeyContext();
   const { toast } = useToast();
-  const {data:keys} = useKeysList()
+  const { data: keys } = useKeysList()
   const [ password, setPassword ] = useState<string>( "" );
   const [ loading, setLoading ] = useState<boolean>( false );
   const [ keyMetadata, setKeyMetadata ] = useState<KeyMetadata>()
@@ -151,7 +151,8 @@ const SignModal: React.FC<SignModalProps> = ( {
   useEffect( () =>
   {
     const keyMeta = keys && keys.find( ( keyMeta ) => keyMeta.$id === keyId )
-    if(!keyMeta && keyId){
+    if ( !keyMeta && keyId )
+    {
       toast( {
         title: "Key Not Found",
         description: `No Keys found for selected keyID ${keyId}`,
@@ -159,8 +160,8 @@ const SignModal: React.FC<SignModalProps> = ( {
       } );
       return
     }
-    setKeyMetadata(keyMeta)
-    
+    setKeyMetadata( keyMeta )
+
   }, [ keyId ] )
 
   const handleAction = async () =>
@@ -180,7 +181,7 @@ const SignModal: React.FC<SignModalProps> = ( {
           variant: "default"
         } );
 
-        onSuccess?.( keyResult.privateKey );
+        onSuccess?.( keyResult.keyPair );
         setOpen( false );
         return;
       }
@@ -193,30 +194,36 @@ const SignModal: React.FC<SignModalProps> = ( {
 
       const encoder = new TextEncoder();
       const encodedData = encoder.encode( signData );
-
-      // Sign the data
-      const signature = keyResult.privateKey.sign( encodedData );
-
-      // Verify the signature
-      const isValid = keyResult.publicKey.verify( encodedData, signature );
-
-      if ( !isValid )
+      if ( keyMetadata?.keyAlgorithm === KeyAlgorithm.ED25519 )
       {
-        throw new Error( "Signature verification failed" );
+        // Sign the data
+        const signature = keyResult.keyPair.signer().sign( { data: encodedData } );
+
+        // Verify the signature
+        const isValid = keyResult.keyPair.verifier().verify( { data: encodedData, signature } );
+
+        if ( !isValid )
+        {
+          throw new Error( "Signature verification failed" );
+        }
+
+        // Show success toast
+        toast( {
+          title: "Signature Successful",
+          description: "The data has been successfully signed.",
+          variant: "default"
+        } );
+
+        // Call onSuccess callback
+        onSuccess?.( signature );
+
+        // Close the modal
+        setOpen( false );
+      } else
+      {
+        throw new Error( keyMetadata?.keyAlgorithm + mode + " unsupported" )
       }
 
-      // Show success toast
-      toast( {
-        title: "Signature Successful",
-        description: "The data has been successfully signed.",
-        variant: "default"
-      } );
-
-      // Call onSuccess callback
-      onSuccess?.( signature );
-
-      // Close the modal
-      setOpen( false );
     } catch ( err )
     {
       // Show error toast
@@ -257,17 +264,17 @@ const SignModal: React.FC<SignModalProps> = ( {
             ? `You are about to sign some data for the following purpose: ${purpose}`
             : `Enter your password to retrieve the private key ${keyMetadata?.name}`
           } */}
-          
+
         </Dialog.DialogDescription>
         {keyMetadata && (
-            <div className="mt-4">
-              <KeyMetadataDisplay
-                keyMetadata={keyMetadata}
-                mode={mode}
-                purpose={purpose}
-              />
-            </div>
-          )}
+          <div className="mt-4">
+            <KeyMetadataDisplay
+              keyMetadata={keyMetadata}
+              mode={mode}
+              purpose={purpose}
+            />
+          </div>
+        )}
         {mode === 'signature' && (
           <div className="mt-4 p-4 bg-secondary rounded-lg">
             <p className="text-sm font-medium">Data to be signed:</p>
@@ -275,8 +282,10 @@ const SignModal: React.FC<SignModalProps> = ( {
           </div>
         )}
 
-        <div className="mt-6 space-y-4" onKeyDown={(e)=>{
-          if(e.key && e.key === "Enter"){
+        <div className="mt-6 space-y-4" onKeyDown={( e ) =>
+        {
+          if ( e.key && e.key === "Enter" )
+          {
             handleAction()
           }
         }}>
@@ -293,7 +302,7 @@ const SignModal: React.FC<SignModalProps> = ( {
           <div className="flex justify-end space-x-4 mt-4">
             <Button
               variant="secondary"
-              onClick={() => {setOpen( false ); onClose?.()}}
+              onClick={() => { setOpen( false ); onClose?.() }}
               disabled={loading}
             >
               Cancel
@@ -329,7 +338,7 @@ export const SignModalProvider: React.FC<{ children: React.ReactNode }> = ( { ch
     options?: {
       signData?: string,
       purpose?: string,
-      onSuccess?: ( result: Uint8Array | PrivateKey ) => void,
+      onSuccess?: ( result: Uint8Array | KeyPair ) => void,
       onError?: ( error: Error ) => void
       onClose?: () => void;
     }

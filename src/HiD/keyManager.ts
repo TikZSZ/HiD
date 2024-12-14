@@ -1,29 +1,48 @@
 import { PrivateKey } from "@hashgraph/sdk";
 import localforage, { key } from "localforage";
 import AppwriteSerivce, { CreateDIDDto, CreateOrganizationDto } from "./appwrite/service"
-import  {KeyPurpose,KeyType,OrganizationRole,KeyAlgorithm} from "./appwrite/service"
+import { KeyPurpose, KeyType, OrganizationRole, KeyAlgorithm } from "./appwrite/service"
 import { Base64 } from "js-base64";
-// import * as Bls12381Multikey from "@digitalbazaar/bls12-381-multikey"
-export {KeyPurpose,KeyType,OrganizationRole,KeyAlgorithm}
+import * as Bls12381Multikey from "@digitalbazaar/bls12-381-multikey"
+import * as ED25519Multikey from "@digitalbazaar/ed25519-multikey"
+export { KeyPurpose, KeyType, OrganizationRole, KeyAlgorithm }
+import { base58_to_binary, binary_to_base58 } from "base58-js"
+
 // Helper function to prefix storage keys with userId
 export function getUserScopedKey ( userId: string, id: string ): string
 {
   return `${userId}:${id}`;
 }
 
-
+export interface KeyPair {
+  publicKeyMultibase:string,
+  secretKeyMultibase:string,
+  publicKey:Uint8Array
+  secretKey:Uint8Array
+  export:any
+  signer:() => {
+    id?:string
+    algorithm:string,
+    sign:(param:{data:Uint8Array}) => Uint8Array
+  }
+  verifier:() => {
+    id?:string
+    algorithm:string,
+    verify:(param:{data:Uint8Array,signature:Uint8Array}) => boolean
+  }
+}
 export interface KeyMetadata
 {
-  $id:string,
-  $createdAt:string,
+  $id: string,
+  $createdAt: string,
   name: string; // Key name
   description?: string; // Optional description
   keyType: KeyType[]; // Key purpose
-  keyAlgorithm:KeyAlgorithm;
+  keyAlgorithm: KeyAlgorithm;
   keyPurposes?: KeyPurpose[]; // Key purposes
-  publicKey:string;
+  publicKey: string;
 }
-export type OmmitedKeyMeta = Omit<KeyMetadata,"$id"|"type"|"publicKey"|"$createdAt">
+export type OmmitedKeyMeta = Omit<KeyMetadata, "$id" | "type" | "publicKey"|"keyType" | "$createdAt">
 
 
 const STORAGE_KEY = "key_storage";
@@ -56,17 +75,19 @@ async function deriveAESKey ( password: string, salt: Uint8Array ): Promise<Cryp
   );
 }
 
-function encodeBase64(input:Uint8Array){
-  return Base64.fromUint8Array(input)
+function encodeBase64 ( input: Uint8Array )
+{
+  return Base64.fromUint8Array( input )
 }
-function decodeBase64(input:string){
-  return Base64.toUint8Array(input)
+function decodeBase64 ( input: string )
+{
+  return Base64.toUint8Array( input )
 }
 // Common function to save keys
 async function saveKey (
   userId: string,
   metadata: KeyMetadata,
-  privateKey: ArrayBuffer|Uint8Array,
+  privateKey: ArrayBuffer | Uint8Array,
   password: string
 ): Promise<KeyMetadata>
 {
@@ -78,8 +99,8 @@ async function saveKey (
     aesKey,
     privateKey
   );
-  
-  const key = await AppwriteSerivce.createKey(userId,{salt:encodeBase64(salt),iv:encodeBase64(iv),encryptedPrivateKey:encodeBase64(new Uint8Array(encryptedPrivateKey)),...metadata})
+
+  const key = await AppwriteSerivce.createKey( userId, { salt: encodeBase64( salt ), iv: encodeBase64( iv ), encryptedPrivateKey: encodeBase64( new Uint8Array( encryptedPrivateKey ) ), ...metadata } )
 
   return key;
 }
@@ -119,8 +140,37 @@ export async function generateRSAKey (
 
   return saveKey(
     userId,
-    { ...metadata, keyType: [KeyType.ENCRYPTION,KeyType.SIGNING],publicKey:textDecoder.decode(publicKey)} as any,
+    { ...metadata, keyType: [ KeyType.ENCRYPTION, KeyType.SIGNING ], publicKey: textDecoder.decode( publicKey ) } as any,
     privateKey,
+    password
+  );
+}
+
+export async function generateKey ( userId: string,
+  password: string,
+  metadata: OmmitedKeyMeta )
+{
+  let keyPair:KeyPair
+  let exported
+  let keyType:KeyType[] = []
+  if ( metadata.keyAlgorithm === KeyAlgorithm.ED25519 )
+  {
+    keyPair = await ED25519Multikey.generate()
+    exported = await keyPair.export( { publicKey: true, secretKey: true } )
+    keyType = [ KeyType.SIGNING ]
+  } else if ( metadata.keyAlgorithm === KeyAlgorithm.BBS_2023 )
+  {
+        
+    keyPair = await Bls12381Multikey.generateBbsKeyPair({algorithm: Bls12381Multikey.ALGORITHMS.BBS_BLS12381_SHA256})
+    exported = await keyPair.export( { publicKey: true, secretKey: true } )
+    keyType = [ KeyType.SIGNING,KeyType.SELECTIVE_DISCLOSURE ]
+  }
+  const privateKey = exported.secretKeyMultibase
+  const publicKey = exported.publicKeyMultibase
+  return saveKey(
+    userId,
+    { ...metadata, keyType, publicKey: publicKey } as any,
+    base58_to_binary( privateKey ),
     password
   );
 }
@@ -132,16 +182,8 @@ export async function generateEd25519Key (
   metadata: OmmitedKeyMeta
 ): Promise<KeyMetadata>
 {
-  // const keyPair = await window.crypto.subtle.generateKey(
-  //   {
-  //     name: "Ed25519",
-  //   },
-  //   true,
-  //   [ "sign", "verify" ]
-  // ) as CryptoKeyPair;
 
-  // const publicKey = await window.crypto.subtle.exportKey( "raw", keyPair.publicKey );
-  // const privateKey = await window.crypto.subtle.exportKey( "pkcs8", keyPair.privateKey );
+
   const privateKeyObj = await PrivateKey.generateED25519Async()
   const privateKey = privateKeyObj.toBytesDer()
   return saveKey(
@@ -150,13 +192,23 @@ export async function generateEd25519Key (
     privateKey,
     password
   );
+  // const ed25519MultikeyPair = await ED25519Multikey.generate()
+  // const exported = await ed25519MultikeyPair.export( { publicKey: true, secretKey: true } )
+  // const privateKey = exported.secretKeyMultibase
+  // const publicKey = exported.publicKeyMultibase
+  // return saveKey(
+  //   userId,
+  //   { ...metadata, keyType: [ KeyType.SIGNING ], publicKey: publicKey } as any,
+  //   base58_to_binary( privateKey ),
+  //   password
+  // );
 }
 
 
 // Retrieve and decrypt a key
 export async function retrieveKey ( userId: string, id: string, password: string )
 {
-  const storedKey = await AppwriteSerivce.getKey(userId,id)
+  const storedKey = await AppwriteSerivce.getKey( userId, id )
 
   if ( !storedKey )
   {
@@ -165,18 +217,27 @@ export async function retrieveKey ( userId: string, id: string, password: string
 
   const { encryptedPrivateKey, publicKey, salt, iv } = storedKey;
 
-  const aesKey = await deriveAESKey( password, decodeBase64(salt) );
+  const aesKey = await deriveAESKey( password, decodeBase64( salt ) );
 
   const decryptedPrivateKey = await window.crypto.subtle.decrypt(
-    { name: "AES-GCM", iv:decodeBase64(iv) },
+    { name: "AES-GCM", iv: decodeBase64( iv ) },
     aesKey,
-    decodeBase64(encryptedPrivateKey)
+    decodeBase64( encryptedPrivateKey )
   );
-
-
+  let keyPair:KeyPair
+  const privateKey = binary_to_base58( new Uint8Array(decryptedPrivateKey) )
+  console.log(publicKey,privateKey)
+  if ( storedKey.keyAlgorithm === KeyAlgorithm.ED25519 )
+  {
+    keyPair = await ED25519Multikey.from( { secretKeyMultibase: privateKey, publicKeyMultibase: publicKey } )
+  } else if ( storedKey.keyAlgorithm === KeyAlgorithm.BBS_2023 )
+  {
+    keyPair = await Bls12381Multikey.from( { secretKeyMultibase: privateKey, publicKeyMultibase: publicKey } )
+  }
+  if(!keyPair) throw new Error("keyPair not found")
   // if ( storedKey.metadata.type === KeyType.SIGNING )
   // {
-    
+
   // } 
   //else
   // {
@@ -198,64 +259,74 @@ export async function retrieveKey ( userId: string, id: string, password: string
   // }
 
   // return { privateKey: importedPrivateKey, publicKey: importedPublicKey };
-  const privateKey = PrivateKey.fromBytes(new Uint8Array(decryptedPrivateKey))
-  return { privateKey: privateKey, publicKey: privateKey.publicKey };
+  // const privateKey = PrivateKey.fromBytes(new Uint8Array(decryptedPrivateKey))
+  // return { privateKey: privateKey, publicKey: privateKey.publicKey };
+  return { privateKey, publicKey: publicKey, keyPair };
 }
 
 // List all stored keys with metadata
 export async function listKeys ( userId: string )
 {
-  const keys = await AppwriteSerivce.getKeys(userId)
+  const keys = await AppwriteSerivce.getKeys( userId )
   return keys
 }
 
 // Delete a key by its ID
 export async function deleteKey ( userId: string, keyId: string )
 {
-  await AppwriteSerivce.deleteKey(userId,keyId)
+  await AppwriteSerivce.deleteKey( userId, keyId )
   return
 }
 
 
 // Find all DIDs associated with a specific key
-export async function getDIDsForKey(userId:string,keyId: string) {
-  return (await AppwriteSerivce.getKey(userId,keyId)).dids
+export async function getDIDsForKey ( userId: string, keyId: string )
+{
+  return ( await AppwriteSerivce.getKey( userId, keyId ) ).dids
 }
 
 // Retrieve DID-Key Associations
-export async function getKeysForDID(
-  userId: string, 
+export async function getKeysForDID (
+  userId: string,
   didId: string
-){
-  return (await AppwriteSerivce.getDID(userId,didId)).keys
+)
+{
+  return ( await AppwriteSerivce.getDID( userId, didId ) ).keys
 }
 // Find all Organizations associated with a specific key
-export async function getOrganizationsForKey(ownerId:string,keyId: string) {
-  return (await AppwriteSerivce.getOrganizationsForKey(ownerId,keyId))
-  
+export async function getOrganizationsForKey ( ownerId: string, keyId: string )
+{
+  return ( await AppwriteSerivce.getOrganizationsForKey( ownerId, keyId ) )
+
 }
 // Get Organization-Key Associations
-export async function getKeysForOrg(
-  userId: string, 
+export async function getKeysForOrg (
+  userId: string,
   orgId: string
-) {
-  return (await AppwriteSerivce.getKeysForOrgAndUser(userId,orgId))
+)
+{
+  return ( await AppwriteSerivce.getKeysForOrgAndUser( userId, orgId ) )
 }
 
-export async function createOrg(userId:string,data:CreateOrganizationDto){
-  return AppwriteSerivce.createOrganization(userId,data)
+export async function createOrg ( userId: string, data: CreateOrganizationDto )
+{
+  return AppwriteSerivce.createOrganization( userId, data )
 }
 
-export async function associateKeyWithDID(userId:string,didId:string,keyId:string){
-  return AppwriteSerivce.associateKeyWithDID(didId,keyId,userId)
+export async function associateKeyWithDID ( userId: string, didId: string, keyId: string )
+{
+  return AppwriteSerivce.associateKeyWithDID( didId, keyId, userId )
 }
-export async function linkOrganizationKey(userId:string,orgId:string,keyId:string) {
-  return AppwriteSerivce.linkOrganizationKey(orgId,keyId,userId)
+export async function linkOrganizationKey ( userId: string, orgId: string, keyId: string )
+{
+  return AppwriteSerivce.linkOrganizationKey( orgId, keyId, userId )
 }
-export async function getDIDs(userId:string) {
-  return AppwriteSerivce.getDIDs(userId)
+export async function getDIDs ( userId: string )
+{
+  return AppwriteSerivce.getDIDs( userId )
 }
 
-export async function upsertDID(userId:string,did:CreateDIDDto) {
-  return AppwriteSerivce.createDID(userId,did)
+export async function upsertDID ( userId: string, did: CreateDIDDto )
+{
+  return AppwriteSerivce.createDID( userId, did )
 }

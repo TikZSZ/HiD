@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table"; // Import Table components
 import { Badge } from "@/components/ui/badge"; // Import Badge for roles
 import { Button } from "@/components/ui/button";
-import { OrganizationWithRoles, OrganizationRole } from "@/HiD/appwrite/service"; // Adjust import paths as needed
+import { OrganizationWithRoles, OrganizationRole, KeyType } from "@/HiD/appwrite/service"; // Adjust import paths as needed
 import { NavLink } from "react-router-dom";
 
 
@@ -11,6 +11,11 @@ export const roleColors: Record<OrganizationRole, string> = {
   ADMIN: "bg-blue-500 text-white",
   MEMBER: "bg-gray-500 text-white",
   VERIFIER: "bg-purple-500 text-white",
+};
+export const keyTypesColors: Record<KeyType, string> = {
+  ENCRYPTION: "bg-green-500 text-white",
+  SIGNING: "bg-blue-500 text-white",
+  SELECTIVE_DISCLOSURE: "bg-purple-500 text-white",
 };
 
 interface OrganizationTableProps

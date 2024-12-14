@@ -677,7 +677,15 @@ class AppwriteService
       if ( keyDoc.org.$id !== orgId ) throw new Error( "Key Does not belong to organization." );
 
       if ( keyDoc.owner.$id !== memberId ) throw new Error( "Key Does not belong to member." );
-
+      // check if DID Holder has an account on HiD
+      const did = (await this.databases.listDocuments<DIDDocument>(conf.appwrtieDBId,conf.appwriteDIDsCollID,[Query.equal("identifier",data.identifier)])).documents
+      
+      let holderId = null
+      if(did.length > 0) {
+        if(did[0].owner){
+          holderId = did[0].owner.$id
+        }
+      }
       // Save the VCDocument in the database
       const result = await this.databases.createDocument<VCDocument>(
         conf.appwrtieDBId,
@@ -685,12 +693,13 @@ class AppwriteService
         ID.unique(), // Generate a unique ID
         {
           issuer: orgId,
-          holder: data.holderId || null,
+          holder: holderId,
           signedBy: keyId,
           identifier: data.identifier
         }
       );
-      const blob = new Blob([data.vcData], { type: "application/json" }); // Create Blob
+      const blob = new Blob([data.vcData], { type: "application/json" }); 
+      // Create Blob
       // save VCObj to a file and add store type
       const {url} = await this.uploadFile(new File([blob],"vcObj"))
       // add VCStore

@@ -19,11 +19,6 @@ import AppwriteService, {
   CreateOrganizationDto,
   OrganizationWithRoles
 } from "@/HiD/appwrite/service";
-type d = UseMutationResult<{
-  type: 'RSA' | 'Ed25519', 
-  metadata: Omit<KeyManager.OmmitedKeyMeta, "keyType">, 
-  password: string
-}>
 // Types for context
 interface KeyContextType {
   userId: string;
@@ -42,7 +37,6 @@ interface KeyContextType {
   
   // Mutation hooks
   useGenerateKey: () => UseMutationResult<KeyManager.KeyMetadata, Error, {
-    type: KeyManager.KeyAlgorithm;
     metadata: Omit<KeyManager.OmmitedKeyMeta, "keyType">;
     password: string;
 }, unknown>
@@ -56,7 +50,7 @@ interface KeyContextType {
   // Existing methods
   openDIDWalletManager: () => void;
   closeDIDWalletManager: () => void;
-  retrieveKey: (id: string, password: string) => Promise<{ publicKey: PublicKey, privateKey: PrivateKey }>;
+  retrieveKey: (id: string, password: string) => Promise<{ publicKey: string, privateKey: string, keyPair:KeyManager.KeyPair }>;
   addAssociation: (type: 'DID' | 'Organization', toId: string, withId: string) => Promise<void>;
   deleteAssociation: (type: 'DID' | 'Organization', id: string, keyId: string) => Promise<void>;
 }
@@ -129,33 +123,36 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
 
   const useGenerateKey = () => {
     return useMutation({
-      mutationFn: ({ type, metadata, password }: {
-        type: KeyManager.KeyAlgorithm,
+      mutationFn: ({ metadata, password }: {
         metadata: Omit<KeyManager.OmmitedKeyMeta, "keyType">,
         password: string
       }) => {
-        if (type === KeyManager.KeyAlgorithm.RSA_4096) {
-          return KeyManager.generateRSAKey(userId, password, {
-            ...metadata,
-            keyType: [KeyType.ENCRYPTION,KeyType.SIGNING],
-            keyAlgorithm:type
-          });
-        }
-        // else if (type === KeyManager.KeyAlgorithm.ED25519){
-        //   return KeyManager.generateEd25519Key(userId, password, {
+        console.log(metadata,password)
+        // // v1
+        // if (type === KeyManager.KeyAlgorithm.RSA_4096) {
+        //   return KeyManager.generateRSAKey(userId, password, {
         //     ...metadata,
-        //     keyType: [KeyType.SIGNING],
+        //     keyType: [KeyType.ENCRYPTION,KeyType.SIGNING],
         //     keyAlgorithm:type
         //   });
         // }
-        // else {
+        // // else if (type === KeyManager.KeyAlgorithm.ED25519){
+        // //   return KeyManager.generateEd25519Key(userId, password, {
+        // //     ...metadata,
+        // //     keyType: [KeyType.SIGNING],
+        // //     keyAlgorithm:type
+        // //   });
+        // // }
+        // // else {
           
-        // }
-        return KeyManager.generateEd25519Key(userId, password, {
-          ...metadata,
-          keyType: [KeyType.SIGNING],
-          keyAlgorithm:type
-        });
+        // // }
+        // return KeyManager.generateEd25519Key(userId, password, {
+        //   ...metadata,
+        //   keyType: [KeyType.SIGNING],
+        //   keyAlgorithm:type
+        // });
+        // // v1
+        return KeyManager.generateKey(userId,password,metadata)
       },
       onSuccess: () => {
         // Invalidate and refetch keys after successful generation

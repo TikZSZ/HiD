@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { useSignModal } from "@/components/app/SignModal"; // The context we just created
 import { PrivateKey, PublicKey } from "@hashgraph/sdk";
-import { getUserScopedKey, KeyMetadata, KeyPurpose, associateKeyWithDID } from '@/HiD/keyManager';
+import { getUserScopedKey, KeyMetadata, KeyPurpose, associateKeyWithDID, KeyPair } from '@/HiD/keyManager';
 import { createDidDocument, registerDidDocument } from '@/did';
 import { useWallet } from '@/contexts/hashconnect';
 import { motion } from "framer-motion";
@@ -67,11 +67,12 @@ export const DIDCreatePage: React.FC = () =>
 
     openSignModal( selectedKey.$id, "key-retrieval", {
       purpose: "DID Creation",
-      onSuccess: async ( privateKey ) =>
+      onSuccess: async ( KeyPair ) =>
       {
         try
         {
-          console.log((privateKey as PrivateKey).toStringDer())
+          console.log(KeyPair)
+          const privateKey = PrivateKey.fromBytesED25519((KeyPair as KeyPair).secretKey)
           const signer = getSigner();
           console.log(signer)
           // @ts-ignore
@@ -89,6 +90,7 @@ export const DIDCreatePage: React.FC = () =>
           toggleModal()
         } catch ( error )
         {
+          // @ts-ignore
           toast( { title: "Error", description: "An error occurred while creating the DID." + " " +error.message, variant: "destructive" } );
           console.error( error );
         } finally
@@ -194,7 +196,7 @@ export const DIDCreatePage: React.FC = () =>
                     <h5 className="text-sm font-semibold">Keys:</h5>
                     {did.keys && did.keys.length > 0 && did.keys.map( ( key ) => (
                       <div key={key.publicKey} className="text-xs text-muted-foreground">
-                        {key.name} - {PublicKey.fromString( key.publicKey ).toStringRaw()}
+                        {key.name} - {key.publicKey}
                       </div>
                     ) )}
                   </div>

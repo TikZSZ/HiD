@@ -20,7 +20,7 @@ import AppwriteService, {
   OrganizationRole,
   OrganizationWithRoles
 } from "@/HiD/appwrite/service";
-import { roleColors } from "../OrganizationTable";
+import { keyTypesColors, roleColors } from "../OrganizationTable";
 import { Badge } from "../ui/badge";
 import { toast } from "@/hooks/use-toast";
 
@@ -164,15 +164,33 @@ const AddKeyModal: React.FC<{
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Key Name:</span>
+                    <span className="font-medium">Name:</span>
                   </div>
                   <span>{selectedKey.name || 'Unnamed Key'}</span>
 
                   <div className="flex items-center space-x-2">
                     <KeyIcon className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Key Index:</span>
+                    <span className="font-medium">PublicKey:</span>
                   </div>
-                  <span>{selectedKey.$id}</span>
+                  <span>{selectedKey.publicKey.slice(0,20)}...</span>
+
+                  <div className="flex items-center space-x-2">
+                    <KeyIcon className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Type:</span>
+                  </div>
+                  <span>{selectedKey.keyAlgorithm}</span>
+
+                  <div className="flex items-center space-x-2">
+                    <KeyIcon className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Purposes:</span>
+                  </div>
+                  <div>
+                  {selectedKey.keyType.map( ( keyType ) => (
+                            <Badge key={keyType} className={keyTypesColors[ keyType ]}>
+                              {keyType}
+                            </Badge>
+                          ) )}
+                  </div>
 
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -587,7 +605,12 @@ const ManageOrganizationPage: React.FC = () =>
                     <TableRow key={key.$id}>
                       <TableCell>{key.owner.name}</TableCell>
                       <TableCell>{key.name}</TableCell>
-                      <TableCell>{key.keyType}</TableCell>
+                      <TableCell><div className="gap-x-2">
+                      {key.keyType.map( ( keyType ) => (
+                            <Badge key={keyType} className={keyTypesColors[ keyType ]+" mx-1"}>
+                              {keyType}
+                            </Badge>
+                          ) )}</div></TableCell>
                       {/* <TableCell>{key.keyPurposes.join( ", " )}</TableCell> */}
                       <TableCell>
                         <Button variant="outline" size="sm">
