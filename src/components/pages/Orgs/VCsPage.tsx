@@ -11,7 +11,7 @@ import { Loader2, Eye, Link as LinkIcon } from "lucide-react";
 import AppwriteService, {
   VCDocument,
 } from "@/HiD/appwrite/service";
-import CreateVCModal from "./IssueVC6";
+import CreateVCModal from "./IssueVC";
 
 
 // Main Manage Verifiable Credentials Page
@@ -25,7 +25,6 @@ const ManageVCPage: React.FC = () =>
 
   const [ selectedOrgId, setSelectedOrgId ] = useState( orgId || "" );
   const [ isIssueVCModalOpen, setIsIssueVCModalOpen ] = useState( false );
-  const [ selectedVCStoresId, setSelectedVCStoresId ] = useState<string | null>( null );
 
   // Fetch VCs for the selected organization
   const {

@@ -158,9 +158,9 @@ const AddKeyModal: React.FC<{
             {selectedKey && (
               <div className="bg-secondary p-4 rounded-md space-y-2">
                 <div className="flex items-center space-x-2">
-                <Info className="h-5 w-5 text-blue-500" />
-                <h4 className="font-semibold">Key Details</h4>
-              </div>
+                  <Info className="h-5 w-5 text-blue-500" />
+                  <h4 className="font-semibold">Key Details</h4>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-muted-foreground" />
@@ -172,7 +172,7 @@ const AddKeyModal: React.FC<{
                     <KeyIcon className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">PublicKey:</span>
                   </div>
-                  <span>{selectedKey.publicKey.slice(0,20)}...</span>
+                  <span>{selectedKey.publicKey.slice( 0, 20 )}...</span>
 
                   <div className="flex items-center space-x-2">
                     <KeyIcon className="h-4 w-4 text-muted-foreground" />
@@ -185,18 +185,18 @@ const AddKeyModal: React.FC<{
                     <span className="font-medium">Purposes:</span>
                   </div>
                   <div>
-                  {selectedKey.keyType.map( ( keyType ) => (
-                            <Badge key={keyType} className={keyTypesColors[ keyType ]}>
-                              {keyType}
-                            </Badge>
-                          ) )}
+                    {selectedKey.keyType.map( ( keyType ) => (
+                      <Badge key={keyType} className={keyTypesColors[ keyType ]}>
+                        {keyType}
+                      </Badge>
+                    ) )}
                   </div>
 
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Created:</span>
                   </div>
-                  <span>{new Date(selectedKey.$createdAt).toLocaleString()}</span>
+                  <span>{new Date( selectedKey.$createdAt ).toLocaleString()}</span>
                 </div>
 
                 <div className="bg-secondary/50 p-3 rounded-lg">
@@ -478,7 +478,7 @@ const ManageOrganizationPage: React.FC = () =>
         title="Manage Organizations"
         description="View and manage organization members and keys."
         buttonText="Manage VCs"
-        onClick={()=>{navigate(`/dashboard/orgs/${orgId}/vcs`)}}
+        onClick={() => { navigate( `/dashboard/orgs/${orgId}/vcs` ) }}
       />
 
       <div className="mb-6">
@@ -528,8 +528,11 @@ const ManageOrganizationPage: React.FC = () =>
                 </Button>
               </div>
             </div>
-
-            {members.length > 0 ? (
+            {isLoadingMembers ? (
+              <div className="flex justify-center items-center p-4">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : members.length > 0 ? (
               <Table className="mt-4">
                 <TableHeader>
                   <TableRow>
@@ -590,8 +593,11 @@ const ManageOrganizationPage: React.FC = () =>
                 </Button>
               </div>
             </div>
-
-            {keys.length > 0 ? (
+            {isLoadingKeys ? (
+              <div className="flex justify-center items-center p-4">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : keys.length > 0 ? (
               <Table className="mt-4">
                 <TableHeader>
                   <TableRow>
@@ -607,11 +613,11 @@ const ManageOrganizationPage: React.FC = () =>
                       <TableCell>{key.owner.name}</TableCell>
                       <TableCell>{key.name}</TableCell>
                       <TableCell><div className="gap-x-2">
-                      {key.keyType.map( ( keyType ) => (
-                            <Badge key={keyType} className={keyTypesColors[ keyType ]+" mx-1"}>
-                              {keyType}
-                            </Badge>
-                          ) )}</div></TableCell>
+                        {key.keyType.map( ( keyType ) => (
+                          <Badge key={keyType} className={keyTypesColors[ keyType ] + " mx-1"}>
+                            {keyType}
+                          </Badge>
+                        ) )}</div></TableCell>
                       {/* <TableCell>{key.keyPurposes.join( ", " )}</TableCell> */}
                       <TableCell>
                         <Button variant="outline" size="sm">

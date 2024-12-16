@@ -14,7 +14,8 @@ import
   User
 } from "lucide-react";
 import { KeyAlgorithm, KeyMetadata, KeyPair } from '@/HiD/keyManager';
-
+import AppwriteService from "@/HiD/appwrite/service"
+import { useQuery } from '@tanstack/react-query';
 // Enhanced types to support multiple use cases
 type ModalMode = 'signature' | 'key-retrieval';
 
@@ -141,9 +142,17 @@ const SignModal: React.FC<SignModalProps> = ( {
   onClose
 } ) =>
 {
-  const { retrieveKey, useKeysList } = useKeyContext();
+  const { retrieveKey,userId } = useKeyContext();
   const { toast } = useToast();
-  const { data: keys } = useKeysList()
+  // const { data: keys } = useKeysList()
+  const {
+    data: keys = [],
+    isLoading: isLoadingKeys
+  } = useQuery( {
+    queryKey: [ 'keys', userId ],
+    queryFn: () => AppwriteService.getKeys( userId),
+    enabled: open
+  } );
   const [ password, setPassword ] = useState<string>( "" );
   const [ loading, setLoading ] = useState<boolean>( false );
   const [ keyMetadata, setKeyMetadata ] = useState<KeyMetadata>()

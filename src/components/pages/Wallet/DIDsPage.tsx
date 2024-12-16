@@ -30,9 +30,9 @@ const formSchema = z.object( {
 
 export const DIDCreatePage: React.FC = () =>
 {
-  const { useKeysList, useUpsertDID, addAssociation,useDIDsList } = useKeyContext();
-  const {data:dids,isLoading} = useDIDsList()
-  const {data:keys} = useKeysList()
+  const { useKeysList, useUpsertDID, addAssociation, useDIDsList } = useKeyContext();
+  const { data: dids, isLoading } = useDIDsList()
+  const { data: keys } = useKeysList()
   const upsertDID = useUpsertDID()
   const { openSignModal } = useSignModal();
   const { getSigner, isConnected } = useWallet();
@@ -70,10 +70,10 @@ export const DIDCreatePage: React.FC = () =>
       {
         try
         {
-          console.log(KeyPair)
-          const privateKey = PrivateKey.fromBytesED25519((KeyPair as KeyPair).secretKey)
+          console.log( KeyPair )
+          const privateKey = PrivateKey.fromBytesED25519( ( KeyPair as KeyPair ).secretKey )
           const signer = getSigner();
-          console.log(signer)
+          console.log( signer )
           // @ts-ignore
           let didDocument = createDidDocument( { privateKey: privateKey as PrivateKey, signer: signer! } );
           didDocument = await registerDidDocument( didDocument );
@@ -90,7 +90,7 @@ export const DIDCreatePage: React.FC = () =>
         } catch ( error )
         {
           // @ts-ignore
-          toast( { title: "Error", description: "An error occurred while creating the DID." + " " +error.message, variant: "destructive" } );
+          toast( { title: "Error", description: "An error occurred while creating the DID." + " " + error.message, variant: "destructive" } );
           console.error( error );
         } finally
         {
@@ -108,7 +108,7 @@ export const DIDCreatePage: React.FC = () =>
       },
     } );
   };
-  
+
   // useEffect(()=>{
   //   getDIDs()
   // },[])
@@ -181,7 +181,11 @@ export const DIDCreatePage: React.FC = () =>
         <h3 className="text-lg font-semibold">
           {dids && dids.length > 0 && `Existing DIDs ${dids.length}`}
         </h3>
-        {dids && dids.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center p-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : dids && dids.length > 0 ? (
           <div className="space-y-4 mt-6">
             {dids.map( ( did ) => (
               <Card key={did.identifier} className="p-4 bg-card rounded-md shadow-md">

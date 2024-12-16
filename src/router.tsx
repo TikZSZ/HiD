@@ -12,10 +12,14 @@ const DashboardLayout = lazy( () => import( "@/components/pages/Layouts/Dashboar
 const DashboardPage = lazy( () => import( "@/components/pages/Dashboard" ) );
 const KeysPage = lazy( () => import( "@/components/pages/Wallet/KeysPage" ) );
 const DIDsPage = lazy( () => import( "@/components/pages/Wallet/DIDsPage" ) );
+const UserVCsPage = lazy( () => import( "@/components/pages/Wallet/UserVCsPage" ) );
+
 const OrganizationsPage = lazy( () => import( "./components/pages/Orgs/OrgsPage" ) )
 const ManageOrganizationPage = lazy( () => import( "./components/pages/Orgs/ManageOrganizationPage" ) )
 const OrgVCsPage = lazy( () => import( "./components/pages/Orgs/VCsPage" ) )
 const VCViewPage = lazy( () => import( "./components/pages/Orgs/VCViewPage" ) )
+const ViewVCPage = lazy( () => import( "./components/pages/VCView" ) )
+
 
 
 
@@ -82,6 +86,18 @@ export const router = createBrowserRouter( [
             path: "wallet/dids",
             element: <PageWrapper>
               <DIDsPage />
+            </PageWrapper>,
+          },
+          {
+            path: "wallet/vcs",
+            element: <PageWrapper>
+              <UserVCsPage />
+            </PageWrapper>,
+          },
+          {
+            path: "wallet/vcs/:vcId",
+            element: <PageWrapper>
+              <ViewVCPage />
             </PageWrapper>,
           },
           {

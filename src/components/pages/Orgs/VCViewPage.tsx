@@ -39,18 +39,6 @@ import
 import { Table, TableHeader, TableRow, TableCell, TableBody } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "../../app/PageHeader";
-import
-{
-  createSignCryptosuite,
-  createDiscloseCryptosuite,
-  createVerifyCryptosuite
-} from "@digitalbazaar/bbs-2023-cryptosuite"
-import { klona } from 'klona';
-import { DataIntegrityProof } from '@digitalbazaar/data-integrity';
-import jsigs from 'jsonld-signatures';
-import * as vc from '@digitalbazaar/vc';
-
-const { purposes: { AssertionProofPurpose } } = jsigs;
 // Icons
 import { Loader2, Plus, Trash2, Eye } from "lucide-react";
 
@@ -66,12 +54,7 @@ import AppwriteService, {
 import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { toast } from "@/hooks/use-toast";
 import ErrorComponent from "../../ErrorComponent";
-import CreateVCModal from "./IssueVC6";
 import { useSignModal } from "@/components/app/SignModal";
-import { KeyPair } from "@/HiD/keyManager";
-import { resolveDID } from "@/did";
-import { documentLoader } from "@/HiD/jsonld-contexts";
-import { ID } from "appwrite";
 
 // W3C Verifiable Credentials Base Schema
 const W3CVCBaseSchema = z.object( {
@@ -296,128 +279,6 @@ const VCViewPage: React.FC = () =>
         title="Verifiable Credential Details"
         description="View and manage this specific Verifiable Credential"
       />
-      {/* <CreateVCModal isOpen={isCreateStoreModalOpen} onOpenChange={setIsCreateStoreModalOpen} onSubmit={async ( data ) =>
-      {
-        // const { contexts, identifier, keyId, credentialSubject, validFrom, validUntil } = data
-        // // const didDocument = await resolveDID( identifier )
-        // // if ( didDocument && !didDocument.hasOwner() )
-        // // {
-        // //   // form.setError( "identifier", { message: "Invalid DIDIdentifier" } )
-        // //   return
-        // // }
-        // console.log( contexts )
-        // openSignModal( keyId, "key-retrieval", {
-        //   purpose: "DID Creation",
-        //   onSuccess: async ( keyPair ) =>
-        //   {
-        //     try
-        //     {
-        //       // org controller ID
-        //       const controller = `did:web:675d93dc69da7be75efd.appwrite.global/issuers/${orgId}`;
-        //       // siging key ID and KeyPair
-        //       const keyid = `${controller}#${keyId}`;
-        //       ( keyPair as KeyPair ).controller = controller;
-        //       ( keyPair as KeyPair ).id = keyid
-        //       // extract mandatory pointers and added Context KV pairs
-        //       const mandatoryPointers: string[] = [`/issuer`]
-        //       const credentialSubjectData: any = {}
-        //       for ( const crsub of credentialSubject )
-        //       {
-        //         if ( crsub.value )
-        //         {
-        //           if(crsub.dataType === "date"){
-        //             credentialSubjectData[ crsub.key ] = new Date(crsub.value).toISOString()
-        //           }else{
-        //             credentialSubjectData[ crsub.key ] = crsub.value
-        //           }
-        //           if ( crsub.mandatory ) mandatoryPointers.push( `/credentialSubject/${crsub.key}` )
-        //         }
-        //       }
-        //       // prepare the VC Document 
-        //       const vcId = ID.unique()
-        //       const credential:any = {
-        //         "@context": [
-        //           "https://www.w3.org/ns/credentials/v2",
-        //           // "https://www.w3.org/ns/credentials/examples/v2",
-        //           ...contexts.map((ctx)=>ctx.context)
-        //         ],
-        //         id: import.meta.env["VITE_BASE_URL"]+`/dashboard/orgs/${orgId}/vcs/${vcId}`,
-        //         type: [ 'VerifiableCredential', ...contexts.map( ( context ) => context.type ) ],
-        //         issuer: {
-        //           id: controller,
-        //           name: "something institute"
-        //         },
-        //         issuanceDate: new Date().toISOString(),
-        //         credentialSubject: {
-        //           id: identifier,
-        //           nonce:crypto.randomUUID(),
-        //           ...credentialSubjectData
-                  
-        //         }
-        //       }
-        //       if(validFrom) credential["validFrom"] = new Date(validFrom).toISOString()
-        //       if(validUntil) credential["validUntil"] = new Date(validUntil).toISOString()
-        //       console.log( credential, mandatoryPointers )
-              
-        //       // sign the vc document
-        //       const unsignedCredential = klona( credential );
-        //       const cryptosuite = createSignCryptosuite( { mandatoryPointers } );
-        //       const suite = new DataIntegrityProof( {
-        //         signer: ( keyPair as KeyPair ).signer(), cryptosuite
-        //       } );
-        //       const signedCredential = await vc.issue( { credential: unsignedCredential, suite: suite, documentLoader: documentLoader } )
-        //       console.dir( { signedCredential }, { depth: null } )
-              
-        //       // create and verify a test revealed document before issusing VC 
-        //       let revealed
-        //       {
-        //         const cryptosuite = createDiscloseCryptosuite( {
-        //           selectivePointers: [ '/credentialSubject/id' ]
-        //         } );
-        //         const suite = new DataIntegrityProof( { cryptosuite,date:new Date() } );
-        //         revealed = await vc.derive( { verifiableCredential: signedCredential, suite: suite, documentLoader: documentLoader } )
-        //         console.dir( revealed )
-        //       }
-        //       {
-        //         const cryptosuite = createVerifyCryptosuite();
-        //         const suite = new DataIntegrityProof( { cryptosuite } );
-        //         const signedCredentialCopy = klona( revealed );
-        //         const result = await vc.verifyCredential( {
-        //           credential: signedCredentialCopy,
-        //           suite, documentLoader: documentLoader,
-        //           purpose: new AssertionProofPurpose()
-        //         } );
-        //         console.log( result )
-        //         // on success save the issued VC to CLOUD 
-        //         if(result.verified){
-        //           const result = await AppwriteService.issueCredential({identifier,vcId,vcData:JSON.stringify({signedCredential,contextMetadata:contexts[0].schema})},orgId!,userId,keyId)
-        //           console.log(result)
-        //           toast( { title: "VC Issued", description: "VC was issued successfully to" + " " + identifier.substring(0,20), variant: "default" } );
-        //         }
-        //       }
-        //       // toggleModal()
-        //     } catch ( error )
-        //     {
-        //       // @ts-ignore
-        //       toast( { title: "Error", description: "An error occurred while creating the DID." + " " + error.message, variant: "destructive" } );
-        //       console.error( error );
-        //     } finally
-        //     {
-        //       // setIsCreating( false );
-        //     }
-        //   },
-        //   onError: ( error ) =>
-        //   {
-        //     console.error( "Signing failed", error );
-        //   },
-        //   onClose: () =>
-        //   {
-        //     console.error( "Signing failed", "User Rejected" );
-        //     // setIsCreating( false );
-        //   },
-        // } );
-      }} ></CreateVCModal> */}
-
       {isLoadingVC ? (
         <div className="flex justify-center items-center">
           <Loader2 className="h-8 w-8 animate-spin" />

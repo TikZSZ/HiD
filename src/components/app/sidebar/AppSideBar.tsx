@@ -18,6 +18,7 @@ import
     Settings2,
     SquareTerminal,
     User,
+    FileBadge2Icon
   } from "lucide-react"
 
 // import { NavMain } from "@/components/nav-main"
@@ -58,6 +59,11 @@ const data = {
           title: "DIDs",
           url: "/dashboard/wallet/dids",
           icon:PlusIcon
+        },
+        {
+          title: "Credentials",
+          url: "/dashboard/wallet/vcs",
+          icon:FileBadge2Icon 
         },
       ],
     },

@@ -9,10 +9,11 @@ export enum KeyType
   SIGNING = 'SIGNING',
   SELECTIVE_DISCLOSURE = "SELECTIVE_DISCLOSURE"
 }
-export enum KeyAlgorithm {
-  RSA_4096= "RSA_4096",
-  BBS_2023="BBS_2023",
-  ED25519="ED25519"
+export enum KeyAlgorithm
+{
+  RSA_4096 = "RSA_4096",
+  BBS_2023 = "BBS_2023",
+  ED25519 = "ED25519"
 }
 export enum KeyPurpose
 {
@@ -84,7 +85,7 @@ export interface KeyDocument extends Models.Document
   encryptedPrivateKey: string;
   publicKey: string;
   keyType: KeyType[];
-  keyAlgorithm:KeyAlgorithm;
+  keyAlgorithm: KeyAlgorithm;
   keyPurposes: KeyPurpose[]; // More flexible than previous enum
   owner: UserDocument;
   org: OrganizationDocument;
@@ -128,7 +129,7 @@ export interface CreateKeyDto
   encryptedPrivateKey: string;
   publicKey: string;
   keyType: KeyType[];
-  keyAlgorithm:KeyAlgorithm
+  keyAlgorithm: KeyAlgorithm
   keyPurposes?: string[];
   name: string;
   description?: string;
@@ -167,7 +168,7 @@ export interface CreateVCDTO
   vcData: string,
   // holderId?: string
   identifier: string
-  vcId:string
+  vcId: string
 }
 
 export interface CreateVCStoreDTO
@@ -650,11 +651,11 @@ class AppwriteService
   async getKeysForOrgAndUser ( ownerId: string, orgId: string )
   {
     // Fetch related Keys
-    const keys = (await this.databases.listDocuments<KeyDocument>(
+    const keys = ( await this.databases.listDocuments<KeyDocument>(
       conf.appwrtieDBId,
       conf.appwriteKeysCollID,
       [ Query.equal( "owner", ownerId ), Query.equal( "org", orgId ) ]
-    ))
+    ) )
     return keys.documents
   }
   async getKeysForOrganization ( orgId: string )
@@ -667,7 +668,7 @@ class AppwriteService
     return keys.documents
   }
 
-  async issueCredential ( data: CreateVCDTO,orgId:string,memberId:string,keyId:string )
+  async issueCredential ( data: CreateVCDTO, orgId: string, memberId: string, keyId: string )
   {
     try
     {
@@ -679,12 +680,14 @@ class AppwriteService
 
       if ( keyDoc.owner.$id !== memberId ) throw new Error( "Key Does not belong to member." );
       // check if DID Holder has an account on HiD
-      const did = (await this.databases.listDocuments<DIDDocument>(conf.appwrtieDBId,conf.appwriteDIDsCollID,[Query.equal("identifier",data.identifier)])).documents
-      
+      const did = ( await this.databases.listDocuments<DIDDocument>( conf.appwrtieDBId, conf.appwriteDIDsCollID, [ Query.equal( "identifier", data.identifier ) ] ) ).documents
+
       let holderId = null
-      if(did.length > 0) {
-        if(did[0].owner){
-          holderId = did[0].owner.$id
+      if ( did.length > 0 )
+      {
+        if ( did[ 0 ].owner )
+        {
+          holderId = did[ 0 ].owner.$id
         }
       }
       // Save the VCDocument in the database
@@ -699,16 +702,16 @@ class AppwriteService
           identifier: data.identifier
         }
       );
-      const blob = new Blob([data.vcData], { type: "application/json" }); 
+      const blob = new Blob( [ data.vcData ], { type: "application/json" } );
       // Create Blob
       // save VCObj to a file and add store type
-      const {url} = await this.uploadFile(new File([blob],"vcObj"))
+      const { url } = await this.uploadFile( new File( [ blob ], "vcObj" ) )
       // add VCStore
       await this.databases.createDocument<VCStoreDocument>(
         conf.appwrtieDBId,
         conf.appwriteVCStoresCollID,
         ID.unique(), // Generate a unique ID
-        {storageType:VCStoreType.CLOUD,location:url,vcId:result.$id,storedBy:StoredByEnum.ORG}
+        { storageType: VCStoreType.CLOUD, location: url, vcId: result.$id, storedBy: StoredByEnum.ORG }
       );
       return result;
     } catch ( error )
@@ -718,7 +721,8 @@ class AppwriteService
     }
   }
 
-  async getVCDoc(vcId:string):Promise<VCDocument>{
+  async getVCDoc ( vcId: string ): Promise<VCDocument>
+  {
     const result = await this.databases.getDocument<VCDocument>(
       conf.appwrtieDBId,
       conf.appwriteVCsCollID,
@@ -727,30 +731,32 @@ class AppwriteService
     return result
   }
 
-  async getCredentialsForOrg(orgId:string,memberId:string):Promise<VCDocument[]>{
+  async getCredentialsForOrg ( orgId: string, memberId: string ): Promise<VCDocument[]>
+  {
     // check if user is a member of org
-    const rolesDocument = (await this.databases.listDocuments<RoleDocument>(
+    const rolesDocument = ( await this.databases.listDocuments<RoleDocument>(
       conf.appwrtieDBId,
       conf.appwriteRolesCollID,
       [ Query.and( [ Query.equal( 'orgId', orgId ), Query.equal( "userId", memberId ) ] ) ]
-    )).documents;
-    if(rolesDocument.length < 1) throw new Error("Unauthorized.")
+    ) ).documents;
+    if ( rolesDocument.length < 1 ) throw new Error( "Unauthorized." )
 
     const result = await this.databases.listDocuments<VCDocument>(
       conf.appwrtieDBId,
       conf.appwriteVCsCollID,
-      [Query.equal("issuer",orgId),Query.orderDesc("$id")]
+      [ Query.equal( "issuer", orgId ), Query.orderDesc( "$id" ) ]
     );
     return result.documents
   }
 
-  async getCredentialsForUser(userId?:string,identifier?:string):Promise<VCDocument[]>{
-    if(!userId && !identifier) throw new Error("invalid Request")
+  async getCredentialsForUser ( userId?: string, identifier?: string ): Promise<VCDocument[]>
+  {
+    if ( !userId && !identifier ) throw new Error( "invalid Request" )
     const result = await this.databases.listDocuments<VCDocument>(
       conf.appwrtieDBId,
       conf.appwriteVCsCollID,
       // @ts-ignore
-      identifier ? [Query.equal("identifier",identifier),] : [Query.equal("holder",userId)]
+      [ identifier ? Query.equal( "identifier", identifier ) : Query.equal( "holder", userId ), Query.orderDesc( "$id" ) ]
     );
     return result.documents
   }

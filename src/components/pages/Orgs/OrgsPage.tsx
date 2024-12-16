@@ -22,10 +22,10 @@ import OrganizationTable from "../../OrganizationTable";
 
 const OrganizationsPage: React.FC = () =>
 {
-  const { useUpsertOrg,useOrgsList } = useKeyContext()
+  const { useUpsertOrg, useOrgsList } = useKeyContext()
   const upsertOrg = useUpsertOrg()
   // Open/Close Modal
-  const {data:orgs,isLoading,} = useOrgsList()
+  const { data: orgs, isLoading, } = useOrgsList()
   const [ isModalOpen, setIsModalOpen ] = useState( false );
   const toggleModal = () => setIsModalOpen( !isModalOpen );
   const [ isCreating, setIsCreating ] = useState( false );
@@ -75,7 +75,11 @@ const OrganizationsPage: React.FC = () =>
         {/* <h3 className="text-lg font-semibold">
           Existing Orgs ({orgs.length})
         </h3> */}
-        {orgs && orgs.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center p-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : orgs && orgs.length > 0 ? (
           <div className="">
             <OrganizationTable organizations={orgs} />
           </div>

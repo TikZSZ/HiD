@@ -30,7 +30,7 @@ type KeyFormValues = z.infer<typeof keySchema>;
 export const KeyManagementOverlay: React.FC = () =>
 {
   const { useKeysList, useGenerateKey, useDeleteKey } = useKeyContext();
-  const { data: keys } = useKeysList()
+  const { data: keys, isLoading } = useKeysList()
   const generateKey = useGenerateKey()
   const deleteKey = useDeleteKey()
   // Form states
@@ -118,91 +118,97 @@ export const KeyManagementOverlay: React.FC = () =>
         <h3 className="text-lg font-semibold">
           {keys && keys.length ? `Existing Keys ${keys.length}` : null}
         </h3>
-        {keys && keys.length > 0 ? (
-          <ul className="space-y-2 mt-6">
-            {keys.map( ( key ) => (
-              <li
-                key={key.$id}
-                className="border rounded-lg p-4 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{key.name}</p>
-                    <p className="text-xs text-muted-foreground">{`${getFormmatedPubKey( key.publicKey )}`}</p>
-                    <p className="text-sm text-muted-foreground">{key.type}</p>
-                  </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteKey( key.$id )}
-                    disabled={loading}
-                  >
-                    Delete
-                  </Button>
-                </div>
-
-                {/* Associations */}
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Associations</h4>
-                  <div className="space-y-1">
-                    {/* DIDs */}
+        {isLoading ? (
+          <div className="flex justify-center items-center p-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) :
+          ( keys && keys.length > 0 ? (
+            <ul className="space-y-2 mt-6">
+              {keys.map( ( key ) => (
+                <li
+                  key={key.$id}
+                  className="border rounded-lg p-4 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h5 className="text-xs font-medium text-muted-foreground">
-                        DIDs:
-                      </h5>
-                      {key.dids.length > 0 ? (
-                        <ul className="list-disc list-inside">
-                          {key.dids.map( ( did ) => (
-                            <li key={did.$id} className="flex justify-between">
-                              <span className="break-all text-sm">{did.name}--{did.identifier.split( "_" )[ 1 ]}</span>
+                      <p className="font-medium">{key.name}</p>
+                      <p className="text-xs text-muted-foreground">{`${getFormmatedPubKey( key.publicKey )}`}</p>
+                      <p className="text-sm text-muted-foreground">{key.type}</p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteKey( key.$id )}
+                      disabled={loading}
+                    >
+                      Delete
+                    </Button>
+                  </div>
 
-                              {/* <Button
+                  {/* Associations */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Associations</h4>
+                    <div className="space-y-1">
+                      {/* DIDs */}
+                      <div>
+                        <h5 className="text-xs font-medium text-muted-foreground">
+                          DIDs:
+                        </h5>
+                        {key.dids.length > 0 ? (
+                          <ul className="list-disc list-inside">
+                            {key.dids.map( ( did ) => (
+                              <li key={did.$id} className="flex justify-between">
+                                <span className="break-all text-sm">{did.name}--{did.identifier.split( "_" )[ 1 ]}</span>
+
+                                {/* <Button
                                 variant="link"
                                 size="sm"
                                 onClick={() => viewDIDAssociations( key.$id, did.$id )}
                               >
                                 View Associations
                               </Button> */}
-                            </li>
-                          ) )}
-                        </ul>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">No associated DIDs</p>
-                      )}
-                    </div>
+                              </li>
+                            ) )}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">No associated DIDs</p>
+                        )}
+                      </div>
 
-                    {/* Organizations */}
-                    <div>
-                      <h5 className="text-xs font-medium text-muted-foreground">
-                        Organizations:
-                      </h5>
-                      {key.org ? (
-                        <ul className="list-disc list-inside">
-                          {
-                            <li key={key.org.$id} className="flex justify-between">
-                              <span className="break-all text-sm">{key.org.name}</span>
-                              {/* <Button
+                      {/* Organizations */}
+                      <div>
+                        <h5 className="text-xs font-medium text-muted-foreground">
+                          Organizations:
+                        </h5>
+                        {key.org ? (
+                          <ul className="list-disc list-inside">
+                            {
+                              <li key={key.org.$id} className="flex justify-between">
+                                <span className="break-all text-sm">{key.org.name}</span>
+                                {/* <Button
                                 variant="link"
                                 size="sm"
                                 onClick={() => viewOrgAssociations( key.$id, key.$id )}
                               >
                                 View Associations
                               </Button> */}
-                            </li>
-                          }
-                        </ul>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">No associated organizations</p>
-                      )}
+                              </li>
+                            }
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">No associated organizations</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            ) )}
-          </ul>
-        ) : (
-          <p className="text-center text-muted-foreground mt-4">No keys available.</p>
-        )}
+                </li>
+              ) )}
+            </ul>
+          ) : (
+            <p className="text-center text-muted-foreground mt-4">No keys available.</p>
+          ) )
+        }
       </div>
 
 
