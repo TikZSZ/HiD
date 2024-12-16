@@ -2,7 +2,7 @@ import * as Base58 from "base58-js";
 import * as crypto from "crypto";
 import { Base64 } from "js-base64";
 import { base58btc } from "multiformats/bases/base58";
-import { MultibaseDecoder, MultibaseEncoder } from "multiformats/bases/interface";
+// import { MultibaseDecoder, MultibaseEncoder } from "multiformats/bases/interface";
 
 export class Hashing {
     public static readonly sha256 = {
@@ -40,10 +40,10 @@ export class Hashing {
      * https://www.w3.org/TR/did-core/#dfn-publickeymultibase
      */
     public static readonly multibase = {
-        encode: function (data: Uint8Array, base: MultibaseEncoder<string> = base58btc): string {
+        encode: function (data: Uint8Array, base: any = base58btc): string {
             return base.encode(data);
         },
-        decode: function (data: string, base: MultibaseDecoder<string> = base58btc): Uint8Array {
+        decode: function (data: string, base: any = base58btc): Uint8Array {
             return base.decode(data);
         },
     };

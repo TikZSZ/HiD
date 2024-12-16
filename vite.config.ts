@@ -7,14 +7,13 @@ import { compression } from 'vite-plugin-compression2'
 // https://vite.dev/config/
 export default defineConfig( {
   plugins: [ react(),
-    compression({algorithm:"brotliCompress",compressionOptions:{chunkSize:5*1024}}),
+  compression( { algorithm: "brotliCompress", compressionOptions: { chunkSize: 5 * 1024 } } ),
   nodePolyfills( {
-    globals:{Buffer:true},
-    include:["stream"]
+    globals: { Buffer: true },
+    include: [ "stream" ]
   }
-  ) 
-],
-server:{origin:"http://localhost:5173"},
+  )
+  ],
   resolve: {
     alias: {
       "@": path.resolve( __dirname, "./src" ),

@@ -2,13 +2,13 @@ import  { AccountId, Transaction,LedgerId } from "@hashgraph/sdk";
 import { type DappMetadata,HashConnect } from "hashconnect";
 
 const appMetadata: DappMetadata = {
-    name: "Hedera-DIDs",
-    description: "Hedera DID Application",
+    name: "HiD",
+    description: "Hedera HiD Application",
     icons: [ "https://www.hashpack.app/img/logo.svg" ],
-    url: import.meta.env["DEV"] ?"http://localhost:5173":"https://hedera-ai.vercel.app",
+    url: import.meta.env["DEV"] ?"http://localhost:5173":"https://hedera-id.vercel.app",
 };
 
-const projectId = "e49ed79ed340742be3e313a3405f03fc";
+const projectId = "75be22ab7616006a6adf4505a47635c5";
 
 export let hashconnect = new HashConnect(
     LedgerId.TESTNET,
