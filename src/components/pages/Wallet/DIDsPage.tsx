@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { useSignModal } from "@/components/app/SignModal"; // The context we just created
 import { PrivateKey, PublicKey } from "@hashgraph/sdk";
-import { getUserScopedKey, KeyMetadata, KeyPurpose, associateKeyWithDID, KeyPair } from '@/HiD/keyManager';
+import { getUserScopedKey, KeyMetadata, KeyPurpose, associateKeyWithDID, KeyPair, KeyAlgorithm } from '@/HiD/keyManager';
 import { createDidDocument, registerDidDocument } from '@/did';
 import { useWallet } from '@/contexts/hashconnect';
 import { Loader2, XIcon } from "lucide-react";
@@ -22,6 +22,8 @@ import
 import { FormModal } from "@/components/app/FormModal";
 import { PlusIcon } from "lucide-react";
 import { PageHeader } from "../../app/PageHeader";
+import { Badge } from "@/components/ui/badge";
+import { keyTypesColors } from "@/components/OrganizationTable";
 
 const formSchema = z.object( {
   DIDName: z.string().min( 1, "DID name is required" ),
@@ -108,7 +110,7 @@ export const DIDCreatePage: React.FC = () =>
       },
     } );
   };
-
+  const filteredKeys = keys && keys.filter((key)=>key.keyAlgorithm === KeyAlgorithm.ED25519)
   // useEffect(()=>{
   //   getDIDs()
   // },[])
@@ -152,9 +154,13 @@ export const DIDCreatePage: React.FC = () =>
                         <SelectValue placeholder="Select a key" />
                       </SelectTrigger>
                       <SelectContent>
-                        {keys && keys.map( ( key ) => (
+                        {filteredKeys && filteredKeys.map( ( key ) => (
                           <SelectItem key={key.$id} value={key.$id}>
-                            {key.name} - {key.$id.slice( 0, 10 )}...
+                            {key.name} - {key.$id.slice( 0, 10 )}...{key.keyType.map( ( keyType ) => (
+                              <Badge key={keyType} className={keyTypesColors[ keyType ] + " mx-1"}>
+                                {keyType}
+                              </Badge>
+                            ) )}
                           </SelectItem>
                         ) )}
                       </SelectContent>

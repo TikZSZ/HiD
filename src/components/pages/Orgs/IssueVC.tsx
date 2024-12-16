@@ -67,7 +67,7 @@ import { Switch } from "@/components/ui/switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { useParams } from "react-router-dom";
-import AppwriteService, { OrganizationWithRoles, VCDocument } from "@/HiD/appwrite/service";
+import AppwriteService, { KeyAlgorithm, OrganizationWithRoles, VCDocument } from "@/HiD/appwrite/service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { keyTypesColors } from "@/components/OrganizationTable";
@@ -601,7 +601,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     //   ...data,
     // } );
   };
-
+  const filteredKeys = keys && keys.length > 0 && keys.filter((key)=>key.keyAlgorithm === KeyAlgorithm.BBS_2023)
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl overflow-auto max-h-[90%]">
@@ -657,7 +657,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {keys.map( ( key ) => (
+                          {filteredKeys && filteredKeys.map( ( key ) => (
                             <SelectItem key={key.$id} value={key.$id}>
                               {key.name} {key.keyType.map( ( keyType ) => (
                                 <Badge key={keyType} className={keyTypesColors[ keyType ] + " mx-1"}>
@@ -665,7 +665,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                                 </Badge>
                               ) )}
                             </SelectItem>
-                          ) )}
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormDescription>

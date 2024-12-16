@@ -13,13 +13,14 @@ const DashboardPage = lazy( () => import( "@/components/pages/Dashboard" ) );
 const KeysPage = lazy( () => import( "@/components/pages/Wallet/KeysPage" ) );
 const DIDsPage = lazy( () => import( "@/components/pages/Wallet/DIDsPage" ) );
 const UserVCsPage = lazy( () => import( "@/components/pages/Wallet/UserVCsPage" ) );
+const UserVPsPage = lazy( () => import( "@/components/pages/Wallet/VPsPage" ) );
 
 const OrganizationsPage = lazy( () => import( "./components/pages/Orgs/OrgsPage" ) )
 const ManageOrganizationPage = lazy( () => import( "./components/pages/Orgs/ManageOrganizationPage" ) )
 const OrgVCsPage = lazy( () => import( "./components/pages/Orgs/VCsPage" ) )
 const VCViewPage = lazy( () => import( "./components/pages/Orgs/VCViewPage" ) )
 const ViewVCPage = lazy( () => import( "./components/pages/VCView" ) )
-
+const ViewVPPage = lazy( () => import( "./components/pages/VPView" ) )
 
 
 
@@ -98,6 +99,18 @@ export const router = createBrowserRouter( [
             path: "wallet/vcs/:vcId",
             element: <PageWrapper>
               <ViewVCPage />
+            </PageWrapper>,
+          },
+          {
+            path: "wallet/vps",
+            element: <PageWrapper>
+              <UserVPsPage />
+            </PageWrapper>,
+          },
+          {
+            path: "wallet/vps/:vpId",
+            element: <PageWrapper>
+              <ViewVPPage />
             </PageWrapper>,
           },
           {

@@ -15,6 +15,7 @@ import { FormModal } from "../../app/FormModal";
 import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { Calendar, Info, KeyIcon, Loader2, User } from "lucide-react";
 import AppwriteService, {
+  KeyAlgorithm,
   KeyDocument,
   MembersWithRoles,
   OrganizationRole,
@@ -44,7 +45,7 @@ const AddKeyModal: React.FC<{
     const { userId, useKeysList } = useKeyContext();
     const { data: keys, isLoading: isLoadingKeys } = useKeysList()
     // Fetch User's Unlinked Keys Query
-    const unlinkedKeys = keys && keys.filter( ( key ) => key.org === null ) || []
+    const unlinkedKeys = keys && keys.filter( ( key ) => key.org === null && key.keyAlgorithm === KeyAlgorithm.BBS_2023) || []
     // const {
     //   data: unlinkedKeys = [],
     //   isLoading: isLoadingKeys
@@ -141,9 +142,13 @@ const AddKeyModal: React.FC<{
                           <div className="p-2 text-center text-muted-foreground">
                             No unlinked keys available
                           </div>
-                        ) : unlinkedKeys.map( ( key ) => (
+                        ) : unlinkedKeys.map( ( key ) =>  (
                           <SelectItem key={key.$id} value={key.$id}>
-                            {key.name} - {key.$id.slice( 0, 10 )}...
+                            {key.name} {key.keyType.map( ( keyType ) => (
+                              <Badge key={keyType} className={keyTypesColors[ keyType ] + " mx-1"}>
+                                {keyType}
+                              </Badge>
+                            ) )}
                           </SelectItem>
                         ) )}
                       </SelectContent>

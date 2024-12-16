@@ -18,7 +18,8 @@ import
     Settings2,
     SquareTerminal,
     User,
-    FileBadge2Icon
+    FileBadge2Icon,
+    FileText
   } from "lucide-react"
 
 // import { NavMain } from "@/components/nav-main"
@@ -65,6 +66,11 @@ const data = {
           url: "/dashboard/wallet/vcs",
           icon:FileBadge2Icon 
         },
+        {
+          title: "Presentations",
+          url: "/dashboard/wallet/vps",
+          icon:FileText 
+        },
       ],
     },
     {
@@ -83,52 +89,6 @@ const data = {
         },
         {
           title: "Security",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
           url: "#",
         },
       ],

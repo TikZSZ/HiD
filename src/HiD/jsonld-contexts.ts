@@ -690,7 +690,7 @@ export async function documentLoader ( url: string )
           console.log( "no did found" )
           return {}
         }
-        console.log( didDocument )
+        // console.log( didDocument )
         const controller = didDocument.id
         try
         {
@@ -705,7 +705,6 @@ export async function documentLoader ( url: string )
               {
                 const keyDocs = didDocument.verificationMethod.map( ( verMethod ) =>
                 {
-                  console.log( verMethod.id, keyId, securityMethod )
                   if ( verMethod.id === keyId ) return {
                     '@context': 'https://w3id.org/security/multikey/v1',
                     type: 'Multikey',

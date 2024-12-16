@@ -101,6 +101,15 @@ export interface UserDocument extends Models.Document
   email: string;
 }
 
+
+export interface PresentationDocument extends Models.Document
+{
+  onwerId: string,
+  vcId: string,
+  location: string,
+  signedBy: KeyDocument
+}
+
 // Interface for Organizations Collection
 export interface OrganizationDocument extends Models.Document
 {
@@ -169,6 +178,13 @@ export interface CreateVCDTO
   // holderId?: string
   identifier: string
   vcId: string
+}
+
+export interface CreateVPDTO
+{
+  vpData: string,
+  vcId: string,
+  vpId:string
 }
 
 export interface CreateVCStoreDTO
@@ -316,7 +332,7 @@ class AppwriteService
     const dids = await this.databases.listDocuments<DIDDocument>(
       conf.appwrtieDBId,
       conf.appwriteDIDsCollID,
-      [ Query.equal( "owner", ownerId ) ]
+      [ Query.equal( "owner", ownerId ),Query.select(["$id","identifier","name","keys.$id","keys.name","keys.publicKey","keys.keyAlgorithm","keys.keyType"]),Query.orderDesc("$id") ]
     );
     return dids.documents
   }
@@ -326,11 +342,22 @@ class AppwriteService
     // Fetch related Keys
     const dids = await this.databases.getDocument<DIDDocument>(
       conf.appwrtieDBId,
-      conf.appwriteKeysCollID,
+      conf.appwriteDIDsCollID,
       didId,
       [ Query.equal( "owner", ownerId ) ]
     );
     return dids
+  }
+
+  async getDIDFromIdentifier ( identifier: string )
+  {
+    // Fetch related Keys
+    const dids = await this.databases.listDocuments<DIDDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteDIDsCollID,
+      [ Query.equal( "identifier", identifier ) ]
+    );
+    return dids.documents
   }
 
   async associateKeyWithDID (
@@ -422,7 +449,10 @@ class AppwriteService
     const keys = await this.databases.listDocuments<KeyDocument>(
       conf.appwrtieDBId,
       conf.appwriteKeysCollID,
-      [ Query.equal( 'owner', userId ) ]
+      [ Query.equal( 'owner', userId ),
+        Query.select(["$id","$createdAt","publicKey","name","description","keyAlgorithm","keyType","org.*"]),
+        Query.orderDesc("$id")
+      ]
     );
     return keys.documents
   }
@@ -437,9 +467,6 @@ class AppwriteService
     );
     return keys
   }
-
-
-
 
   async deleteKey ( userId: string, id: string )
   {
@@ -497,7 +524,7 @@ class AppwriteService
     const orgs = await this.databases.listDocuments<OrganizationDocument>(
       conf.appwrtieDBId,
       conf.appwriteOrgsCollID,
-      [ Query.equal( '$id', roles.documents.map( ( role ) => role.orgId ) ) ]
+      [ Query.equal( '$id', roles.documents.map( ( role ) => role.orgId ) ),Query.orderDesc("$id") ]
     );
 
     return orgs.documents.map( ( document, i ) => ( { ...document, roles: roles.documents[ i ].roles } ) )
@@ -514,7 +541,7 @@ class AppwriteService
     const members = await this.databases.listDocuments<UserDocument>(
       conf.appwrtieDBId,
       conf.appwriteUsersCollID,
-      [ Query.equal( '$id', roles.documents.map( ( role ) => role.userId ) ) ]
+      [ Query.equal( '$id', roles.documents.map( ( role ) => role.userId ) ),Query.orderDesc("$id") ]
     );
     console.log( members, roles.documents.map( ( role ) => role.userId ) )
     return members.documents.map( ( document, i ) => ( { ...document, roles: roles.documents[ i ].roles } ) )
@@ -643,7 +670,7 @@ class AppwriteService
     const keys = await this.databases.listDocuments<OrganizationDocument>(
       conf.appwrtieDBId,
       conf.appwriteOrgsCollID,
-      [ Query.equal( "owner", ownerId ), Query.equal( "org", keyId ) ]
+      [ Query.equal( "owner", ownerId ), Query.equal( "org", keyId ), ]
     );
     return keys.documents
   }
@@ -654,7 +681,7 @@ class AppwriteService
     const keys = ( await this.databases.listDocuments<KeyDocument>(
       conf.appwrtieDBId,
       conf.appwriteKeysCollID,
-      [ Query.equal( "owner", ownerId ), Query.equal( "org", orgId ) ]
+      [ Query.equal( "owner", ownerId ), Query.equal( "org", orgId ),Query.orderDesc("$id") ]
     ) )
     return keys.documents
   }
@@ -721,6 +748,62 @@ class AppwriteService
     }
   }
 
+  async issuePresentation ( data: CreateVPDTO, ownerId: string, keyId: string )
+  {
+    try
+    {
+      // Verify that the keyId is authorized for the given organization
+      const keyDoc = await this.getKey( ownerId, keyId )
+      if ( !keyDoc ) throw new Error( "Key does not exist" );
+
+      if ( keyDoc.owner.$id !== ownerId ) throw new Error( "Key Does not belong to user." );
+
+      const blob = new Blob( [ data.vpData ], { type: "application/json" } );
+      // Create Blob
+      // save VCObj to a file and add store type
+      const { url } = await this.uploadFile( new File( [ blob ], "vcObj" ) )
+      // Save the VCDocument in the database
+      const result = await this.databases.createDocument<PresentationDocument>(
+        conf.appwrtieDBId,
+        conf.appwriteVPsCollID,
+        data.vpId, // Generate a unique ID
+        {
+          signedBy: keyId,
+          ownerId, location: url,
+          vcId:data.vcId
+        }
+      );
+      return result;
+    } catch ( error )
+    {
+      console.error( "Error issuing credential:", error );
+      throw error;
+    }
+  }
+
+  async getPresentations ( userId: string )
+  {
+    if ( !userId ) throw new Error( "invalid Request" )
+    const result = await this.databases.listDocuments<PresentationDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteVPsCollID,
+      // @ts-ignore
+      [ Query.equal( "ownerId", userId ), Query.orderDesc( "$id" ),Query.select(["ownerId","vcId","location","$createdAt","$id","signedBy.$id","signedBy.name","signedBy.publicKey"]) ]
+    );
+    return result.documents
+  }
+
+  async getPresentation ( vpId: string )
+  {
+    if ( !vpId ) throw new Error( "invalid Request" )
+    const result = await this.databases.getDocument<PresentationDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteVPsCollID,
+      vpId
+    );
+    return result
+  }
+
   async getVCDoc ( vcId: string ): Promise<VCDocument>
   {
     const result = await this.databases.getDocument<VCDocument>(
@@ -744,7 +827,7 @@ class AppwriteService
     const result = await this.databases.listDocuments<VCDocument>(
       conf.appwrtieDBId,
       conf.appwriteVCsCollID,
-      [ Query.equal( "issuer", orgId ), Query.orderDesc( "$id" ) ]
+      [ Query.equal( "issuer", orgId ), Query.orderDesc( "$id" ),Query.select(["$id","identifier","$createdAt","issuer.name","issuer.$id","holder.*"]) ]
     );
     return result.documents
   }
@@ -756,7 +839,7 @@ class AppwriteService
       conf.appwrtieDBId,
       conf.appwriteVCsCollID,
       // @ts-ignore
-      [ identifier ? Query.equal( "identifier", identifier ) : Query.equal( "holder", userId ), Query.orderDesc( "$id" ) ]
+      [ identifier ? Query.equal( "identifier", identifier ) : Query.equal( "holder", userId ), Query.orderDesc( "$id" ),Query.select(["$id","identifier","$createdAt","issuer.name","issuer.$id"]) ]
     );
     return result.documents
   }

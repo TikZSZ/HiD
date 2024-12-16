@@ -12,6 +12,8 @@ import { FormModal } from "../../app/FormModal";
 import { PageHeader } from "../../app/PageHeader";
 import { Loader2 } from "lucide-react";
 import { KeyAlgorithm } from "@/HiD/keyManager";
+import { keyTypesColors } from "@/components/OrganizationTable";
+import { Badge } from "@/components/ui/badge";
 function getFormmatedPubKey ( publicKey: string )
 {
   // const pK = PublicKey.fromString( publicKey ).toStringRaw()
@@ -132,10 +134,18 @@ export const KeyManagementOverlay: React.FC = () =>
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{key.name}</p>
-                      <p className="text-xs text-muted-foreground">{`${getFormmatedPubKey( key.publicKey )}`}</p>
+                      <p className="font-medium">{key.name}  
+                        <Badge className={"bg-secondary text-sm text-white ml-5  rounded-sm mb-2"}>
+                        {key.keyAlgorithm}
+                      </Badge></p>
+                      <p className="text-xs text-muted-foreground">{`${getFormmatedPubKey( key.publicKey )}`} </p>
                       <p className="text-sm text-muted-foreground">{key.type}</p>
+                      <div>
+
+                        
+                      </div>
                     </div>
+
                     <Button
                       variant="destructive"
                       size="sm"
@@ -157,8 +167,8 @@ export const KeyManagementOverlay: React.FC = () =>
                         </h5>
                         {key.dids.length > 0 ? (
                           <ul className="list-disc list-inside">
-                            {key.dids.map( ( did ) => (
-                              <li key={did.$id} className="flex justify-between">
+                            {key.dids.map( ( did, i ) => (
+                              <li key={i} className="flex justify-between">
                                 <span className="break-all text-sm">{did.name}--{did.identifier.split( "_" )[ 1 ]}</span>
 
                                 {/* <Button
@@ -202,6 +212,11 @@ export const KeyManagementOverlay: React.FC = () =>
                       </div>
                     </div>
                   </div>
+                  {key.keyType.map( ( keyType ) => (
+                          <Badge key={keyType} className={keyTypesColors[ keyType ] + " mr-2"}>
+                            {keyType}
+                          </Badge>
+                        ) )}
                 </li>
               ) )}
             </ul>
