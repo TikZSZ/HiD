@@ -25,7 +25,6 @@ import
   FormDescription
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import
 {
   Card,
@@ -33,10 +32,8 @@ import
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 // @ts-ignore
-import {binary_to_base58} from "base58-js"
+import { binary_to_base58 } from "base58-js"
 interface ImportedContext
 {
   context: { [ key: string ]: string };
@@ -47,8 +44,8 @@ interface ImportedContext
       type: string;
       optional?: boolean;
       description?: string;
-      value?:any
-      mandatory?:boolean
+      value?: any
+      mandatory?: boolean
     }
   };
 }
@@ -59,112 +56,40 @@ import
   Trash2,
   ShieldCheck,
   FileUp,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Loader2
 } from "lucide-react";
 
 // Services and Contexts
 import { toast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { useParams } from "react-router-dom";
+import AppwriteService, { OrganizationWithRoles, VCDocument } from "@/HiD/appwrite/service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { keyTypesColors } from "@/components/OrganizationTable";
-// Enhanced Zod Schema for VC Creation with Dynamic Field Support
+import { KeyPair } from "@/HiD/keyManager";
+import { useSignModal } from "@/components/app/SignModal";
+import { ID } from "appwrite";
+
+import
+{
+  createSignCryptosuite,
+  createDiscloseCryptosuite,
+  createVerifyCryptosuite
+} from "@digitalbazaar/bbs-2023-cryptosuite"
+import { klona } from 'klona';
+import { DataIntegrityProof } from '@digitalbazaar/data-integrity';
+import jsigs from 'jsonld-signatures';
+import * as vc from '@digitalbazaar/vc';
+import { documentLoader } from "@/HiD/jsonld-contexts";
+const { purposes: { AssertionProofPurpose } } = jsigs;
 
 // Dynamic Input Component
-const DynamicInput: React.FC<{
-  dataType: string;
-  value: any;
-  onChange: ( value: any ) => void;
-  placeholder?: string;
-  field?: any
-}> = ( { dataType, value, onChange, placeholder, field } ) =>
-  {
-    {
-      console.log( field )
-      switch ( dataType )
-      {
-        case 'date':
-          return (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !value && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {value ? format( value, "PPP" ) : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={value}
-                  onSelect={onChange}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          );
-        case 'number':
-          return (
-            // <div className="grid w-full max-w-sm items-center gap-1.5">
-            //   <Label htmlFor="email">Email</Label>
-            //   <Input type="number" value={value || ''} onChange={( e ) => onChange( Number( e.target.value ) )} placeholder={placeholder} />
-            // </div>
-            <FormItem>
-              <FormLabel>{field.key}</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder={placeholder} />
-              </FormControl>
-              <FormDescription>
-                {field.description}
-              </FormDescription>
-            </FormItem>
-            // <Input
-            //   type="number"
-            //   value={value || ''}
-            //   onChange={( e ) => onChange( Number( e.target.value ) )}
-            //   placeholder={placeholder}
-            // />
-          );
-        case 'boolean':
-          return (
-            <Checkbox
-              checked={value || false}
-              onCheckedChange={onChange}
-            />
-          );
-        default:
-          return (
-            // <Input
-            //   value={value || ''}
-            //   onChange={( e ) => onChange( e.target.value )}
-            //   placeholder={placeholder}
-            // />
-            <FormItem>
-              <FormLabel>{field.key}</FormLabel>
-              <FormControl>
-                <Input value={value || ''} onChange={( e ) => onChange( e.target.value )} placeholder={placeholder} required={!field.optional} />
-              </FormControl>
-              <FormDescription>
-                {field.description}
-              </FormDescription>
-            </FormItem>
-          );
-      }
-    };
-  }
-
-const DynamicInput2: React.FC<{ field: any, fieldName: string, fieldDescription?: string, dataType: string, required: boolean }> = ( { field, dataType, fieldName, fieldDescription = "", required } ) =>
+const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?: string, dataType: string, required: boolean }> = ( { field, dataType, fieldName, fieldDescription = "", required } ) =>
 {
   // console.log( field )
   {
@@ -241,15 +166,10 @@ const VCCreationSchema = z.object( {
     if ( identifier.split( ":" )[ 3 ].split( "_" ).length !== 2 ) return false
     if ( identifier.split( ":" )[ 3 ].split( "_" )[ 1 ].split( "." ).length !== 3 ) return false
     return true
-  }, "identifier should be of form did:hedera:network:....._TopicID " ).default(""),
+  }, "identifier should be of form did:hedera:network:....._TopicID " ).default( "" ),
   keyId: z.string().nonempty( "Select a key to sign the credential" ),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
-
-  // subject: z.object( {
-  //   id: z.string().optional(),
-  //   name: z.string().optional()
-  // } ).optional(),
 
   contexts: z.array(
     z.object( {
@@ -257,7 +177,7 @@ const VCCreationSchema = z.object( {
       context: z.record( z.string(), z.any() ),
       originalFile: z.string().optional(),
       schema: z.record( z.string(), z.object( {
-        name:z.string(),
+        name: z.string(),
         mandatory: z.boolean().default( false ).optional(),
         type: z.string(),
         description: z.string().optional()
@@ -278,39 +198,41 @@ const VCCreationSchema = z.object( {
     } )
   ).default( [] )
 } );
+type IssueVCFormValues = z.infer<typeof VCCreationSchema>
 interface CreateVCModalProps
 {
   isOpen: boolean;
   onOpenChange: ( open: boolean ) => void;
-  onSubmit: ( data: z.infer<typeof VCCreationSchema> ) => void;
+  // onSubmit: ( data: IssueVCFormValues ) => Promise<void>;
+  org:OrganizationWithRoles
 }
 export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
   isOpen,
   onOpenChange,
-  onSubmit
+  org:{$id:orgId,name:orgName}
 } ) =>
 {
-  const { orgId } = useParams<{ orgId: string }>();
-  const { userId, useOrgsList } = useKeyContext();
+  const { userId, } = useKeyContext();
+  const queryClient = useQueryClient();
+  const { openSignModal } = useSignModal();
+
   const {
     data: keys = [],
     isLoading: isLoadingKeys
   } = useQuery( {
-    queryKey: [ 'memberKeys', orgId ],
+    queryKey: [ 'orgKeys', orgId ],
     queryFn: () => AppwriteService.getKeysForOrgAndUser( userId, orgId! ),
     enabled: isOpen
   } );
   // Form Setup with more robust default values
-  const form = useForm<z.infer<typeof VCCreationSchema>>( {
+  const form = useForm<IssueVCFormValues>( {
     resolver: zodResolver( VCCreationSchema ),
     defaultValues: {
-      // name: "",
-      // description: "",
-      identifier:'',
+      identifier: '',
       contexts: [],
       credentialSubject: [],
-      validFrom:undefined,
-      validUntil:undefined
+      validFrom: undefined,
+      validUntil: undefined
     },
   } );
 
@@ -337,8 +259,9 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     try
     {
       const textEncoder = new TextEncoder()
-      const hash = file.name+"#"+(binary_to_base58(new Uint8Array(await crypto.subtle.digest("SHA-256",textEncoder.encode(jsonStr)))) as string).substring(0,15)
-      if(contextsFields.find((cont)=>cont.originalFile === hash)){
+      const hash = file.name + "#" + ( binary_to_base58( new Uint8Array( await crypto.subtle.digest( "SHA-256", textEncoder.encode( jsonStr ) ) ) ) as string ).substring( 0, 15 )
+      if ( contextsFields.find( ( cont ) => cont.originalFile === hash ) )
+      {
         toast( {
           title: "Duplicate Context",
           description: "The imported context already exists.",
@@ -373,13 +296,13 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
         {} as ImportedContext[ "fields" ]
       );
       console.log( contextType, contextSchema )
-      
+
       // Add context to contexts array with schema
       appendContext( {
 
         type: contextType,
         context: parsedContext.context,
-        originalFile:hash,
+        originalFile: hash,
         schema: contextSchema
       } );
 
@@ -418,45 +341,45 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     }
   }
 
-//   useEffect( () =>
-//   {
-//     addJSONContext( `{
-//   "context": {
-//     "@protected": true,
-//     "AlumniCredential": "urn:example:AlumniCredential",
-//     "alumniOf": "https://schema.org#alumniOf",
-//     "currentGrade": "https://schema.org#number",
-//     "graduationDate": "https://schema.org#date"
-//   },
-//   "type": "AlumniCredential",
-//   "fields": {
-//     "alumniOf": {
-//       "name":"Alumni Of",
-//       "type":"string",
-//       "optional":false,
-//       "mandatory":true,
-//       "description":"University Name"
-//     }, 
-//     "currentGrade": {
-//       "name":"Current Grade",
-//       "type":"number",
-//       "optional":false,
-//       "mandatory":true,
-//       "description":"Current Student Grade"
-//     }, 
-//     "graduationDate": {
-//       "name":"Graduation Date",
-//       "type":"date",
-//       "optional":false,
-//       "mandatory":true,
-//       "description":"Current Student Graduation Date"
-//     }
-//   }
-// }`)
-//   }, [] )
+  //   useEffect( () =>
+  //   {
+  //     addJSONContext( `{
+  //   "context": {
+  //     "@protected": true,
+  //     "AlumniCredential": "urn:example:AlumniCredential",
+  //     "alumniOf": "https://schema.org#alumniOf",
+  //     "currentGrade": "https://schema.org#number",
+  //     "graduationDate": "https://schema.org#date"
+  //   },
+  //   "type": "AlumniCredential",
+  //   "fields": {
+  //     "alumniOf": {
+  //       "name":"Alumni Of",
+  //       "type":"string",
+  //       "optional":false,
+  //       "mandatory":true,
+  //       "description":"University Name"
+  //     }, 
+  //     "currentGrade": {
+  //       "name":"Current Grade",
+  //       "type":"number",
+  //       "optional":false,
+  //       "mandatory":true,
+  //       "description":"Current Student Grade"
+  //     }, 
+  //     "graduationDate": {
+  //       "name":"Graduation Date",
+  //       "type":"date",
+  //       "optional":false,
+  //       "mandatory":true,
+  //       "description":"Current Student Graduation Date"
+  //     }
+  //   }
+  // }`)
+  //   }, [] )
 
   // Enhanced File Drop Handler
-  
+
   const onDrop = useCallback( ( acceptedFiles: File[] ) =>
   {
     acceptedFiles.forEach( file =>
@@ -466,7 +389,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
       reader.onload = ( event ) =>
       {
         // @ts-ignore
-        addJSONContext( event.target.result,file )
+        addJSONContext( event.target.result, file )
       };
 
       reader.readAsText( file );
@@ -497,12 +420,164 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     removeContext( contextIndex );
   };
 
-  const handleSubmit = ( data: z.infer<typeof VCCreationSchema> ) =>
+  // Issue VC Mutation
+  const issueVCMutation = useMutation( {
+    mutationFn: async ( data: IssueVCFormValues ) =>
+    {
+      const { contexts, identifier, keyId: keyID, credentialSubject, validFrom, validUntil } = data
+      // const didDocument = await resolveDID( identifier )
+      // if ( didDocument && !didDocument.hasOwner() )
+      // {
+      //   // form.setError( "identifier", { message: "Invalid DIDIdentifier" } )
+      //   return
+      // }
+      return new Promise( ( res:(data:VCDocument)=>void, rej ) =>
+      {
+        let vcDocument: VCDocument
+        console.log( contexts )
+        openSignModal( keyID, "key-retrieval", {
+          purpose: "DID Creation",
+          onSuccess: async ( keyPair ) =>
+          {
+
+            try
+            {
+              if ( keyPair instanceof Uint8Array ) return
+              // org controller ID
+              const controller = `did:web:675d93dc69da7be75efd.appwrite.global/issuers/${orgId}`;
+              // siging key ID and KeyPair
+              const keyid = `${controller}#${keyID}`;
+              keyPair.controller = controller;
+              keyPair.id = keyid
+              // extract mandatory pointers and added Context KV pairs
+              const mandatoryPointers: string[] = [ `/issuer` ]
+              const credentialSubjectData: any = {}
+              for ( const crsub of credentialSubject )
+              {
+                if ( crsub.value )
+                {
+                  if ( crsub.dataType === "date" )
+                  {
+                    credentialSubjectData[ crsub.key ] = new Date( crsub.value ).toISOString()
+                  } else
+                  {
+                    credentialSubjectData[ crsub.key ] = crsub.value
+                  }
+                  if ( crsub.mandatory ) mandatoryPointers.push( `/credentialSubject/${crsub.key}` )
+                }
+              }
+              // prepare the VC Document 
+              const vcId = ID.unique()
+              const credential: any = {
+                "@context": [
+                  "https://www.w3.org/ns/credentials/v2",
+                  "https://www.w3.org/ns/credentials/examples/v2",
+                  ...contexts.map( ( ctx ) => ctx.context )
+                ],
+                id: import.meta.env[ "VITE_BASE_URL" ] + `/dashboard/orgs/${orgId}/vcs/${vcId}`,
+                type: [ 'VerifiableCredential', ...contexts.map( ( context ) => context.type ) ],
+                issuer: {
+                  id: controller,
+                  name: orgName
+                },
+                issuanceDate: new Date().toISOString(),
+                credentialSubject: {
+                  id: identifier,
+                  nonce: crypto.randomUUID(),
+                  ...credentialSubjectData
+                }
+              }
+              if ( validFrom ) credential[ "validFrom" ] = new Date( validFrom ).toISOString()
+              if ( validUntil ) credential[ "validUntil" ] = new Date( validUntil ).toISOString()
+              console.log( credential, mandatoryPointers )
+
+              // sign the vc document
+              const unsignedCredential = klona( credential );
+              const cryptosuite = createSignCryptosuite( { mandatoryPointers } );
+              const suite = new DataIntegrityProof( {
+                signer: ( keyPair as KeyPair ).signer(), cryptosuite
+              } );
+              const signedCredential = await vc.issue( { credential: unsignedCredential, suite: suite, documentLoader: documentLoader } )
+              console.dir( { signedCredential }, { depth: null } )
+
+              // create and verify a test revealed document before issusing VC 
+              let revealed
+              {
+                const cryptosuite = createDiscloseCryptosuite( {
+                  selectivePointers: [ '/credentialSubject/id' ]
+                } );
+                const suite = new DataIntegrityProof( { cryptosuite, date: new Date() } );
+                revealed = await vc.derive( { verifiableCredential: signedCredential, suite: suite, documentLoader: documentLoader } )
+                console.dir( revealed )
+              }
+              {
+                const cryptosuite = createVerifyCryptosuite();
+                const suite = new DataIntegrityProof( { cryptosuite } );
+                const signedCredentialCopy = klona( revealed );
+                const result = await vc.verifyCredential( {
+                  credential: signedCredentialCopy,
+                  suite, documentLoader: documentLoader,
+                  purpose: new AssertionProofPurpose()
+                } );
+                console.log( result )
+                // on success save the issued VC to CLOUD 
+                if ( result.verified )
+                {
+                  vcDocument = await AppwriteService.issueCredential( { identifier, vcId, vcData: JSON.stringify( { signedCredential, contextMetadata: contexts.reduce( ( acc, ctx ) => ( { ...acc, ...ctx.schema } ), {} ) } ) }, orgId!, userId, keyID )
+                  console.log( vcDocument )
+                  toast( { title: "VC Issued", description: "VC was issued successfully to" + " " + identifier.substring( 0, 20 ), variant: "default" } );
+                  res( vcDocument )
+                }
+              }
+            } catch ( err )
+            {
+              rej( err )
+            }
+          },
+          onError: ( error ) =>
+          {
+            console.error( "Signing failed", error );
+            rej( error )
+          },
+          onClose: () =>
+          {
+            console.error( "Signing failed", "User Rejected" );
+            rej()
+            // setIsCreating( false );
+          },
+        } );
+      } )
+    },
+    onSuccess: async ( newVC ) =>
+    {
+
+      // Invalidate and refetch VCs
+      queryClient.invalidateQueries( {
+        queryKey: [ 'orgVCs', orgId ]
+      } );
+
+      toast( {
+        title: "Credential Issued",
+        description: "The Verifiable Credential has been successfully issued.",
+      } );
+    },
+    onError: ( error ) =>
+    {
+      console.error( "Error issuing credential:", error );
+      toast( {
+        title: "Error",
+        description: "Failed to issue credential. Please try again. " + error.message,
+        variant: "destructive"
+      } );
+    }
+  } );
+
+  const handleSubmit = async ( data: IssueVCFormValues ) =>
   {
-    onSubmit( {
-      ...data,
-      // Additional processing if needed
-    } );
+    await issueVCMutation.mutateAsync( data )
+    // await onSubmit( {
+    //   ...data,
+    // } );
   };
 
   return (
@@ -517,93 +592,6 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit( handleSubmit )} className="space-y-6 overflow-auto">
-            {/* Restore all original form sections from the previous implementation */}
-            {/* VC Metadata Card */}
-
-            {/* <Card>
-              <CardHeader>
-                <CardTitle>Credential Metadata</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={( { field } ) => (
-                    <FormItem>
-                      <FormLabel>Credential Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Optional credential name" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        A human-readable name for the credential
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={( { field } ) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Optional description" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Provide additional context about the credential
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card> */}
-
-            {/* Validity Periods */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Validity Period</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="validFrom"
-                  render={( { field } ) => (
-                    <FormItem>
-                      <FormLabel>Valid From</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                      
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        When does this credential become valid?
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="validUntil"
-                  render={( { field } ) => (
-                    <FormItem>
-                      <FormLabel>Valid Until</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                        
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        When does this credential expire?
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
 
             {/* Subject Metadata */}
             <Card>
@@ -667,6 +655,55 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                 />
               </CardContent>
             </Card>
+
+            {/* Validity Periods */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Validity Period</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="validFrom"
+                  render={( { field } ) => (
+                    <FormItem>
+                      <FormLabel>Valid From</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          {...field}
+
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        When does this credential become valid?
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="validUntil"
+                  render={( { field } ) => (
+                    <FormItem>
+                      <FormLabel>Valid Until</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          {...field}
+
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        When does this credential expire?
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+
             {/* Context Import Section */}
             <Card>
               <CardHeader>
@@ -734,27 +771,12 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                     key={field.id}
                     className="flex items-center space-x-2 mb-2"
                   >
-                    {/* <Input
-                      placeholder="Property Key"
-                      value={field.key}
-                      disabled
-                    /> */}
-                    {/* <DynamicInput
-                      dataType={field.dataType || 'string'}
-                      value={form.watch( `credentialSubject.${index}.value` )}
-                      onChange={( value ) =>
-                      {
-                        form.setValue( `credentialSubject.${index}.value`, value );
-                      }}
-                      placeholder={`Enter ${field.key}`}
-                      field={field}
-                    /> */}
                     <FormField
                       control={form.control}
                       name={`credentialSubject.${index}.value`}
                       rules={{ required: !field.optional }}
                       render={( { field: field2 } ) => (
-                        <DynamicInput2
+                        <DynamicInput
                           dataType={field.dataType || 'string'}
                           field={field2}
                           fieldName={field.name}
@@ -768,23 +790,11 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                       name={`credentialSubject.${index}.mandatory`}
                       control={form.control}
                       render={( { field: checkboxField } ) => (
-                        // <Checkbox
-                        //   checked={checkboxField.value}
-                        //   onCheckedChange={checkboxField.onChange}
-                        // />
                         <div className="items-top flex space-x-2">
-                          {/* <div className="grid gap-1.5 leading-none"> */}
-                          {/* <label
-                              htmlFor="terms1"
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              Mandatory
-                            </label> */}
                           <div className="flex items-center space-x-2">
                             <Switch checked={checkboxField.value} onCheckedChange={checkboxField.onChange} id="airplane-mode" />
                             <Label htmlFor="airplane-mode">Mandatory</Label>
                           </div>
-                          {/* </div> */}
                         </div>
                       )}
                     />
@@ -806,9 +816,19 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
               </p>
             )}
             {/* Submit Button */}
-            <div className="flex justify-end">
-              <Button type="submit">
-                Create Verifiable Credential
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+              <Button variant="outline" type="button" onClick={() => onOpenChange( false )}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Issue Credential"
+                )}
               </Button>
             </div>
           </form>

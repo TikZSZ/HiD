@@ -739,7 +739,7 @@ class AppwriteService
     const result = await this.databases.listDocuments<VCDocument>(
       conf.appwrtieDBId,
       conf.appwriteVCsCollID,
-      [Query.equal("issuer",orgId)]
+      [Query.equal("issuer",orgId),Query.orderDesc("$id")]
     );
     return result.documents
   }
