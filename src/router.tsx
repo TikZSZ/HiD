@@ -5,17 +5,17 @@ import { lazy } from "react";
 
 
 const LoginPage = lazy( () => import( "@/components/pages/LoginPage" ) );
-const ProtectedLayout = lazy( () => import( "@/components/pages/AuthLayout" ) );
+const ProtectedLayout = lazy( () => import( "@/components/pages/Layouts/AuthLayout" ) );
 const SignupPage = lazy( () => import( "@/components/pages/SignupPage" ) );
 const RouterErrorPage = lazy( () => import( "@/components/pages/ErrorPage" ) );
-const DashboardLayout = lazy( () => import( "@/components/pages/DashboardLayout" ) );
+const DashboardLayout = lazy( () => import( "@/components/pages/Layouts/DashboardLayout" ) );
 const DashboardPage = lazy( () => import( "@/components/pages/Dashboard" ) );
-const KeysPage = lazy( () => import( "@/components/pages/KeysPage" ) );
-const DIDsPage = lazy( () => import( "@/components/pages/DIDsPage" ) );
-const OrganizationsPage = lazy( () => import( "./components/pages/OrgsPage" ) )
-const ManageOrganizationPage = lazy( () => import( "./components/pages/ManageOrganizationPage" ) )
-const OrgVCsPage = lazy( () => import( "./components/pages/VCsPage" ) )
-const VCViewPage = lazy( () => import( "./components/pages/VCViewPage" ) )
+const KeysPage = lazy( () => import( "@/components/pages/Wallet/KeysPage" ) );
+const DIDsPage = lazy( () => import( "@/components/pages/Wallet/DIDsPage" ) );
+const OrganizationsPage = lazy( () => import( "./components/pages/Orgs/OrgsPage" ) )
+const ManageOrganizationPage = lazy( () => import( "./components/pages/Orgs/ManageOrganizationPage" ) )
+const OrgVCsPage = lazy( () => import( "./components/pages/Orgs/VCsPage" ) )
+const VCViewPage = lazy( () => import( "./components/pages/Orgs/VCViewPage" ) )
 
 
 

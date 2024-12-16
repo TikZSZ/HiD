@@ -12,6 +12,7 @@ export default defineConfig( {
   }
   ) 
 ],
+server:{origin:"http://localhost:5173"},
   resolve: {
     alias: {
       "@": path.resolve( __dirname, "./src" ),

@@ -3,15 +3,14 @@ import multikeyContext from '@digitalbazaar/multikey-context';
 
 import { JSONObject } from "./JSON";
 import { Ed25519PubCodec, HcsDid } from '../src/HiD/did-sdk';
-import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
 import { base58_to_binary, binary_to_base58 } from 'base58-js';
 import
-  {
-    bls12381MultikeyKeyPair,
-    controllerDocBls12381Multikey,
-    publicBls12381Multikey,
-  } from './mock-data';
-import { PrivateKey } from '@hashgraph/sdk';
+{
+  bls12381MultikeyKeyPair,
+  controllerDocBls12381Multikey,
+  publicBls12381Multikey,
+} from './mock-data';
+
 const contexts = new Map<string, JSONObject>();
 contexts.set( "https://w3id.org/vc/status-list/2021/v1", {
   "@context": {
@@ -659,6 +658,22 @@ contexts.set(
   publicBls12381Multikey )
 
 export default contexts;
+interface DIDObj
+{
+  '@context': string;
+  id: string;
+  verificationMethod: VerificationMethod[];
+  assertionMethod: string[];
+  authentication: string[];
+}
+
+interface VerificationMethod
+{
+  id: string;
+  type: string;
+  controller: string;
+  publicKeyBase58: string;
+}
 export async function documentLoader ( url: string )
 {
   if ( contexts.has( url ) )
@@ -675,21 +690,14 @@ export async function documentLoader ( url: string )
     {
       case "hedera":
         const [ did, _ ] = url.split( "#" )
-        const didDocument = ( await new HcsDid( { identifier: did } ).resolve() ).toJsonTree()
+        const didDocument = ( await new HcsDid( { identifier: did } ).resolve() ).toJsonTree() as DIDObj
         if ( !didDocument.id && didDocument.verificationMethod.length < 1 )
         {
           console.log( "no did found" )
           return {}
         }
+        // console.log( didDocument )
         const controller = didDocument.id
-        const keyBase58 = didDocument.verificationMethod[ 0 ]
-        const publicEDDSAMultikey = {
-          '@context': 'https://w3id.org/security/multikey/v1',
-          type: 'Multikey',
-          controller,
-          id: keyBase58.id,
-          publicKeyMultibase: "z" + binary_to_base58( new Ed25519PubCodec().encode( base58_to_binary( keyBase58.publicKeyBase58 ) ) )
-        };
         // const Pkey = PrivateKey.fromString("302e020100300506032b657004220420cf8be37e734e2309b3988b2af9eb7295f1ccb886f0a9dcc08f1dae4451f6b3b9")
         // const publicEDDSAMultikeyd = {
         //   '@context': 'https://w3id.org/security/multikey/v1',
@@ -700,24 +708,65 @@ export async function documentLoader ( url: string )
         //   secretKeyMultibase:binary_to_base58(new Ed25519PubCodec().encode(Pkey.toBytesRaw()))
         // };
         // console.dir(publicEDDSAMultikeyd,{depth:null})
-        const controllerDocEDDSAMultikey = {
-          '@context': [
-            'https://www.w3.org/ns/did/v1',
-            'https://w3id.org/security/multikey/v1'
-          ],
-          id: controller,
-          assertionMethod: [ publicEDDSAMultikey ]
-        };
-        // contexts.set( publicEDDSAMultikeyKey.controller,
-        //   controllerDocEDD25519Multikey )
-        // contexts.set(
-        //   publicEDDSAMultikeyKey.id,
-        //   publicEDDSAMultikeyKey )
-        contexts.set( publicEDDSAMultikey.controller, controllerDocEDDSAMultikey )
-        contexts.set( publicEDDSAMultikey.id, publicEDDSAMultikey )
-        // console.dir(contexts.get(url),{depth:null})
-        console.dir( { local: controllerDocEDD25519Multikey, remote: controllerDocEDDSAMultikey }, { depth: null } )
-        return {document:contexts.get( url )}
+        // const verficationMethodsMultiKey = didDocument.verificationMethod.map( ( verMethod ) => (
+        //   {
+        //     '@context': 'https://w3id.org/security/multikey/v1',
+        //     type: 'Multikey',
+        //     controller,
+        //     id: verMethod.id,
+        //     publicKeyMultibase: "z" + binary_to_base58( new Ed25519PubCodec().encode( base58_to_binary( verMethod.publicKeyBase58 ) ) )
+        //   }
+        // ) )
+        try
+        {
+          const securityMethods = [ "assertionMethod", "authentication", "capabilityDelegation", "capabilityInvocation" ]
+          const allMultiKeys: { [ key: string ]: object[] } = {}
+          for ( const securityMethod of securityMethods )
+          {
+            if ( didDocument[ securityMethod ] && didDocument[ securityMethod ].length > 0 )
+            {
+              const keyIds = didDocument[ securityMethod ] as string[]
+              for ( const keyId of keyIds )
+              {
+                const keyDocs = didDocument.verificationMethod.map( ( verMethod ) =>
+                {
+                  if ( verMethod.id === keyId ) return {
+                    '@context': 'https://w3id.org/security/multikey/v1',
+                    type: 'Multikey',
+                    controller,
+                    id: verMethod.id,
+                    publicKeyMultibase: "z" + binary_to_base58( new Ed25519PubCodec().encode( base58_to_binary( verMethod.publicKeyBase58 ) ) )
+                  }
+                } )
+                if ( keyDocs.length > 0 )
+                {
+                  // @ts-ignore
+                  allMultiKeys[ securityMethod ] = keyDocs
+                }
+              }
+            }
+          }
+          const controllerDocEDDSAMultikey = {
+            '@context': [
+              'https://www.w3.org/ns/did/v1',
+              'https://w3id.org/security/multikey/v1'
+            ],
+            id: controller,
+            ...allMultiKeys
+          };
+          contexts.set( controllerDocEDDSAMultikey.id, controllerDocEDDSAMultikey )
+          for ( let key in allMultiKeys )
+          {
+            allMultiKeys[ key ].map( ( keyDOc ) =>
+            {
+              contexts.set( keyDOc.id, keyDOc )
+            } )
+          }
+        } catch ( err )
+        {
+          console.log( err )
+        }
+        return { document: contexts.get( url ) }
         break;
       case "key": {
         const keyParts = url.split( ":" );
@@ -754,13 +803,15 @@ export async function documentLoader ( url: string )
       }
 
       case "web": {
-        const didUrl = new URL( url.split( "did:web:" )[ 1 ].replace( /:/g, "/" ) );
-        const wellKnownUrl = `${didUrl.origin}/.well-known/did.json`;
+        let didUrl = url.split( "did:web:" )[ 1 ]
+        if(didUrl.startsWith("https") || didUrl.startsWith("http")){
+          didUrl = didUrl.replace("https://","").replace("http://", "")
+        }
 
-        const response = await fetch( wellKnownUrl );
+        const response = await fetch( `https://${didUrl}` );
         if ( !response.ok )
         {
-          throw new Error( `Failed to fetch DID document from ${wellKnownUrl}` );
+          throw new Error( `Failed to fetch DID document from ${didUrl}` );
         }
 
         const didWebDoc = await response.json();
@@ -773,9 +824,8 @@ export async function documentLoader ( url: string )
         contexts.set( url, didWebDoc );
         return {
           document: didWebDoc,
-        };
+        }
       }
-
       default: {
         throw new Error( `Unsupported DID method: ${method}` );
       }

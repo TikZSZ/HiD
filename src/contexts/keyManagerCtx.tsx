@@ -127,31 +127,6 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
         metadata: Omit<KeyManager.OmmitedKeyMeta, "keyType">,
         password: string
       }) => {
-        console.log(metadata,password)
-        // // v1
-        // if (type === KeyManager.KeyAlgorithm.RSA_4096) {
-        //   return KeyManager.generateRSAKey(userId, password, {
-        //     ...metadata,
-        //     keyType: [KeyType.ENCRYPTION,KeyType.SIGNING],
-        //     keyAlgorithm:type
-        //   });
-        // }
-        // // else if (type === KeyManager.KeyAlgorithm.ED25519){
-        // //   return KeyManager.generateEd25519Key(userId, password, {
-        // //     ...metadata,
-        // //     keyType: [KeyType.SIGNING],
-        // //     keyAlgorithm:type
-        // //   });
-        // // }
-        // // else {
-          
-        // // }
-        // return KeyManager.generateEd25519Key(userId, password, {
-        //   ...metadata,
-        //   keyType: [KeyType.SIGNING],
-        //   keyAlgorithm:type
-        // });
-        // // v1
         return KeyManager.generateKey(userId,password,metadata)
       },
       onSuccess: () => {

@@ -21,7 +21,6 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
-import { authService } from "@/HiD/appwrite/auth";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,7 +45,6 @@ export function LoginPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
     setIsSubmitting(true);
     try {
       await login(values.email, values.password);

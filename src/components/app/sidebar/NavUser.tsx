@@ -35,9 +35,7 @@ import
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/hooks/useAuth"
 // import { KeyManagementDialog } from "./KeyManagmentOverlay"
-import {KeyManagementOverlay} from "../KeyManagerOverlay"
 import { useState } from "react"
-import { Button } from "../../ui/button"
 
 export function NavUser ( {
   user,
@@ -107,15 +105,6 @@ export function NavUser ( {
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={( e ) =>
-              {
-                e.preventDefault()
-                setOpen( true )
-              }} >
-                <BadgeCheck />
-                Key Manager
-              </DropdownMenuItem>
-              <KeyManagementOverlay open={open} setOpen={setOpen} />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>

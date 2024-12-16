@@ -16,11 +16,11 @@ export enum KeyAlgorithm {
 }
 export enum KeyPurpose
 {
-  AUTHENTICATION = "authentication",
-  ASSERTION = "assertion",
-  KEY_AGREEMENT = "key_agreement",
-  CAPABILITY_DELEGATION = "capability_delegation",
-  CAPABILITY_INVOCATION = "capability_invocation",
+  AUTHENTICATION = "assertionMethod",
+  ASSERTION = "authentication",
+  KEY_AGREEMENT = "keyAgreement",
+  CAPABILITY_DELEGATION = "capabilityDelegation",
+  CAPABILITY_INVOCATION = "capabilityInvocation",
 }
 export enum OrganizationRole
 {
@@ -165,8 +165,9 @@ export interface KeyAssociationDto
 export interface CreateVCDTO
 {
   vcData: string,
-  holderId?: string
+  // holderId?: string
   identifier: string
+  vcId:string
 }
 
 export interface CreateVCStoreDTO
@@ -690,7 +691,7 @@ class AppwriteService
       const result = await this.databases.createDocument<VCDocument>(
         conf.appwrtieDBId,
         conf.appwriteVCsCollID,
-        ID.unique(), // Generate a unique ID
+        data.vcId, // Generate a unique ID
         {
           issuer: orgId,
           holder: holderId,

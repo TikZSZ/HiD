@@ -5,6 +5,11 @@ import
     createSignCryptosuite,
     createVerifyCryptosuite
   } from "@digitalbazaar/bbs-2023-cryptosuite"
+import { klona } from 'klona';
+import { DataIntegrityProof } from '@digitalbazaar/data-integrity';
+import jsigs from 'jsonld-signatures';
+const { purposes: { AssertionProofPurpose } } = jsigs;
+
 import {cryptosuite as eddsaRdfc2022CryptoSuite} from
   '@digitalbazaar/eddsa-rdfc-2022-cryptosuite';
 import * as Bls12381Multikey from "@digitalbazaar/bls12-381-multikey"
@@ -16,16 +21,14 @@ import
     bls12381MultikeyKeyPair,
     dlCredential,
     dlCredentialNoIds,
-    achievementCredential
+    achievementCredential,
+    customCredential
   } from './mock-data';
 import * as vc from '@digitalbazaar/vc';
 
 const algorithm = Bls12381Multikey.ALGORITHMS.BBS_BLS12381_SHA256;
-import { DataIntegrityProof } from '@digitalbazaar/data-integrity';
-import jsigs from 'jsonld-signatures';
-import { klona } from 'klona';
+
 import { loader } from "./documentLoader"
-const { purposes: { AssertionProofPurpose } } = jsigs;
 import {HcsDid} from "../src/HiD/did-sdk/index"
 import { Client, PrivateKey, Signer } from "@hashgraph/sdk";
 import { documentLoader } from "./contexts";
@@ -51,11 +54,11 @@ const publicEDDSAMultikeyKeyPair = {
 
 async function main ( credential: object, selectivePointers: string[], nullObj: object = {} )
 {
-  const cryptosuite = createSignCryptosuite();
-  const unsignedCredential = klona( credential );
   const keyPair = await Bls12381Multikey.from( {
     ...bls12381MultikeyKeyPair
   }, { algorithm } );
+  const unsignedCredential = klona( credential );
+  const cryptosuite = createSignCryptosuite({});
   const date = new Date().toISOString()
   const suite = new DataIntegrityProof( {
     signer: keyPair.signer(), cryptosuite
@@ -63,13 +66,8 @@ async function main ( credential: object, selectivePointers: string[], nullObj: 
 
   let error;
   let signedCredential;
-  try
-  {
-    signedCredential = await vc.issue( { credential: unsignedCredential, suite: suite, documentLoader: documentLoader } )
-  } catch ( e )
-  {
-    error = e;
-  }
+
+  signedCredential = await vc.issue( { credential: unsignedCredential, suite: suite, documentLoader: documentLoader } )
   console.dir( { error, signedCredential: { ...signedCredential, ...nullObj } }, { depth: null } )
 
   console.log( "\n =========\n", 'should derive a reveal document', "\n =========" )
@@ -81,19 +79,14 @@ async function main ( credential: object, selectivePointers: string[], nullObj: 
       selectivePointers: selectivePointers as any
     } );
     const suite = new DataIntegrityProof( { cryptosuite } );
+    revealed = await vc.derive( { verifiableCredential: signedCredential, suite: suite, documentLoader: documentLoader } )
 
-    try
-    {
-      // revealed = await jsigs.derive( signedCredential, {
-      //   suite,
-      //   purpose: new AssertionProofPurpose(),
-      //   documentLoader
-      // } );
-      revealed = await vc.derive( { verifiableCredential: signedCredential, suite: suite, documentLoader: documentLoader } )
-    } catch ( e )
-    {
-      error = e;
-    }
+    // revealed = await jsigs.derive( signedCredential, {
+    //   suite,
+    //   purpose: new AssertionProofPurpose(),
+    //   documentLoader
+    // } );
+    
     console.dir( { error, revealed: { ...revealed, ...nullObj } }, { depth: null } )
   }
   await reveal()
@@ -104,32 +97,11 @@ async function main ( credential: object, selectivePointers: string[], nullObj: 
     const cryptosuite = createVerifyCryptosuite();
     const suite = new DataIntegrityProof( { cryptosuite } );
     const signedCredentialCopy = klona( revealed );
-    // const result = await vc.verifyCredential( {
-    //   credential: signedCredentialCopy,
-    //   suite, documentLoader: documentLoader,
-    //   // purpose: new AssertionProofPurpose()
-    // } );
-    // const signCryptosuite = createSignCryptosuite();
-    // const signSuite = new DataIntegrityProof( {
-    //   signer: keyPair.signer(), cryptosuite:signCryptosuite
-    // } );
-    // // const signedDoc = await jsigs.sign( unsignedCredential, {
-    // //   suite: signSuite, purpose: new AssertionProofPurpose(),
-    // //   documentLoader
-    // // } )
-    // const signedDoc = await jsigs.sign( unsignedCredential, {
-    //       suite:signSuite,
-    //       purpose: new AssertionProofPurpose(),
-    //       documentLoader
-    // } );
-    
-    const result = await jsigs.verify(
-      signedCredentialCopy, {
-        suite, purpose: new AssertionProofPurpose(),
-      documentLoader
+    const result = await vc.verifyCredential( {
+      credential: signedCredentialCopy,
+      suite, documentLoader: documentLoader,
+      purpose: new AssertionProofPurpose()
     } );
-
-    // console.dir(result,{depth:null})
     console.log( result.verified )
   }
   await verify()
@@ -143,11 +115,13 @@ async function main ( credential: object, selectivePointers: string[], nullObj: 
     const keyPair = await Ed25519Multikey.from( {
       ...publicEDDSAMultikeyKeyPair
     } );
+    // keyPair.id = "did:hedera:testnet:z9qd1bB7ABC5mccHe3Chas1VDQusYc79ttDAsRRVA7MXm_0.0.5263305"
+    // keyPair.controller = "keyPair"
     // const cryptosuite = ecdsaRdfc2019Cryptosuite()
     const suite = new DataIntegrityProof( {
       signer: keyPair.signer(), cryptosuite:eddsaRdfc2022CryptoSuite
     } );
-    console.log(keyPair)
+    // console.log(keyPair)
     const id = bls12381MultikeyKeyPair.id;
     const holder = bls12381MultikeyKeyPair.controller;
     presentation = vc.createPresentation( {
@@ -155,48 +129,21 @@ async function main ( credential: object, selectivePointers: string[], nullObj: 
     } );
     // console.log((await canonize(rdf,{ algorithm: 'RDFC-1.0', })))
     vp = await vc.signPresentation( {
-      presentation, suite, documentLoader, challenge, purpose: new AssertionProofPurpose()
+      presentation, suite, documentLoader, purpose: new AssertionProofPurpose()
     } );
-    console.dir( { error, vp: { ...vp, ...nullObj } }, { depth: null } )
-
-    // rdf = await toRDF(vp)
-    // console.log((await canonize(rdf,{ algorithm: 'RDFC-1.0', })))
-    // console.log(JSON.stringify(vp))
-    // console.log( vp )
-    // console.log( presentation )
-    // const vpDoc:object = {"@context":[ "https://www.w3.org/ns/credentials/v2", "https://www.w3.org/ns/credentials/examples/v2" ],type:["VerifiablePresentation"],verifiableCredential:signedCredential,id:id,holder:holder}
-    // console.log(vpDoc)
-
-    // vp = await jsigs.sign( presentation, {
-    //   suite,
-    //   purpose: new AssertionProofPurpose(),
-    //   documentLoader
-    // } );
-    // console.log( vp )
+    // console.dir( { error, vp: { ...vp, ...nullObj } }, { depth: null } )
   }
   await issueVP()
 
   console.log( "\n =========\n", 'should verify a VP', "\n =========" )
   async function verifyVP ()
   {
-    // const cryptosuite2 = ECDSACreateVerifyCryptosuite()
-    // const suite2 = new DataIntegrityProof( {
-    //   cryptosuite: cryptosuite2
-    // } );
     const cryptosuite = createVerifyCryptosuite();
     const suite = new DataIntegrityProof( { cryptosuite:cryptosuite } );
     const suite2 = new DataIntegrityProof( { cryptosuite:eddsaRdfc2022CryptoSuite } );
-    const result = await vc.verify( { presentation: vp, challenge, suite: [suite,suite2], documentLoader, presentationPurpose: new AssertionProofPurpose() } );
-    // console.dir( result,{depth:null} )
-
-    // const result = await jsigs.verify( vp, {
-    //   suite,
-    //   purpose: new AssertionProofPurpose(),
-    //   documentLoader,
-    // } );
-
-    // const result = await vc.verify( { presentation: vp, suite, presentationPurpose: new AssertionProofPurpose() } )
-    console.log( result )
+    const result = await vc.verify( { presentation: vp, suite: [suite,suite2], documentLoader, presentationPurpose: new AssertionProofPurpose() } );
+    console.dir( { error, vp: { ...vp, ...nullObj } }, { depth: null } )
+    console.log( result.verified,result.error )
   }
   await verifyVP()
 }
@@ -206,15 +153,28 @@ async function main ( credential: object, selectivePointers: string[], nullObj: 
 //   '/credentialSubject/driverLicense/expirationDate'
 // ],{proof:null,"@context":null})
 
-main( alumniCredential, [
-  // '/credentialSubject/achievements/1/sails/0',
-  // '/credentialSubject/achievements/1/sails/2',
-  // '/credentialSubject/achievements/1/boards/1',
+main( customCredential, [
   "/issuer",
-  "/credentialSubject/id",
-  "/issuanceDate"
+  "/credentialSubject/projectName",
+  "/credentialSubject/certificationBody",
+  "/credentialSubject/vCRR",
+  "/credentialSubject/dataSources",
+  "/credentialSubject/dataHash",
+  "/credentialSubject/iCRR",
+  "/credentialSubject/statuss",
+  "/credentialSubject/vCRR"
+]
+//   [
+//   // '/credentialSubject/achievements/1/sails/0',
+//   // '/credentialSubject/achievements/1/sails/2',
+//   // '/credentialSubject/achievements/1/boards/1',
+//   "/issuer",
+//   "/credentialSubject/id",
+//   "/issuanceDate"
 
-], {} )
+// ]
+
+, {} )
 
 // const cryptosuite = createSignCryptosuite();
 // const unsignedCredential = klona( {} );

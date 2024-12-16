@@ -28,8 +28,7 @@ export default async function ( {req,res,log,error}:any ): Promise<void>
     // const { orgId, keyId } = req.query
     if ( !orgId )
     {
-      res.status( 400 ).json( { error: 'Organization ID is required.' } );
-      return;
+      return res.json( { error: 'Organization/Issuer ID is required.' },400 );
     }
     // Fetch organization details
     const organization = await databases.getDocument(
@@ -37,7 +36,11 @@ export default async function ( {req,res,log,error}:any ): Promise<void>
       ORGANIZATION_COLLECTION_ID,
       orgId
     );
-    if(!organization) throw new Error("Organization not found")
+
+    if(!organization){
+      return res.json( { error: 'Organization not found.' },404 );
+    }
+
     log( orgId, organization )
 
     // Fetch linked keys
@@ -49,7 +52,7 @@ export default async function ( {req,res,log,error}:any ): Promise<void>
       ]
     ) ).documents;
     // console.log(keyLinks)
-    const controller = `did:web:https://675d93dc69da7be75efd.appwrite.global/issuers/${orgId}`
+    const controller = `did:web:675d93dc69da7be75efd.appwrite.global/issuers/${orgId}`
     const assertionMethods = keys.map( ( key ) => ( {
       '@context': 'https://w3id.org/security/multikey/v1',
       type: 'Multikey',
@@ -77,7 +80,7 @@ export default async function ( {req,res,log,error}:any ): Promise<void>
     // );
     log(controllerMultikey)
     // Return the organization and its keys
-    return res.json(controllerMultikey,200);
+    return res.json(controllerMultikey,200,{'Access-Control-Allow-Origin': '*',});
   } catch ( err: any )
   {
     error("Error:" + err.message);
@@ -86,7 +89,8 @@ export default async function ( {req,res,log,error}:any ): Promise<void>
         success: false,
         error: err.message,
       },
-      400
+      500,
+      {'Access-Control-Allow-Origin': '*',}
     );
   }
 }

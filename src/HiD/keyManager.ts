@@ -15,6 +15,8 @@ export function getUserScopedKey ( userId: string, id: string ): string
 }
 
 export interface KeyPair {
+  id?:string;
+  controller?:string
   publicKeyMultibase:string,
   secretKeyMultibase:string,
   publicKey:Uint8Array
