@@ -40,7 +40,8 @@ const ManageVCPage: React.FC = () =>
   // Effects to handle organization selection
   useEffect( () =>
   {
-    if ( orgId ) setSelectedOrgId( orgId );
+    if ( orgId && orgId !== "undefined") setSelectedOrgId( orgId )
+    else  navigate( `/dashboard/orgs/vcs` );
   }, [ orgId ] );
 
   useEffect( () =>
@@ -80,11 +81,13 @@ const ManageVCPage: React.FC = () =>
             <SelectValue placeholder="Select an organization" />
           </SelectTrigger>
           <SelectContent>
-            {orgs.map( ( org ) => (
+            {orgs.length > 0 ? orgs.map( ( org ) => (
               <SelectItem key={org.$id} value={org.$id}>
                 {org.name}
               </SelectItem>
-            ) )}
+            ) ):<div className="p-2 text-center text-muted-foreground">
+            No organizations found
+          </div>}
           </SelectContent>
         </Select>
       </div>

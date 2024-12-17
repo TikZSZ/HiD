@@ -19,54 +19,7 @@ import AppwriteService, {
   CreateOrganizationDto,
   OrganizationWithRoles
 } from "@/HiD/appwrite/service";
-// Types for context
-interface KeyContextType {
-  userId: string;
-  // keys: KeyDocument[];
-  // dids: DIDDocument[];
-  // orgs: OrganizationWithRoles[];
-  isOpen: boolean;
-  setIsOpen: (val: boolean) => void;
-  
-  // Query hooks for downstream components
-  useKeysList: () => UseQueryResult<KeyDocument[]>;
-  
-  useDIDsList: () => UseQueryResult<DIDDocument[]>;
-  
-  useOrgsList: () => UseQueryResult<OrganizationWithRoles[]>;
-  
-  // Mutation hooks
-  useGenerateKey: () => UseMutationResult<KeyManager.KeyMetadata, Error, {
-    metadata: Omit<KeyManager.OmmitedKeyMeta, "keyType">;
-    password: string;
-}, unknown>
-  
-  useDeleteKey: () => UseMutationResult<void, Error, string, unknown>
-  
-  useUpsertOrg: () => UseMutationResult<OrganizationWithRoles, Error, CreateOrganizationDto, unknown>
-  
-  useUpsertDID: () => UseMutationResult<DIDDocument, Error, CreateDIDDto, unknown>;
-  
-  // Existing methods
-  openDIDWalletManager: () => void;
-  closeDIDWalletManager: () => void;
-  retrieveKey: (id: string, password: string) => Promise<{ publicKey: string, privateKey: string, keyPair:KeyManager.KeyPair }>;
-  addAssociation: (type: 'DID' | 'Organization', toId: string, withId: string) => Promise<void>;
-  deleteAssociation: (type: 'DID' | 'Organization', id: string, keyId: string) => Promise<void>;
-}
-
-// Create QueryClient
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes
-    },
-  },
-});
-
-// Initial context
-const KeyContext = createContext<KeyContextType | undefined>(undefined);
+import { KeyContext } from './keyManagerCtx';
 
 // Provider component
 export const KeyProvider: React.FC<{ userId: string, children: React.ReactElement }> = ({ userId, children }) => {
@@ -166,10 +119,11 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
         KeyManager.upsertDID(userId, did),
       onSuccess: (newDID) => {
         // Update the DIDs query cache
-        queryClient.setQueryData(['dids', userId], (oldData: DIDDocument[] = []) => [
-          ...oldData,
-          newDID
-        ]);
+        // queryClient.setQueryData(['dids', userId], (oldData: DIDDocument[] = []) => [
+        //   ...oldData,
+        //   newDID
+        // ]);
+        queryClient.resetQueries({queryKey:['dids', userId]})
       }
     });
   };
@@ -206,6 +160,16 @@ export const KeyProvider: React.FC<{ userId: string, children: React.ReactElemen
   );
 };
 
+// Create QueryClient
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 30 * 60 * 1000, // 30 minutes
+    },
+  },
+});
+
 // Wrapper component to provide QueryClient
 export const KeyProviderWrapper: React.FC<{ 
   userId: string, 
@@ -217,10 +181,3 @@ export const KeyProviderWrapper: React.FC<{
     </KeyProvider>
   </QueryClientProvider>
 );
-
-// Hook to use the context
-export const useKeyContext = () => {
-  const context = useContext(KeyContext);
-  if (!context) throw new Error('KeyContext must be used within a KeyProvider');
-  return context;
-};

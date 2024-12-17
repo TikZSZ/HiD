@@ -45,7 +45,7 @@ const AddKeyModal: React.FC<{
     const { userId, useKeysList } = useKeyContext();
     const { data: keys, isLoading: isLoadingKeys } = useKeysList()
     // Fetch User's Unlinked Keys Query
-    const unlinkedKeys = keys && keys.filter( ( key ) => key.org === null && key.keyAlgorithm === KeyAlgorithm.BBS_2023) || []
+    const unlinkedKeys = keys && keys.filter( ( key ) => key.org === null ) || []
     // const {
     //   data: unlinkedKeys = [],
     //   isLoading: isLoadingKeys
@@ -495,11 +495,13 @@ const ManageOrganizationPage: React.FC = () =>
             <SelectValue placeholder="Select an organization to manage" />
           </SelectTrigger>
           <SelectContent>
-            {orgs.map( ( org ) => (
+            {orgs.length > 0 ? orgs.map( ( org ) => (
               <SelectItem key={org.$id} value={org.$id}>
                 {org.name}
               </SelectItem>
-            ) )}
+            ) ):<div className="p-2 text-center text-muted-foreground">
+            No organizations found
+          </div>}
           </SelectContent>
         </Select>
       </div>
@@ -509,10 +511,10 @@ const ManageOrganizationPage: React.FC = () =>
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Organization Details</CardTitle>
+              <p className="text-muted-foreground text-xl"> {selectedOrg.name}</p>
             </CardHeader>
             <CardContent>
-              <p><strong>Name:</strong> {selectedOrg.name}</p>
-              <p><strong>Description:</strong> {selectedOrg.description || "No description provided."}</p>
+              <p className="max-w-[70%] text-lg"> {selectedOrg.description || "No description provided."}</p>
             </CardContent>
           </Card>
 

@@ -134,11 +134,12 @@ export const KeyManagementOverlay: React.FC = () =>
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{key.name}  
+                      <div className="font-medium">{key.name}  
                         <Badge className={"bg-secondary text-sm text-white ml-5  rounded-sm mb-2"}>
                         {key.keyAlgorithm}
-                      </Badge></p>
+                      </Badge></div>
                       <p className="text-xs text-muted-foreground">{`${getFormmatedPubKey( key.publicKey )}`} </p>
+                      <span className="text-xs text-muted-foreground">{new Date( key.$createdAt ).toLocaleString()}</span>
                       <p className="text-sm text-muted-foreground">{key.type}</p>
                       <div>
 
@@ -158,18 +159,18 @@ export const KeyManagementOverlay: React.FC = () =>
 
                   {/* Associations */}
                   <div className="space-y-2">
-                    <h4 className="text-sm font-semibold">Associations</h4>
+                    {/* <h4 className="text-sm font-semibold">Associations</h4> */}
                     <div className="space-y-1">
                       {/* DIDs */}
                       <div>
-                        <h5 className="text-xs font-medium text-muted-foreground">
+                        <h5 className="text-sm font-medium">
                           DIDs:
                         </h5>
                         {key.dids.length > 0 ? (
                           <ul className="list-disc list-inside">
                             {key.dids.map( ( did, i ) => (
                               <li key={i} className="flex justify-between">
-                                <span className="break-all text-sm">{did.name}--{did.identifier.split( "_" )[ 1 ]}</span>
+                                <span className="break-all text-sm text-muted-foreground">{did.name}#{did.identifier.split( "_" )[ 1 ]}</span>
 
                                 {/* <Button
                                 variant="link"
@@ -182,13 +183,13 @@ export const KeyManagementOverlay: React.FC = () =>
                             ) )}
                           </ul>
                         ) : (
-                          <p className="text-xs text-muted-foreground">No associated DIDs</p>
+                          <p className="text-sm text-muted-foreground">No associated DIDs</p>
                         )}
                       </div>
 
                       {/* Organizations */}
                       <div>
-                        <h5 className="text-xs font-medium text-muted-foreground">
+                        <h5 className="text-sm font-medium">
                           Organizations:
                         </h5>
                         {key.org ? (
@@ -207,7 +208,7 @@ export const KeyManagementOverlay: React.FC = () =>
                             }
                           </ul>
                         ) : (
-                          <p className="text-xs text-muted-foreground">No associated organizations</p>
+                          <p className="text-sm text-muted-foreground">No associated organizations</p>
                         )}
                       </div>
                     </div>

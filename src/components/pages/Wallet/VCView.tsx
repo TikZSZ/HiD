@@ -71,12 +71,12 @@ interface VCViewProps
   onCreateVerifiablePresentation: ( selectedFields: string[] ) => void;
 }
 import AppwriteService, { KeyAlgorithm, KeyDocument, VCStoreDocument } from "@/HiD/appwrite/service"
-import { useQuery } from '@tanstack/react-query';
-import { useSignModal } from '../app/SignModal';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSignModal } from '../../app/SignModal';
 import { useKeyContext } from '@/contexts/keyManagerCtx';
-import ErrorComponent from '../ErrorComponent';
+import ErrorComponent from '../../ErrorComponent';
 import { ID } from 'appwrite';
-import { keyTypesColors } from '../OrganizationTable';
+import { keyTypesColors } from '../../OrganizationTable';
 export const ViewVCPage: React.FC = (
   //   { 
   //   vcData, 
@@ -107,7 +107,7 @@ export const ViewVCPage: React.FC = (
     enabled: ( vcStores.length > 0 ),
   } );
   const didIdentifier = vcData && vcData.signedCredential.credentialSubject.id
-
+  const queryClient = useQueryClient()
   const {
     data: did,
     isLoading: isLoadingKeys
@@ -214,6 +214,7 @@ export const ViewVCPage: React.FC = (
                 presentation: vp, contextMetadatas: [ vcData.contextMetadata ]
               } )
             }, userId, selectedKey )
+            queryClient.invalidateQueries({queryKey:[ 'userVPs', userId ]})
             toast( { title: "VP Issued", description: "VP was issued successfully for" + " " + vcId, variant: "default" } );
             console.log( vpDoc )
           } else
@@ -292,8 +293,8 @@ export const ViewVCPage: React.FC = (
 
           </CardTitle>
           <CardDescription>
-            Issued by {vcData.signedCredential.issuer.name} on {' '}
-            {format( new Date( vcData.signedCredential.issuanceDate ), 'PPP' )}
+            Issued by <span className='text-muted-foreground'>{vcData.signedCredential.issuer.name}</span> on {' '}
+            <span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.issuanceDate ), 'PPP' )}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>

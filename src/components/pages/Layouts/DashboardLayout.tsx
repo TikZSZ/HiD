@@ -1,6 +1,6 @@
 
 // import { KeyManagementProvider } from "@/contexts/keyManager";
-import { KeyProvider, KeyProviderWrapper } from "@/contexts/keyManagerCtx";
+import { KeyProviderWrapper } from "@/contexts/keyManagerProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { SignModalProvider } from "../../app/SignModal";
 import { Sidebar } from "@/components/app/sidebar/Sidebar";

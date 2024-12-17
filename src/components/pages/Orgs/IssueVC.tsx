@@ -57,7 +57,10 @@ import
   ShieldCheck,
   FileUp,
   Calendar as CalendarIcon,
-  Loader2
+  Loader2,
+  Upload,
+  CloudDownload,
+  Link
 } from "lucide-react";
 
 // Services and Contexts
@@ -69,6 +72,8 @@ import { useKeyContext } from "@/contexts/keyManagerCtx";
 import { useParams } from "react-router-dom";
 import AppwriteService, { KeyAlgorithm, OrganizationWithRoles, VCDocument } from "@/HiD/appwrite/service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Badge } from "@/components/ui/badge";
 import { keyTypesColors } from "@/components/OrganizationTable";
 import { KeyPair } from "@/HiD/keyManager";
@@ -162,9 +167,10 @@ const VCCreationSchema = z.object( {
   // description: z.string().nonempty( "Name is required" ),
   identifier: z.string().refine( ( identifier ) =>
   {
-    if ( identifier.split( ":" ).length !== 4 ) return false
-    if ( identifier.split( ":" )[ 3 ].split( "_" ).length !== 2 ) return false
-    if ( identifier.split( ":" )[ 3 ].split( "_" )[ 1 ].split( "." ).length !== 3 ) return false
+    if(!identifier) return false
+    // if ( identifier.split( ":" ).length !== 4 ) return false
+    // if ( identifier.split( ":" )[ 3 ].split( "_" ).length !== 2 ) return false
+    // if ( identifier.split( ":" )[ 3 ].split( "_" )[ 1 ].split( "." ).length !== 3 ) return false
     return true
   }, "identifier should be of form did:hedera:network:....._TopicID " ).default( "" ),
   keyId: z.string().nonempty( "Select a key to sign the credential" ),
@@ -212,10 +218,32 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
   org: { $id: orgId, name: orgName }
 } ) =>
 {
+  const [ activeTab, setActiveTab ] = useState( 'local' );
+  const [ cloudImportUrl, setCloudImportUrl ] = useState( '' );
+
   const { userId, } = useKeyContext();
   const queryClient = useQueryClient();
   const { openSignModal } = useSignModal();
-
+  // URL Import Mutation
+  const importUrlMutation = useMutation(
+    {
+      mutationFn: async ( data:{url: string,name:string} ): Promise<any> =>
+      {
+        const response = await fetch( data.url );
+        if ( !response.ok ) throw new Error( 'Failed to fetch context' );
+        const jsonStr = await response.text();
+        return addJSONContext( jsonStr, { name:data.name } );
+      },
+      onError: ( error ) =>
+      {
+        toast( {
+          title: "Import Failed",
+          description: error.message,
+          variant: "destructive"
+        } );
+      }
+    }
+  );
   const {
     data: keys = [],
     isLoading: isLoadingKeys
@@ -254,92 +282,102 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     name: "contexts"
   } );
 
-  async function addJSONContext ( jsonStr: string, file: any = { name: 'default.json' } )
-  {
-    try
-    {
-      const textEncoder = new TextEncoder()
-      const hash = file.name + "#" + ( binary_to_base58( new Uint8Array( await crypto.subtle.digest( "SHA-256", textEncoder.encode( jsonStr ) ) ) ) as string ).substring( 0, 15 )
-      if ( contextsFields.find( ( cont ) => cont.originalFile === hash ) )
-      {
-        toast( {
-          title: "Duplicate Context",
-          description: "The imported context already exists.",
-          variant: "destructive"
-        } );
-        return;
-      }
-      const parsedContext = JSON.parse( jsonStr ) as ImportedContext;
+  // Cloud Contexts Query
+  const {
+    data: cloudContexts,
+    isLoading: isLoadingCloudContexts,
+    error: cloudContextsError
+  } = useQuery( {
+    queryKey: [ 'cloudContexts' ], queryFn: () => AppwriteService.listVCContexts(),
+    retry: 2
+  },
+  );
+  // async function addJSONContext ( jsonStr: string, file: any = { name: 'default.json' } )
+  // {
+  //   try
+  //   {
+  //     const textEncoder = new TextEncoder()
+  //     const hash = file.name + "#" + ( binary_to_base58( new Uint8Array( await crypto.subtle.digest( "SHA-256", textEncoder.encode( jsonStr ) ) ) ) as string )
+  //     if ( contextsFields.find( ( cont ) => cont.originalFile === hash ) )
+  //     {
+  //       toast( {
+  //         title: "Duplicate Context",
+  //         description: "The imported context already exists.",
+  //         variant: "destructive"
+  //       } );
+  //       return;
+  //     }
+  //     const parsedContext = JSON.parse( jsonStr ) as ImportedContext;
 
-      if ( !parsedContext.context || !parsedContext.fields )
-      {
-        toast( {
-          title: "Invalid Context",
-          description: "The imported context is missing required fields.",
-          variant: "destructive"
-        } );
-        return;
-      }
+  //     if ( !parsedContext.context || !parsedContext.fields )
+  //     {
+  //       toast( {
+  //         title: "Invalid Context",
+  //         description: "The imported context is missing required fields.",
+  //         variant: "destructive"
+  //       } );
+  //       return;
+  //     }
 
-      // Determine context type and schema
-      const contextType = parsedContext.type || file.name.replace( '.json', '' );
-      const contextSchema = Object.entries( parsedContext.fields ).reduce(
-        ( acc, [ key, details ] ) => ( {
-          ...acc,
-          [ key ]: {
-            name: details.name || key,
-            mandatory: details.mandatory || false,
-            type: details.type || 'string',
-            description: details.description || ''
-          }
-        } ),
-        {} as ImportedContext[ "fields" ]
-      );
-      console.log( contextType, contextSchema )
+  //     // Determine context type and schema
+  //     const contextType = parsedContext.type || file.name.replace( '.json', '' );
+  //     const contextSchema = Object.entries( parsedContext.fields ).reduce(
+  //       ( acc, [ key, details ] ) => ( {
+  //         ...acc,
+  //         [ key ]: {
+  //           name: details.name || key,
+  //           mandatory: details.mandatory || false,
+  //           type: details.type || 'string',
+  //           description: details.description || ''
+  //         }
+  //       } ),
+  //       {} as ImportedContext[ "fields" ]
+  //     );
+  //     console.log( contextType, contextSchema )
 
-      // Add context to contexts array with schema
-      appendContext( {
+  //     // Add context to contexts array with schema
+  //     appendContext( {
 
-        type: contextType,
-        context: parsedContext.context,
-        originalFile: hash,
-        schema: contextSchema
-      } );
+  //       type: contextType,
+  //       context: parsedContext.context,
+  //       originalFile: hash,
+  //       schema: contextSchema
+  //     } );
 
-      // Add fields to credentialSubject
-      Object.entries( parsedContext.fields ).forEach( ( [ key, details ] ) =>
-      {
-        const existingField = form.watch( "credentialSubject" )
-          .find( field => field.key === key );
+  //     // Add fields to credentialSubject
+  //     Object.entries( parsedContext.fields ).forEach( ( [ key, details ] ) =>
+  //     {
+  //       const existingField = form.watch( "credentialSubject" )
+  //         .find( field => field.key === key );
 
-        if ( !existingField )
-        {
-          appendSubjectField( {
-            key,
-            value: details.value || "",
-            mandatory: details.mandatory || false,
-            optional: details.optional,
-            contextRef: contextType,
-            dataType: details.type || 'string',
-            description: details.description,
-            name: details.name
-          } );
-        }
-      } );
+  //       if ( !existingField )
+  //       {
+  //         appendSubjectField( {
+  //           key,
+  //           value: details.value || "",
+  //           mandatory: details.mandatory || false,
+  //           optional: details.optional,
+  //           contextRef: contextType,
+  //           dataType: details.type || 'string',
+  //           description: details.description,
+  //           name: details.name
+  //         } );
+  //       }
+  //     } );
 
-      toast( {
-        title: "Context Imported",
-        description: `Context from ${file.name} added successfully.`
-      } );
-    } catch ( error )
-    {
-      toast( {
-        title: "Import Failed",
-        description: "Could not parse the context file. Please check the format.",
-        variant: "destructive"
-      } );
-    }
-  }
+  //     toast( {
+  //       title: "Context Imported",
+  //       description: `Context from ${file.name} added successfully.`
+  //     } );
+  //   } catch ( error )
+  //   {
+  //     toast( {
+  //       title: "Import Failed",
+  //       description: "Could not parse the context file. Please check the format.",
+  //       variant: "destructive"
+  //     } );
+  //   }
+  // }
 
   //   useEffect( () =>
   //   {
@@ -380,25 +418,150 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
 
   // Enhanced File Drop Handler
 
-  const onDrop = useCallback( ( acceptedFiles: File[] ) =>
+  // const onDrop = useCallback( ( acceptedFiles: File[] ) =>
+  // {
+  //   acceptedFiles.forEach( file =>
+  //   {
+  //     const reader = new FileReader();
+
+  //     reader.onload = ( event ) =>
+  //     {
+  //       // @ts-ignore
+  //       addJSONContext( event.target.result, file )
+  //     };
+
+  //     reader.readAsText( file );
+  //   } );
+  // }, [ appendContext, appendSubjectField, form ] );
+
+  // Dropzone setup
+
+  // Async function to add JSON context with deduplication logic
+  const addJSONContext = async ( jsonStr: string, file: { name: string } = { name: 'default.json' } ) =>
+  {
+    try
+    {
+      const textEncoder = new TextEncoder();
+      const hash = (
+        binary_to_base58(
+          new Uint8Array(
+            await crypto.subtle.digest( "SHA-256", textEncoder.encode( jsonStr ) )
+          )
+        ) as string
+      );
+      const fileName = file.name + "#" + hash
+      // Check for duplicate contexts
+      if ( contextsFields.find( ( cont ) => cont.originalFile?.split("#")[1] === hash ) )
+      {
+        toast( {
+          title: "Duplicate Context",
+          description: "The imported context already exists.",
+          variant: "destructive"
+        } );
+        return;
+      }
+
+      const parsedContext = JSON.parse( jsonStr );
+
+      if ( !parsedContext.context || !parsedContext.fields )
+      {
+        toast( {
+          title: "Invalid Context",
+          description: "The imported context is missing required fields.",
+          variant: "destructive"
+        } );
+        return;
+      }
+
+      // Determine context type and schema
+      const contextType = parsedContext.type || file.name.replace( '.json', '' );
+      const contextSchema = Object.entries( parsedContext.fields ).reduce(
+        ( acc, [ key, details ] ) => ( {
+          ...acc,
+          [ key ]: {
+            name: details.name || key,
+            mandatory: details.mandatory || false,
+            type: details.type || 'string',
+            description: details.description || ''
+          }
+        } ),
+        {}
+      );
+
+      // Add context to contexts array with schema
+      appendContext( {
+        type: contextType,
+        context: parsedContext.context,
+        originalFile: fileName,
+        schema: contextSchema
+      } );
+
+      // Add fields to credentialSubject
+      Object.entries( parsedContext.fields ).forEach( ( [ key, details ] ) =>
+      {
+        const existingField = form.watch( "credentialSubject" )
+          .find( field => field.key === key );
+
+        if ( !existingField )
+        {
+          appendSubjectField( {
+            key,
+            value: details.value || "",
+            mandatory: details.mandatory || false,
+            optional: details.optional,
+            contextRef: contextType,
+            dataType: details.type || 'string',
+            description: details.description,
+            name: details.name
+          } );
+        }
+      } );
+
+      toast( {
+        title: "Context Imported",
+        description: `Context from ${file.name} added successfully.`
+      } );
+    } catch ( error )
+    {
+      toast( {
+        title: "Import Failed",
+        description: "Could not parse the context file. Please check the format.",
+        variant: "destructive"
+      } );
+    }
+  };
+
+  // Local File Drop Handler
+  const onLocalFileDrop = useCallback( ( acceptedFiles: File[] ) =>
   {
     acceptedFiles.forEach( file =>
     {
       const reader = new FileReader();
-
       reader.onload = ( event ) =>
       {
         // @ts-ignore
-        addJSONContext( event.target.result, file )
+        addJSONContext( event.target.result, file );
       };
-
       reader.readAsText( file );
     } );
   }, [ appendContext, appendSubjectField, form ] );
 
-  // Dropzone setup
-  const { getRootProps, getInputProps, isDragActive } = useDropzone( {
-    onDrop,
+
+  // const { getRootProps, getInputProps, isDragActive } = useDropzone( {
+  //   onDrop,
+  //   accept: {
+  //     'application/json': [ '.json' ]
+  //   },
+  //   multiple: true
+  // } );
+
+  // Local File Dropzone
+  const {
+    getRootProps: getLocalFileRootProps,
+    getInputProps: getLocalFileInputProps,
+    isDragActive: isLocalFileDragActive
+  } = useDropzone( {
+    onDrop: onLocalFileDrop,
     accept: {
       'application/json': [ '.json' ]
     },
@@ -601,7 +764,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     //   ...data,
     // } );
   };
-  const filteredKeys = keys && keys.length > 0 && keys.filter((key)=>key.keyAlgorithm === KeyAlgorithm.BBS_2023)
+  const filteredKeys = keys && keys.length > 0 && keys.filter( ( key ) => key.keyAlgorithm === KeyAlgorithm.BBS_2023 )
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl overflow-auto max-h-[90%]">
@@ -665,7 +828,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                                 </Badge>
                               ) )}
                             </SelectItem>
-                          ))}
+                          ) )}
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -731,53 +894,116 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
               <CardHeader>
                 <CardTitle>Import Context</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div
-                  {...getRootProps()}
-                  className={`
-                                border-2 border-dashed p-6 text-center cursor-pointer 
-                                ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
-                              `}
-                >
-                  <input {...getInputProps()} />
-                  <p className="text-gray-600">
-                    Drag 'n' drop context JSON files here, or click to select files
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              <CardContent className="border rounded-lg p-5">
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="local">
+                      <Upload className="mr-2 h-4 w-4" /> Local Files
+                    </TabsTrigger>
+                    <TabsTrigger value="cloud">
+                      <CloudDownload className="mr-2 h-4 w-4" /> Cloud Import
+                    </TabsTrigger>
+                  </TabsList>
 
-            {/* Imported Contexts Display */}
-            {contextsFields.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Imported Contexts</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {contextsFields.map( ( context, index ) => (
+                  {/* Local File Import Tab */}
+                  <TabsContent value="local">
                     <div
-                      key={context.id}
-                      className="border p-4 mb-2 rounded flex justify-between items-center"
+                      {...getLocalFileRootProps()}
+                      className={`
+                border-2 border-dashed p-6 text-center cursor-pointer 
+                ${isLocalFileDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
+              `}
                     >
-                      <div>
-                        <p className="font-medium">{context.type}</p>
-                        <p className="text-sm text-gray-500">
-                          {context.originalFile || 'Custom Context'}
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => removeContextAndFields( index )}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <input {...getLocalFileInputProps()} />
+                      <p className="text-gray-600">
+                        Drag 'n' drop context JSON files here, or click to select files
+                      </p>
                     </div>
-                  ) )}
-                </CardContent>
-              </Card>
-            )}
+                  </TabsContent>
+
+                  {/* Cloud Import Tab */}
+                  <TabsContent value="cloud">
+                    <div className="space-y-4">
+                      {/* URL Import */}
+                      <div className="flex space-x-2">
+                        <Input
+                          placeholder="Enter context JSON URL"
+                          value={cloudImportUrl}
+                          onChange={( e ) => setCloudImportUrl( e.target.value )}
+                        />
+                        <Button
+                        type="button"
+                          onClick={() => importUrlMutation.mutate( {name:cloudImportUrl,url:cloudImportUrl} )}
+                          disabled={!cloudImportUrl}
+                        >
+                          <Link className="mr-2 h-4 w-4" /> Import
+                        </Button>
+                      </div>
+
+                      {/* Cloud Contexts List */}
+                      {isLoadingCloudContexts ? (
+                        <p>Loading cloud contexts...</p>
+                      ) : cloudContextsError ? (
+                        <p className="text-red-500">Failed to load cloud contexts</p>
+                      ) : (
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-medium">Available Cloud Contexts</h3>
+                          {cloudContexts?.map( ( context, index ) => (
+                            <Card key={index} className="hover:bg-secondary">
+                              <CardContent className="p-4 flex justify-between items-center">
+                                <div>
+                                  <p className="font-medium">{context.name}</p>
+                                  <p className="text-sm text-gray-500">{context.url.split("/")[8]}</p>
+                                </div>
+                                <Button
+                                type="button"
+                                  variant="default"
+                                  onClick={() => importUrlMutation.mutate( {url:context.url,name:context.name} )}
+                                >
+                                  Import
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          ) )}
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+
+              {/* Imported Contexts Display */}
+              {contextsFields.length > 0 && (
+                <Card className="p-1 border-t-0 rounded-none">
+                  <CardHeader>
+                    <CardTitle>Imported Contexts</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {contextsFields.map( ( context, index ) => (
+                      <div
+                        key={context.id}
+                        className="border  p-4 mb-2 rounded flex justify-between items-center"
+                      >
+                        <div>
+                          <p className="font-medium">{context.type}</p>
+                          <p className="text-sm text-gray-500">
+                            {context.originalFile?.substring( 0, 30 ) || 'Custom Context'}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => removeContextAndFields( index )}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) )}
+                  </CardContent>
+                </Card>
+              )}
+            </Card>
 
             {/* Credential Subject Fields */}
             <Card>

@@ -19,8 +19,8 @@ const OrganizationsPage = lazy( () => import( "./components/pages/Orgs/OrgsPage"
 const ManageOrganizationPage = lazy( () => import( "./components/pages/Orgs/ManageOrganizationPage" ) )
 const OrgVCsPage = lazy( () => import( "./components/pages/Orgs/VCsPage" ) )
 const VCViewPage = lazy( () => import( "./components/pages/Orgs/VCViewPage" ) )
-const ViewVCPage = lazy( () => import( "./components/pages/VCView" ) )
-const ViewVPPage = lazy( () => import( "./components/pages/VPView" ) )
+const ViewVCPage = lazy( () => import( "./components/pages/Wallet/VCView" ) )
+const ViewVPPage = lazy( () => import( "./components/pages/Wallet/VPView" ) )
 
 
 

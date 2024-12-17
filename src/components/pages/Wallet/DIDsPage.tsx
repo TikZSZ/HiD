@@ -10,7 +10,7 @@ import { PrivateKey, PublicKey } from "@hashgraph/sdk";
 import { getUserScopedKey, KeyMetadata, KeyPurpose, associateKeyWithDID, KeyPair, KeyAlgorithm } from '@/HiD/keyManager';
 import { createDidDocument, registerDidDocument } from '@/did';
 import { useWallet } from '@/contexts/hashconnect';
-import { Loader2, XIcon } from "lucide-react";
+import { Copy, Loader2, XIcon } from "lucide-react";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -110,11 +110,18 @@ export const DIDCreatePage: React.FC = () =>
       },
     } );
   };
-  const filteredKeys = keys && keys.filter((key)=>key.keyAlgorithm === KeyAlgorithm.ED25519)
+  const filteredKeys = keys && keys.filter( ( key ) => key.keyAlgorithm === KeyAlgorithm.ED25519 )
   // useEffect(()=>{
   //   getDIDs()
   // },[])
-
+  const copyToClipboard = ( text: string ) =>
+    {
+      navigator.clipboard.writeText( text );
+      toast( {
+        title: "Copied to Clipboard",
+        description: "The value has been copied successfully.",
+      } );
+    };
   return (
     <div className="relative h-full p-4 min-h-[90vh]" >
       {/* Full Page Overlay for DID Creation Form */}
@@ -199,7 +206,14 @@ export const DIDCreatePage: React.FC = () =>
                   <CardTitle>{did.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm font-medium">Identifier: {did.identifier}</p>
+                  <p className="text-sm font-medium">Identifier: {did.identifier} <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => copyToClipboard( did.identifier )}
+                  >
+                    <Copy className="h-4 w-4 text-gray-500" />
+                  </Button></p>
+                  <span className="text-xs text-muted-foreground">{new Date( did.$createdAt ).toLocaleString()}</span>
                   <div className="mt-2">
                     <h5 className="text-sm font-semibold">Keys:</h5>
                     {did.keys && did.keys.length > 0 && did.keys.map( ( key ) => (

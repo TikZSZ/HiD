@@ -1,7 +1,6 @@
 import { Models } from 'appwrite';
 import { Client, Databases, ID, Query, Permission, Role, Storage } from 'appwrite';
 import { conf } from '../../conf/conf';
-import { string } from '@ucanto/core/schema';
 // Enum Definitions
 export enum KeyType
 {
@@ -332,7 +331,7 @@ class AppwriteService
     const dids = await this.databases.listDocuments<DIDDocument>(
       conf.appwrtieDBId,
       conf.appwriteDIDsCollID,
-      [ Query.equal( "owner", ownerId ),Query.select(["$id","identifier","name","keys.$id","keys.name","keys.publicKey","keys.keyAlgorithm","keys.keyType"]),Query.orderDesc("$id") ]
+      [ Query.equal( "owner", ownerId ),Query.select(["$id","$createdAt","identifier","name","keys.$id","keys.name","keys.publicKey","keys.keyAlgorithm","keys.keyType"]),Query.orderDesc("$id") ]
     );
     return dids.documents
   }
@@ -521,6 +520,7 @@ class AppwriteService
       conf.appwriteRolesCollID,
       [ Query.equal( 'userId', userId ) ]
     );
+    if(roles.documents.length < 1) return []
     const orgs = await this.databases.listDocuments<OrganizationDocument>(
       conf.appwrtieDBId,
       conf.appwriteOrgsCollID,
@@ -761,7 +761,7 @@ class AppwriteService
       const blob = new Blob( [ data.vpData ], { type: "application/json" } );
       // Create Blob
       // save VCObj to a file and add store type
-      const { url } = await this.uploadFile( new File( [ blob ], "vcObj" ) )
+      const { url } = await this.uploadFile( new File( [ blob ], "vpObj" ) )
       // Save the VCDocument in the database
       const result = await this.databases.createDocument<PresentationDocument>(
         conf.appwrtieDBId,
@@ -894,6 +894,11 @@ class AppwriteService
   {
     const uploadedFile = await this.storage.createFile( conf.appwriteBucketId, ID.unique(), fileData )
     return { uploadedFile, url: `https://cloud.appwrite.io/v1/storage/buckets/${conf.appwriteBucketId}/files/${uploadedFile.$id}/view?project=${conf.appwrtieProjectId}` }
+  }
+
+  async listVCContexts():Promise<{name:string,url:string}[]>{
+    const result = await this.databases.listDocuments(conf.appwrtieDBId,conf.appwriteContextsCollID)
+    return result.documents as any
   }
 
   /**

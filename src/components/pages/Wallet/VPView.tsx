@@ -87,7 +87,7 @@ interface VPViewProps
 }
 import AppwriteService, {  PresentationDocument } from "@/HiD/appwrite/service"
 import { useQuery } from '@tanstack/react-query';
-import ErrorComponent from '../ErrorComponent';
+import ErrorComponent from '../../ErrorComponent';
 export const ViewVCPage: React.FC = (
 ) =>
 {
@@ -106,7 +106,7 @@ export const ViewVCPage: React.FC = (
     isLoading: isLoadingVP,
     error
   } = useQuery<VPViewProps[ "vpData" ]>( {
-    queryKey: [ 'vcData', vpId ],
+    queryKey: [ 'vpData', vpId ],
     queryFn: async () => ( await fetch( vpURL! ) ).json(),
     enabled: !!vpURL,
   } );

@@ -52,7 +52,7 @@ const VPsPage: React.FC = () =>
           <Table className="mt-4">
             <TableHeader>
               <TableRow>
-                <TableCell>ID</TableCell>
+                <TableCell>VP ID</TableCell>
                 <TableCell>VC ID</TableCell>
                 <TableCell>Signed By</TableCell>
                 <TableCell>Created At</TableCell>
@@ -65,10 +65,10 @@ const VPsPage: React.FC = () =>
                   <TableCell>{vc.$id}</TableCell>
                   <TableCell>{vc.vcId}</TableCell>
                   <TableCell>
-                    {vc.signedBy.name+"#"+vc.signedBy.publicKey.substring(0,20)}
+                    <span className="text-muted-foreground">{vc.signedBy.name}</span>#{vc.signedBy.publicKey.substring(0,20)}...
                   </TableCell>
                   <TableCell>
-                    {new Date( vc.$createdAt ).toLocaleDateString()}
+                    {new Date( vc.$createdAt ).toLocaleString()}
                   </TableCell>
                   <TableCell>
                     {/* <div className="flex space-x-2">
