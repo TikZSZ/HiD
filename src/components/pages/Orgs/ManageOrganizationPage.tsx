@@ -509,7 +509,7 @@ const ManageOrganizationPage: React.FC = () =>
               <div className="flex justify-center items-center p-4">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-            ):selectedOrg && (
+            ):selectedOrg ? (
               <>
                 <Card className="mb-6">
                   <CardHeader>
@@ -657,6 +657,8 @@ const ManageOrganizationPage: React.FC = () =>
                   orgId={selectedOrgId}
                 />
               </>
+            ): (
+              <p className="text-center text-muted-foreground mt-4 text-xl">No organizations found.</p>
             )}
     </div>
   );

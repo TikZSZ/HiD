@@ -98,7 +98,7 @@ const VPsPage: React.FC = () =>
             </TableBody>
           </Table>
         ) : (
-          <p className="text-muted-foreground mt-4">No verifiable presentations found.</p>
+          <p className="text-muted-foreground mt-4 text-xl text-center">No verifiable presentations found.</p>
         )}
       </div>
 

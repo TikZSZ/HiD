@@ -11,63 +11,68 @@ import { Loader2, Eye } from "lucide-react";
 import AppwriteService, { VCDocument } from "@/HiD/appwrite/service";
 import CreateVCModal from "./IssueVC";
 
-const OrganizationVCsPage: React.FC = () => {
+const OrganizationVCsPage: React.FC = () =>
+{
   const navigate = useNavigate();
   const { orgId } = useParams<{ orgId: string }>();
   const { userId, useOrgsList } = useKeyContext();
   const { data: orgs = [], isLoading: isLoadingOrgs } = useOrgsList();
 
-  const [selectedOrgId, setSelectedOrgId] = useState(orgId || "");
-  const [activeTab, setActiveTab] = useState<"issued" | "received">("issued");
-  const [isIssueVCModalOpen, setIsIssueVCModalOpen] = useState(false);
+  const [ selectedOrgId, setSelectedOrgId ] = useState( orgId || "" );
+  const [ activeTab, setActiveTab ] = useState<"issued" | "received">( "issued" );
+  const [ isIssueVCModalOpen, setIsIssueVCModalOpen ] = useState( false );
 
   // Fetch VCs issued by the organization
   const {
     data: issuedVCs = [],
     isLoading: isLoadingIssuedVCs,
     refetch: refetchIssuedVCs
-  } = useQuery<VCDocument[]>({
-    queryKey: ['orgIssuedVCs', selectedOrgId],
-    queryFn: () => AppwriteService.getCredentialsForOrg(selectedOrgId, userId),
+  } = useQuery<VCDocument[]>( {
+    queryKey: [ 'orgIssuedVCs', selectedOrgId ],
+    queryFn: () => AppwriteService.getCredentialsForOrg( selectedOrgId, userId ),
     enabled: !!selectedOrgId && activeTab === "issued"
-  });
+  } );
 
   // Fetch VCs received by the organization
   const {
     data: receivedVCs = [],
     isLoading: isLoadingReceivedVCs,
     refetch: refetchReceivedVCs
-  } = useQuery<VCDocument[]>({
-    queryKey: ['orgReceivedVCs', selectedOrgId],
-    queryFn: () => AppwriteService.getOrgCredentials(selectedOrgId),
-    enabled: !!selectedOrgId && activeTab==="received"
-  });
+  } = useQuery<VCDocument[]>( {
+    queryKey: [ 'orgReceivedVCs', selectedOrgId ],
+    queryFn: () => AppwriteService.getOrgCredentials( selectedOrgId ),
+    enabled: !!selectedOrgId && activeTab === "received"
+  } );
 
   // Effects to handle organization selection and navigation
-  useEffect(() => {
-    if (orgId && orgId !== "undefined") setSelectedOrgId(orgId);
-    else navigate('/dashboard/orgs/vcs');
-  }, [orgId]);
+  useEffect( () =>
+  {
+    if ( orgId && orgId !== "undefined" ) setSelectedOrgId( orgId );
+    else navigate( '/dashboard/orgs/vcs' );
+  }, [ orgId ] );
 
-  useEffect(() => {
-    if (!selectedOrgId && orgs.length > 0) {
-      const firstOrgId = orgs[0].$id;
-      setSelectedOrgId(firstOrgId);
-      navigate(`/dashboard/orgs/${firstOrgId}/vcs`);
+  useEffect( () =>
+  {
+    if ( !selectedOrgId && orgs.length > 0 )
+    {
+      const firstOrgId = orgs[ 0 ].$id;
+      setSelectedOrgId( firstOrgId );
+      navigate( `/dashboard/orgs/${firstOrgId}/vcs` );
     }
-  }, [orgs, selectedOrgId, navigate]);
+  }, [ orgs, selectedOrgId, navigate ] );
 
   // Organization change handler
-  const handleOrgChange = (value: string) => {
-    setSelectedOrgId(value);
-    navigate(`/dashboard/orgs/${value}/vcs`);
+  const handleOrgChange = ( value: string ) =>
+  {
+    setSelectedOrgId( value );
+    navigate( `/dashboard/orgs/${value}/vcs` );
   };
 
   // Find selected organization
-  const selectedOrg = orgs.find((org) => org.$id === selectedOrgId);
+  const selectedOrg = orgs.find( ( org ) => org.$id === selectedOrgId );
 
   // Render common VC table
-  const renderVCTable = (vcs: VCDocument[], issuedMode: boolean) => (
+  const renderVCTable = ( vcs: VCDocument[], issuedMode: boolean ) => (
     isLoadingIssuedVCs || isLoadingReceivedVCs ? (
       <div className="flex justify-center items-center p-4">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -84,20 +89,20 @@ const OrganizationVCsPage: React.FC = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {vcs.map((vc) => (
+          {vcs.map( ( vc ) => (
             <TableRow key={vc.$id}>
               <TableCell>{vc.$id}</TableCell>
-              <TableCell>
-                {vc.identifier.split(":")[1] === "hedera" ? "hedera: "+vc.identifier.split("_")[0].substring(19, 40) + "...#" + vc.identifier.split("_")[1]:"web: "+vc.identifier.substring(0,29)+"..."}
+              <TableCell className="break-all">
+                {vc.identifier}
               </TableCell>
               <TableCell>
                 {issuedMode
-                  ? (vc.holder ? `${vc.holder.name}#${vc.holder.email}` : "External Holder")
+                  ? ( vc.holder ? `${vc.holder.name}#${vc.holder.email}` : "External Holder" )
                   : `${vc.issuer.name}`
                 }
               </TableCell>
               <TableCell>
-                {new Date(vc.$createdAt).toLocaleDateString()}
+                {new Date( vc.$createdAt ).toLocaleDateString()}
               </TableCell>
               <TableCell>
                 <NavLink to={`/dashboard/orgs/${selectedOrgId}/vcs/${vc.$id}`}>
@@ -107,7 +112,7 @@ const OrganizationVCsPage: React.FC = () => {
                 </NavLink>
               </TableCell>
             </TableRow>
-          ))}
+          ) )}
         </TableBody>
       </Table>
     ) : (
@@ -135,11 +140,11 @@ const OrganizationVCsPage: React.FC = () => {
           </SelectTrigger>
           <SelectContent>
             {orgs.length > 0 ? (
-              orgs.map((org) => (
+              orgs.map( ( org ) => (
                 <SelectItem key={org.$id} value={org.$id}>
                   {org.name}
                 </SelectItem>
-              ))
+              ) )
             ) : (
               <div className="p-2 text-center text-muted-foreground">
                 No organizations found
@@ -149,11 +154,15 @@ const OrganizationVCsPage: React.FC = () => {
         </Select>
       </div>
 
-      {selectedOrg && (
+      {isLoadingIssuedVCs || isLoadingReceivedVCs ? (
+        <div className="flex justify-center items-center p-4">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : selectedOrg ? (
         <>
-          <Tabs 
-            value={activeTab} 
-            onValueChange={(value) => setActiveTab(value as any)}
+          <Tabs
+            value={activeTab}
+            onValueChange={( value ) => setActiveTab( value as any )}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-2">
@@ -164,26 +173,26 @@ const OrganizationVCsPage: React.FC = () => {
                 VCs Received by {selectedOrg.name}
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="issued">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">
                   Verifiable Credentials Issued
                 </h3>
-                <Button onClick={() => setIsIssueVCModalOpen(true)}>
+                <Button onClick={() => setIsIssueVCModalOpen( true )}>
                   Issue Credential
                 </Button>
               </div>
-              {renderVCTable(issuedVCs, true)}
+              {renderVCTable( issuedVCs, true )}
             </TabsContent>
-            
+
             <TabsContent value="received">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">
                   Verifiable Credentials Received
                 </h3>
               </div>
-              {renderVCTable(receivedVCs, false)}
+              {renderVCTable( receivedVCs, false )}
             </TabsContent>
           </Tabs>
 
@@ -194,6 +203,8 @@ const OrganizationVCsPage: React.FC = () => {
             org={selectedOrg}
           />
         </>
+      ) : (
+        <p className="text-center text-muted-foreground mt-4 text-xl">No credentials found.</p>
       )}
     </div>
   );

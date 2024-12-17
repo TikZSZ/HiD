@@ -561,7 +561,9 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                     userId,
                     keyID
                   )
-
+                  queryClient.invalidateQueries({queryKey:['orgReceivedVCs', orgId]})
+                  queryClient.invalidateQueries({queryKey:['orgIssuedVCs', orgId ]})
+                  queryClient.invalidateQueries({queryKey:['userVCs']})
                   console.log( vcDocument )
                   toast( { title: "VC Issued", description: "VC was issued successfully to" + " " + identifier.substring( 0, 20 ), variant: "default" } );
                   res( vcDocument )

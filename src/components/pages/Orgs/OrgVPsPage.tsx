@@ -153,7 +153,7 @@ const OrgVPsPage: React.FC = () =>
             </TableBody>
           </Table>
         ) : (
-          <p className="text-muted-foreground mt-4">No verifiable presentations found.</p>
+          <p className="text-center text-muted-foreground mt-4 text-xl">No verifiable presentations found.</p>
         )}
       </div>
     </div>

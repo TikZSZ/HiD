@@ -11,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormModal } from "../../app/FormModal";
 import { PageHeader } from "../../app/PageHeader";
 import { Loader2 } from "lucide-react";
-import { KeyAlgorithm } from "@/HiD/keyManager";
+import { KeyAlgorithm, KeyType } from "@/HiD/keyManager";
 import { keyTypesColors } from "@/components/OrganizationTable";
 import { Badge } from "@/components/ui/badge";
 function getFormmatedPubKey ( publicKey: string )
@@ -134,16 +134,16 @@ export const KeyManagementOverlay: React.FC = () =>
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium">{key.name}  
+                      <div className="font-medium">{key.name}
                         <Badge className={"bg-secondary text-sm text-white ml-5  rounded-sm mb-2"}>
-                        {key.keyAlgorithm}
-                      </Badge></div>
+                          {key.keyAlgorithm}
+                        </Badge></div>
                       <p className="text-xs text-muted-foreground">{`${getFormmatedPubKey( key.publicKey )}`} </p>
                       <span className="text-xs text-muted-foreground">{new Date( key.$createdAt ).toLocaleString()}</span>
                       <p className="text-sm text-muted-foreground">{key.type}</p>
                       <div>
 
-                        
+
                       </div>
                     </div>
 
@@ -214,15 +214,15 @@ export const KeyManagementOverlay: React.FC = () =>
                     </div>
                   </div>
                   {key.keyType.map( ( keyType ) => (
-                          <Badge key={keyType} className={keyTypesColors[ keyType ] + " mr-2"}>
-                            {keyType}
-                          </Badge>
-                        ) )}
+                    <Badge key={keyType} className={keyTypesColors[ keyType ] + " mr-2"}>
+                      {keyType}
+                    </Badge>
+                  ) )}
                 </li>
               ) )}
             </ul>
           ) : (
-            <p className="text-center text-muted-foreground mt-4">No keys available.</p>
+            <p className="text-center text-muted-foreground mt-4 text-xl">No Keys available.</p>
           ) )
         }
       </div>
@@ -248,7 +248,7 @@ export const KeyManagementOverlay: React.FC = () =>
                         <SelectValue placeholder="Select Key Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.values( KeyAlgorithm ).map( ( type ) => (
+                        {Object.values( KeyAlgorithm ).map( ( type, i ) => (
                           <SelectItem key={type} value={type}>
                             {type}
                           </SelectItem>

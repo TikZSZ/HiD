@@ -1,27 +1,29 @@
 import { Suspense, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "../ToggleMode";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import
+  {
+    Sheet,
+    SheetContent,
+    SheetTitle,
+    SheetTrigger,
+  } from "@/components/ui/sheet";
 import { Menu, Wallet } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from "@/components/ui/dropdown-menu"; // Import DropdownMenu components
+import
+  {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+  } from "@/components/ui/dropdown-menu"; // Import DropdownMenu components
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useWallet } from "@/contexts/hashconnect";
 import { Skeleton } from "../ui/skeleton";
@@ -34,15 +36,18 @@ const LoadingNavItems = () => (
   </div>
 );
 
-const NavItemsContent = ({ isLoading, children }: any) => {
-  if (isLoading) {
+const NavItemsContent = ( { isLoading, children }: any ) =>
+{
+  if ( isLoading )
+  {
     return <LoadingNavItems />;
   }
   return children;
 };
 
-export const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+export const Navbar = () =>
+{
+  const [ isOpen, setIsOpen ] = useState( false );
   const navigate = useNavigate();
   const { user, logout, isAuthenticated, loading } = useAuth();
 
@@ -59,53 +64,59 @@ export const Navbar = () => {
     state,
   } = useWallet();
 
-  useEffect(() => {
+  useEffect( () =>
+  {
     init();
-  }, []);
+  }, [] );
 
-  const handleLogout = async () => {
-    try {
+  const handleLogout = async () =>
+  {
+    try
+    {
       await logout();
-      navigate("/"); // Redirect to the homepage or another route after logout
-    } catch (error) {
-      console.error("Failed to log out", error);
+      navigate( "/" ); // Redirect to the homepage or another route after logout
+    } catch ( error )
+    {
+      console.error( "Failed to log out", error );
     }
   };
 
-  useEffect(() => {
-    const checkAuth = async () => {
+  useEffect( () =>
+  {
+    const checkAuth = async () =>
+    {
       await isAuthenticated();
     };
     checkAuth();
-  }, [isAuthenticated]);
+  }, [ isAuthenticated ] );
 
-  const truncateAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const truncateAddress = ( address: string ) =>
+  {
+    return `${address.slice( 0, 6 )}...${address.slice( -4 )}`;
   };
 
   const NavItems = () => (
     <NavItemsContent isLoading={loading}>
       <>
-        <NavLink
-          to="docs"
-          className={({isActive}) =>
-            (isActive ? "text-primary" : "dark:text-primary-foreground text-secondary-foreground")
-          }
-        >
-          <Button variant="ghost" className="mr-4">
-            Docs
-          </Button>
-        </NavLink>
-
         {user ? (
-          <NavLink to="dashboard" className={({isActive}) =>
-            (isActive ? "text-primary" : "dark:text-primary-foreground text-secondary-foreground")
+          <NavLink to="dashboard" className={( { isActive } ) =>
+            ( isActive ? "text-muted-foreground" : "dark:text-primary-foreground text-secondary-foreground" )
           }>
-            <Button variant="ghost" className="mr-4">
+            <Button variant="ghost" className="mr-4 text-foreground ">
               Dashboard
             </Button>
           </NavLink>
         ) : null}
+        <NavLink
+          to="docs"
+          className={( { isActive } ) =>
+            ( isActive ? "text-muted-foreground" : "dark:text-primary-foreground text-secondary-foreground" )
+          }
+        >
+          <Button variant="ghost" className="text-foreground mr-4">
+            Docs
+          </Button>
+        </NavLink>
 
         {user ? (
           <DropdownMenu>
@@ -113,7 +124,7 @@ export const Navbar = () => {
               <Button variant="ghost" className="p-0">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={"/default-avatar.png"} alt={user.name} />
-                  <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{user.name?.charAt( 0 )}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -136,12 +147,12 @@ export const Navbar = () => {
                     value={selectedAccount!}
                     onValueChange={setSelectedAccount}
                   >
-                    {accountIds?.map((account) => (
+                    {accountIds?.map( ( account ) => (
                       <DropdownMenuRadioItem key={account} value={account}>
                         <Wallet className="mr-2 h-4 w-4" />
-                        {truncateAddress(account)}
+                        {truncateAddress( account )}
                       </DropdownMenuRadioItem>
-                    ))}
+                    ) )}
                   </DropdownMenuRadioGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => disconnect()}>
@@ -163,7 +174,7 @@ export const Navbar = () => {
         ) : (
           <>
             <Button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate( "/login" )}
               variant="default"
               className="mr-4"
             >
@@ -188,13 +199,14 @@ export const Navbar = () => {
           </h1>
         </Link>
         <div className="flex items-center">
-          <div className="relative mr-4">
-            <ModeToggle />
-          </div>
+          
           <div className="hidden md:flex">
             <Suspense fallback={<LoadingNavItems />}>
               <NavItems />
             </Suspense>
+          </div>
+          <div className="relative ml-4">
+            <ModeToggle />
           </div>
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden pt-1">
@@ -207,8 +219,9 @@ export const Navbar = () => {
                 <VisuallyHidden.Root>Navbar</VisuallyHidden.Root>
               </SheetTitle>
               <nav
-                onClick={() => {
-                  setIsOpen(false);
+                onClick={() =>
+                {
+                  setIsOpen( false );
                 }}
                 className="flex flex-col space-y-4 mt-8"
               >

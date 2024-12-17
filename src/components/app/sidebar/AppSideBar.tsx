@@ -19,7 +19,9 @@ import
     SquareTerminal,
     User,
     FileBadge2Icon,
-    FileText
+    FileText,
+    Building2,
+    Notebook
   } from "lucide-react"
 
 // import { NavMain } from "@/components/nav-main"
@@ -76,21 +78,25 @@ const data = {
     {
       title: "Organizations",
       url: "/dashboard/orgs",
-      icon: Bot,
+      icon: Building2,
       isActive: true,
       items: [
         {
           title: "Manage",
           url: "/dashboard/orgs/manage",
-
+          icon:Notebook 
         },
         {
           title: "Credentials",
           url: "/dashboard/orgs/vcs",
+          icon:FileBadge2Icon 
+          
         },
         {
           title: "Presentations",
-          url: "/dashboard/orgs/vps"
+          url: "/dashboard/orgs/vps",
+          icon:FileText 
+          
         },
       ],
     },

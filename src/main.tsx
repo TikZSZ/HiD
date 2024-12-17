@@ -1,6 +1,8 @@
 import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
+import "./scrollbar.css";
+
 import { ThemeProvider } from "@/components/ThemeProvider.tsx";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router.tsx";

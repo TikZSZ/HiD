@@ -23,7 +23,26 @@ import
 import { Link, NavLink, useLocation, matchPath } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useEffect } from "react"
+// Helper function to create a more flexible route matcher
+const isActiveRoute = (currentPath: string, routePattern: string) => {
+  // Exact match
+  if (currentPath === routePattern) return true;
 
+  // Handle dynamic segments
+  const pathSegments = currentPath.split('/');
+  const routeSegments = routePattern.split('/');
+
+  // Ensure same number of segments or route pattern can accommodate dynamic segment
+  if (pathSegments.length !== routeSegments.length && 
+      !(routeSegments.some(segment => segment.startsWith(':')))) {
+    return false;
+  }
+
+  // Compare segments, allowing for dynamic segments marked with ':'
+  return routeSegments.every((segment, index) => 
+    segment.startsWith(':') || segment === pathSegments[index]
+  );
+};
 export function NavMain ( {
   items,
 }: {

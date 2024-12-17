@@ -19,6 +19,7 @@ import { PageHeader } from "../../app/PageHeader";
 import { FormModal } from "../../app/FormModal";
 import { Loader2 } from "lucide-react";
 import OrganizationTable from "../../OrganizationTable";
+import { Textarea } from "@/components/ui/textarea";
 
 const OrganizationsPage: React.FC = () =>
 {
@@ -84,7 +85,7 @@ const OrganizationsPage: React.FC = () =>
             <OrganizationTable organizations={orgs} />
           </div>
         ) : (
-          <p className="text-center text-muted-foreground mt-4">No organizations created yet.</p>
+          <p className="text-center text-muted-foreground mt-4 text-xl">No organizations created yet.</p>
         )}
       </div>
 
@@ -114,10 +115,11 @@ const OrganizationsPage: React.FC = () =>
                 <FormItem>
                   <FormLabel htmlFor="description">Description</FormLabel>
                   <FormControl>
-                    <Input
+                    <Textarea
                       id="description"
                       placeholder="Enter organization description"
                       {...field}
+                      
                     />
                   </FormControl>
                   <FormMessage />

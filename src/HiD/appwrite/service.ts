@@ -10,7 +10,7 @@ export enum KeyType
 }
 export enum KeyAlgorithm
 {
-  RSA_4096 = "RSA_4096",
+  // RSA_4096 = "RSA_4096",
   BBS_2023 = "BBS_2023",
   ED25519 = "ED25519"
 }
@@ -756,7 +756,7 @@ class AppwriteService
       const keyDoc = await this.getKey( ownerId, keyId )
       if ( !keyDoc ) throw new Error( "Key does not exist" );
 
-      if ( keyDoc.owner.$id !== ownerId ) throw new Error( "Key Does not belong to user." );
+      // if ( keyDoc.owner.$id !== ownerId ) throw new Error( "Key Does not belong to user." );
 
       const blob = new Blob( [ data.vpData ], { type: "application/json" } );
       // Create Blob

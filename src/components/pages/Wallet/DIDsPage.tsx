@@ -227,7 +227,7 @@ export const DIDCreatePage: React.FC = () =>
             ) )}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground mt-4">No DIDs Found</p>
+          <p className="text-center text-muted-foreground mt-4 text-xl">No DIDs Found</p>
         )}
       </div>
 

@@ -59,7 +59,9 @@ const UserVCsPage: React.FC = () =>
               {vcs.map( ( vc ) => (
                 <TableRow key={vc.$id}>
                   <TableCell>{vc.$id}</TableCell>
-                  <TableCell>{vc.identifier.split( "_" )[ 0 ].substring( 19, 40 ) + "...#" + vc.identifier.split( "_" )[ 1 ]}</TableCell>
+                  <TableCell className="break-all">
+                    {vc.identifier}
+                  </TableCell>
                   <TableCell>
                     {vc.issuer.name}
                   </TableCell>
@@ -83,7 +85,7 @@ const UserVCsPage: React.FC = () =>
             </TableBody>
           </Table>
         ) : (
-          <p className="text-muted-foreground mt-4">No verifiable credentials found.</p>
+          <p className="text-muted-foreground mt-4 text-xl text-center">No verifiable credentials found.</p>
         )}
       </div>
 
