@@ -25,12 +25,20 @@ import
   FileSignature,
   CheckCircle2,
   AlertCircle,
-  Loader2
+  Loader2,
+  UserCircle2
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { useParams } from 'react-router-dom';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import AppwriteService, { KeyAlgorithm, KeyDocument, VCStoreDocument } from "@/HiD/appwrite/service"
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSignModal } from '../../app/SignModal';
+import { useKeyContext } from '@/contexts/keyManagerCtx';
+import ErrorComponent from '../../ErrorComponent';
+import { ID } from 'appwrite';
+import { keyTypesColors } from '../../OrganizationTable';
 import
 {
   createDiscloseCryptosuite,
@@ -70,13 +78,7 @@ interface VCViewProps
   };
   onCreateVerifiablePresentation: ( selectedFields: string[] ) => void;
 }
-import AppwriteService, { KeyAlgorithm, KeyDocument, VCStoreDocument } from "@/HiD/appwrite/service"
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSignModal } from '../../app/SignModal';
-import { useKeyContext } from '@/contexts/keyManagerCtx';
-import ErrorComponent from '../../ErrorComponent';
-import { ID } from 'appwrite';
-import { keyTypesColors } from '../../OrganizationTable';
+
 export const ViewVCPage: React.FC = (
   //   { 
   //   vcData, 
@@ -214,7 +216,7 @@ export const ViewVCPage: React.FC = (
                 presentation: vp, contextMetadatas: [ vcData.contextMetadata ]
               } )
             }, userId, selectedKey )
-            queryClient.invalidateQueries({queryKey:[ 'userVPs', userId ]})
+            queryClient.invalidateQueries( { queryKey: [ 'userVPs', userId ] } )
             toast( { title: "VP Issued", description: "VP was issued successfully for" + " " + vcId, variant: "default" } );
             console.log( vpDoc )
           } else
@@ -270,7 +272,7 @@ export const ViewVCPage: React.FC = (
         return value;
     }
   };
-  const filteredKeys = did && did.keys && did.keys.filter((key)=>key.keyAlgorithm === KeyAlgorithm.ED25519) || []
+  const filteredKeys = did && did.keys && did.keys.filter( ( key ) => key.keyAlgorithm === KeyAlgorithm.ED25519 ) || []
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -279,85 +281,112 @@ export const ViewVCPage: React.FC = (
         <div className="flex justify-center items-center p-4">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      ) : ( vcData ? <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <ShieldCheck className="mr-2 text-green-600" />
-            Verifiable Credential Details
-            {vcData.signedCredential.type.map( ( type, i ) =>
-            {
-              return <Badge key={i} variant="secondary" className="ml-2">
-                {type}
-              </Badge>
-            } )}
-
-          </CardTitle>
-          <CardDescription>
-            Issued by <span className='text-muted-foreground'>{vcData.signedCredential.issuer.name}</span> on {' '}
-            <span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.issuanceDate ), 'PPP' )}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Credential Subject Details */}
-          <div className="grid md:grid-cols-2 gap-4">
-            {Object.entries( vcData.contextMetadata ).map( ( [ key, metadata ] ) =>
-            {
-              const value = vcData.signedCredential.credentialSubject[ key ];
-
-              return value !== undefined ? (
-                <div
-                  key={key}
-                  className="bg-background p-4 rounded-lg border flex justify-between items-center"
-                >
-                  <div>
-                    <div className="font-semibold text-primary">
-                      {metadata.name}
-                      {metadata.mandatory && (
-                        <Badge variant="outline" className="ml-2 text-green-600">
-                          Mandatory
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 text-foreground mt-1">
-                      {metadata.description}
-                    </p>
-                    <p className="text-muted-foreground text-sm break-all">
-                      {renderFieldValue( key, value )}
-                    </p>
-
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard( value.toString() )}
-                  >
-                    <Copy className="h-4 w-4 text-gray-500" />
-                  </Button>
+      ) : ( vcData ?
+        <div>
+          {/* Holder Information */}
+          <Card className='mb-5'>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <UserCircle2 className="mr-2 text-blue-600" />
+                Credential Holder
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <strong>Holder ID:</strong>
+                  <p className="text-muted-foreground break-all">
+                    {vcData.signedCredential.credentialSubject.id}
+                  </p>
                 </div>
-              ) : null;
-            } )}
-          </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Proof Details */}
-          <div className="mt-6 bg-background p-4 rounded-lg border">
-            <h3 className="font-semibold mb-2 flex items-center">
-              <CheckCircle2 className="mr-2 text-green-600" />
-              Proof Details
-            </h3>
-            <div className="space-y-2">
-              <p>
-                <span className="font-medium ">Type:</span> {' '}
-                <span className='text-muted-foreground' >{vcData.signedCredential.proof.type}</span>
-              </p>
-              <p>
-                <span className="font-medium ">Cryptosuite:</span> {' '}
-                <span className='text-muted-foreground' >{vcData.signedCredential.proof.cryptosuite}</span>
+          {/* Existing VC Details Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <ShieldCheck className="mr-2 text-green-600" />
+                Verifiable Credential Details
+                {vcData.signedCredential.type.map( ( type, i ) =>
+                {
+                  return <Badge key={i} variant="secondary" className="ml-2">
+                    {type}
+                  </Badge>
+                } )}
 
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card> : <ErrorComponent message='VC Not Found' /> )}
+              </CardTitle>
+              <CardDescription>
+                Issued by <span className='text-muted-foreground'>{vcData.signedCredential.issuer.name}</span> on {' '}
+                <span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.issuanceDate ), 'PPP' )}</span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Credential Subject Details */}
+              <div className="grid md:grid-cols-2 gap-4">
+                {Object.entries( vcData.contextMetadata ).map( ( [ key, metadata ] ) =>
+                {
+                  const value = vcData.signedCredential.credentialSubject[ key ];
+
+                  return value !== undefined ? (
+                    <div
+                      key={key}
+                      className="bg-background p-4 rounded-lg border flex justify-between items-center"
+                    >
+                      <div>
+                        <div className="font-semibold text-primary">
+                          {metadata.name}
+                          {metadata.mandatory && (
+                            <Badge variant="outline" className="ml-2 text-green-600">
+                              Mandatory
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 text-foreground mt-1">
+                          {metadata.description}
+                        </p>
+                        <p className="text-muted-foreground text-sm break-all">
+                          {renderFieldValue( key, value )}
+                        </p>
+
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyToClipboard( value.toString() )}
+                      >
+                        <Copy className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </div>
+                  ) : null;
+                } )}
+              </div>
+
+              {/* Proof Details */}
+              <div className="mt-6 bg-background p-4 rounded-lg border">
+                <h3 className="font-semibold mb-2 flex items-center">
+                  <CheckCircle2 className="mr-2 text-green-600" />
+                  Proof Details
+                </h3>
+                <div className="space-y-2">
+                  <p>
+                    <span className="font-medium ">Type:</span> {' '}
+                    <span className='text-muted-foreground' >{vcData.signedCredential.proof.type}</span>
+                  </p>
+                  <p>
+                    <span className="font-medium ">Cryptosuite:</span> {' '}
+                    <span className='text-muted-foreground' >{vcData.signedCredential.proof.cryptosuite}</span>
+
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+        </div>: <ErrorComponent message='VC Not Found' /> )}
+
+
 
       {/* Create Verifiable Presentation Button */}
       {
@@ -434,11 +463,11 @@ export const ViewVCPage: React.FC = (
                       <Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />
                       Loading keys...
                     </div>
-                  ) : did && did.keys && did.keys.length === 0 ? (
+                  ) : filteredKeys && filteredKeys.length === 0 ? (
                     <div className="p-2 text-center text-muted-foreground">
                       No unlinked keys available
                     </div>
-                  ) : did && did.keys && did.keys.map( ( key ) => (
+                  ) : filteredKeys.map( ( key ) => (
                     <SelectItem key={key.$id} value={key.$id}>
                       {key.name} - {key.$id.slice( 0, 10 )}...{key.keyType.map( ( keyType ) => (
                         <Badge key={keyType} className={keyTypesColors[ keyType ] + " mx-1"}>

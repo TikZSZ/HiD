@@ -77,6 +77,7 @@ const data = {
       title: "Organizations",
       url: "/dashboard/orgs",
       icon: Bot,
+      isActive: true,
       items: [
         {
           title: "Manage",
@@ -88,8 +89,8 @@ const data = {
           url: "/dashboard/orgs/vcs",
         },
         {
-          title: "Security",
-          url: "#",
+          title: "Presentations",
+          url: "/dashboard/orgs/vps"
         },
       ],
     },

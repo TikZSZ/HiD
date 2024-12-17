@@ -118,8 +118,6 @@ const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?:
               </FormDescription>
             </FormItem>
           </div>
-
-
         );
       case 'number':
         return (
@@ -135,16 +133,10 @@ const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?:
         );
       case 'boolean':
         return (
-          // <Checkbox checked={field.value}
-          //   onCheckedChange={( e ) =>
-          //   {
-          //     field.value = e
-          //   }} />
           <div>
             <Switch checked={field.value} onCheckedChange={field.onChange} id="airplane" />
             <Label htmlFor="airplane">Mandatory</Label>
           </div>
-
         );
       default:
         return (
@@ -168,11 +160,12 @@ const VCCreationSchema = z.object( {
   identifier: z.string().refine( ( identifier ) =>
   {
     if(!identifier) return false
-    // if ( identifier.split( ":" ).length !== 4 ) return false
+    if ( identifier.split( ":" ).length < 3 ) return false
+    if(identifier.split( ":" )[0] !== "did" && !(identifier.split( ":" )[1].includes("hedera") && identifier.split( ":" )[1].includes("web")) ) return false
     // if ( identifier.split( ":" )[ 3 ].split( "_" ).length !== 2 ) return false
     // if ( identifier.split( ":" )[ 3 ].split( "_" )[ 1 ].split( "." ).length !== 3 ) return false
     return true
-  }, "identifier should be of form did:hedera:network:....._TopicID " ).default( "" ),
+  }, "identifier should be of form did:hedera:network:..._{TopicID} or did:web:{URL}" ).default( "" ),
   keyId: z.string().nonempty( "Select a key to sign the credential" ),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
@@ -289,152 +282,10 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     error: cloudContextsError
   } = useQuery( {
     queryKey: [ 'cloudContexts' ], queryFn: () => AppwriteService.listVCContexts(),
-    retry: 2
+    retry: 2,
+    enabled:activeTab === "cloud"
   },
   );
-  // async function addJSONContext ( jsonStr: string, file: any = { name: 'default.json' } )
-  // {
-  //   try
-  //   {
-  //     const textEncoder = new TextEncoder()
-  //     const hash = file.name + "#" + ( binary_to_base58( new Uint8Array( await crypto.subtle.digest( "SHA-256", textEncoder.encode( jsonStr ) ) ) ) as string )
-  //     if ( contextsFields.find( ( cont ) => cont.originalFile === hash ) )
-  //     {
-  //       toast( {
-  //         title: "Duplicate Context",
-  //         description: "The imported context already exists.",
-  //         variant: "destructive"
-  //       } );
-  //       return;
-  //     }
-  //     const parsedContext = JSON.parse( jsonStr ) as ImportedContext;
-
-  //     if ( !parsedContext.context || !parsedContext.fields )
-  //     {
-  //       toast( {
-  //         title: "Invalid Context",
-  //         description: "The imported context is missing required fields.",
-  //         variant: "destructive"
-  //       } );
-  //       return;
-  //     }
-
-  //     // Determine context type and schema
-  //     const contextType = parsedContext.type || file.name.replace( '.json', '' );
-  //     const contextSchema = Object.entries( parsedContext.fields ).reduce(
-  //       ( acc, [ key, details ] ) => ( {
-  //         ...acc,
-  //         [ key ]: {
-  //           name: details.name || key,
-  //           mandatory: details.mandatory || false,
-  //           type: details.type || 'string',
-  //           description: details.description || ''
-  //         }
-  //       } ),
-  //       {} as ImportedContext[ "fields" ]
-  //     );
-  //     console.log( contextType, contextSchema )
-
-  //     // Add context to contexts array with schema
-  //     appendContext( {
-
-  //       type: contextType,
-  //       context: parsedContext.context,
-  //       originalFile: hash,
-  //       schema: contextSchema
-  //     } );
-
-  //     // Add fields to credentialSubject
-  //     Object.entries( parsedContext.fields ).forEach( ( [ key, details ] ) =>
-  //     {
-  //       const existingField = form.watch( "credentialSubject" )
-  //         .find( field => field.key === key );
-
-  //       if ( !existingField )
-  //       {
-  //         appendSubjectField( {
-  //           key,
-  //           value: details.value || "",
-  //           mandatory: details.mandatory || false,
-  //           optional: details.optional,
-  //           contextRef: contextType,
-  //           dataType: details.type || 'string',
-  //           description: details.description,
-  //           name: details.name
-  //         } );
-  //       }
-  //     } );
-
-  //     toast( {
-  //       title: "Context Imported",
-  //       description: `Context from ${file.name} added successfully.`
-  //     } );
-  //   } catch ( error )
-  //   {
-  //     toast( {
-  //       title: "Import Failed",
-  //       description: "Could not parse the context file. Please check the format.",
-  //       variant: "destructive"
-  //     } );
-  //   }
-  // }
-
-  //   useEffect( () =>
-  //   {
-  //     addJSONContext( `{
-  //   "context": {
-  //     "@protected": true,
-  //     "AlumniCredential": "urn:example:AlumniCredential",
-  //     "alumniOf": "https://schema.org#alumniOf",
-  //     "currentGrade": "https://schema.org#number",
-  //     "graduationDate": "https://schema.org#date"
-  //   },
-  //   "type": "AlumniCredential",
-  //   "fields": {
-  //     "alumniOf": {
-  //       "name":"Alumni Of",
-  //       "type":"string",
-  //       "optional":false,
-  //       "mandatory":true,
-  //       "description":"University Name"
-  //     }, 
-  //     "currentGrade": {
-  //       "name":"Current Grade",
-  //       "type":"number",
-  //       "optional":false,
-  //       "mandatory":true,
-  //       "description":"Current Student Grade"
-  //     }, 
-  //     "graduationDate": {
-  //       "name":"Graduation Date",
-  //       "type":"date",
-  //       "optional":false,
-  //       "mandatory":true,
-  //       "description":"Current Student Graduation Date"
-  //     }
-  //   }
-  // }`)
-  //   }, [] )
-
-  // Enhanced File Drop Handler
-
-  // const onDrop = useCallback( ( acceptedFiles: File[] ) =>
-  // {
-  //   acceptedFiles.forEach( file =>
-  //   {
-  //     const reader = new FileReader();
-
-  //     reader.onload = ( event ) =>
-  //     {
-  //       // @ts-ignore
-  //       addJSONContext( event.target.result, file )
-  //     };
-
-  //     reader.readAsText( file );
-  //   } );
-  // }, [ appendContext, appendSubjectField, form ] );
-
-  // Dropzone setup
 
   // Async function to add JSON context with deduplication logic
   const addJSONContext = async ( jsonStr: string, file: { name: string } = { name: 'default.json' } ) =>
@@ -461,7 +312,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
         return;
       }
 
-      const parsedContext = JSON.parse( jsonStr );
+      const parsedContext = JSON.parse( jsonStr ) as ImportedContext;
 
       if ( !parsedContext.context || !parsedContext.fields )
       {
@@ -589,6 +440,8 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     {
       const { contexts, identifier, keyId: keyID, credentialSubject, validFrom, validUntil } = data
       console.log( data )
+      // const document = await documentLoader(identifier)
+  
       // const didDocument = await resolveDID( identifier )
       // if ( didDocument && !didDocument.hasOwner() )
       // {
@@ -727,7 +580,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
           onClose: () =>
           {
             console.error( "Signing failed", "User Rejected" );
-            rej()
+            rej(new Error("Signing failed User Rejected"))
             // setIsCreating( false );
           },
         } );
@@ -735,7 +588,6 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     },
     onSuccess: async ( newVC ) =>
     {
-
       // Invalidate and refetch VCs
       queryClient.invalidateQueries( {
         queryKey: [ 'orgVCs', orgId ]
@@ -751,7 +603,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
       console.error( "Error issuing credential:", error );
       toast( {
         title: "Error",
-        description: "Failed to issue credential. Please try again. " + error.message,
+        description: "Failed to issue credential. \n\n Reason: " + error.message,
         variant: "destructive"
       } );
     }

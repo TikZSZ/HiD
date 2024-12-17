@@ -183,7 +183,7 @@ export interface CreateVPDTO
 {
   vpData: string,
   vcId: string,
-  vpId:string
+  vpId: string
 }
 
 export interface CreateVCStoreDTO
@@ -331,7 +331,7 @@ class AppwriteService
     const dids = await this.databases.listDocuments<DIDDocument>(
       conf.appwrtieDBId,
       conf.appwriteDIDsCollID,
-      [ Query.equal( "owner", ownerId ),Query.select(["$id","$createdAt","identifier","name","keys.$id","keys.name","keys.publicKey","keys.keyAlgorithm","keys.keyType"]),Query.orderDesc("$id") ]
+      [ Query.equal( "owner", ownerId ), Query.select( [ "$id", "$createdAt", "identifier", "name", "keys.$id", "keys.name", "keys.publicKey", "keys.keyAlgorithm", "keys.keyType" ] ), Query.orderDesc( "$id" ) ]
     );
     return dids.documents
   }
@@ -449,8 +449,8 @@ class AppwriteService
       conf.appwrtieDBId,
       conf.appwriteKeysCollID,
       [ Query.equal( 'owner', userId ),
-        Query.select(["$id","$createdAt","publicKey","name","description","keyAlgorithm","keyType","org.*"]),
-        Query.orderDesc("$id")
+      Query.select( [ "$id", "$createdAt", "publicKey", "name", "description", "keyAlgorithm", "keyType", "org.*" ] ),
+      Query.orderDesc( "$id" )
       ]
     );
     return keys.documents
@@ -520,11 +520,11 @@ class AppwriteService
       conf.appwriteRolesCollID,
       [ Query.equal( 'userId', userId ) ]
     );
-    if(roles.documents.length < 1) return []
+    if ( roles.documents.length < 1 ) return []
     const orgs = await this.databases.listDocuments<OrganizationDocument>(
       conf.appwrtieDBId,
       conf.appwriteOrgsCollID,
-      [ Query.equal( '$id', roles.documents.map( ( role ) => role.orgId ) ),Query.orderDesc("$id") ]
+      [ Query.equal( '$id', roles.documents.map( ( role ) => role.orgId ) ), Query.orderDesc( "$id" ) ]
     );
 
     return orgs.documents.map( ( document, i ) => ( { ...document, roles: roles.documents[ i ].roles } ) )
@@ -541,7 +541,7 @@ class AppwriteService
     const members = await this.databases.listDocuments<UserDocument>(
       conf.appwrtieDBId,
       conf.appwriteUsersCollID,
-      [ Query.equal( '$id', roles.documents.map( ( role ) => role.userId ) ),Query.orderDesc("$id") ]
+      [ Query.equal( '$id', roles.documents.map( ( role ) => role.userId ) ), Query.orderDesc( "$id" ) ]
     );
     console.log( members, roles.documents.map( ( role ) => role.userId ) )
     return members.documents.map( ( document, i ) => ( { ...document, roles: roles.documents[ i ].roles } ) )
@@ -681,7 +681,7 @@ class AppwriteService
     const keys = ( await this.databases.listDocuments<KeyDocument>(
       conf.appwrtieDBId,
       conf.appwriteKeysCollID,
-      [ Query.equal( "owner", ownerId ), Query.equal( "org", orgId ),Query.orderDesc("$id") ]
+      [ Query.equal( "owner", ownerId ), Query.equal( "org", orgId ), Query.orderDesc( "$id" ) ]
     ) )
     return keys.documents
   }
@@ -770,7 +770,7 @@ class AppwriteService
         {
           signedBy: keyId,
           ownerId, location: url,
-          vcId:data.vcId
+          vcId: data.vcId
         }
       );
       return result;
@@ -781,6 +781,18 @@ class AppwriteService
     }
   }
 
+  async getPresentationsForOrg ( orgId: string )
+  {
+    if ( !orgId ) throw new Error( "invalid Request" )
+    const result = await this.databases.listDocuments<PresentationDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteVPsCollID,
+      // @ts-ignore
+      [ Query.equal( "ownerId", orgId ), Query.orderDesc( "$id" ), Query.select( [ "ownerId", "vcId", "location", "$createdAt", "$id", "signedBy.$id", "signedBy.name", "signedBy.publicKey" ] ) ]
+    );
+    return result.documents
+  }
+
   async getPresentations ( userId: string )
   {
     if ( !userId ) throw new Error( "invalid Request" )
@@ -788,7 +800,7 @@ class AppwriteService
       conf.appwrtieDBId,
       conf.appwriteVPsCollID,
       // @ts-ignore
-      [ Query.equal( "ownerId", userId ), Query.orderDesc( "$id" ),Query.select(["ownerId","vcId","location","$createdAt","$id","signedBy.$id","signedBy.name","signedBy.publicKey"]) ]
+      [ Query.equal( "ownerId", userId ), Query.orderDesc( "$id" ), Query.select( [ "ownerId", "vcId", "location", "$createdAt", "$id", "signedBy.$id", "signedBy.name", "signedBy.publicKey" ] ) ]
     );
     return result.documents
   }
@@ -817,17 +829,17 @@ class AppwriteService
   async getCredentialsForOrg ( orgId: string, memberId: string ): Promise<VCDocument[]>
   {
     // check if user is a member of org
-    const rolesDocument = ( await this.databases.listDocuments<RoleDocument>(
-      conf.appwrtieDBId,
-      conf.appwriteRolesCollID,
-      [ Query.and( [ Query.equal( 'orgId', orgId ), Query.equal( "userId", memberId ) ] ) ]
-    ) ).documents;
-    if ( rolesDocument.length < 1 ) throw new Error( "Unauthorized." )
+    // const rolesDocument = ( await this.databases.listDocuments<RoleDocument>(
+    //   conf.appwrtieDBId,
+    //   conf.appwriteRolesCollID,
+    //   [ Query.and( [ Query.equal( 'orgId', orgId ), Query.equal( "userId", memberId ) ] ) ]
+    // ) ).documents;
+    // if ( rolesDocument.length < 1 ) throw new Error( "Unauthorized." )
 
     const result = await this.databases.listDocuments<VCDocument>(
       conf.appwrtieDBId,
       conf.appwriteVCsCollID,
-      [ Query.equal( "issuer", orgId ), Query.orderDesc( "$id" ),Query.select(["$id","identifier","$createdAt","issuer.name","issuer.$id","holder.*"]) ]
+      [ Query.equal( "issuer", orgId ), Query.orderDesc( "$id" ), Query.select( [ "$id", "identifier", "$createdAt", "issuer.name", "issuer.$id", "holder.*" ] ) ]
     );
     return result.documents
   }
@@ -839,7 +851,19 @@ class AppwriteService
       conf.appwrtieDBId,
       conf.appwriteVCsCollID,
       // @ts-ignore
-      [ identifier ? Query.equal( "identifier", identifier ) : Query.equal( "holder", userId ), Query.orderDesc( "$id" ),Query.select(["$id","identifier","$createdAt","issuer.name","issuer.$id"]) ]
+      [ identifier ? Query.equal( "identifier", identifier ) : Query.equal( "holder", userId ), Query.orderDesc( "$id" ), Query.select( [ "$id", "identifier", "$createdAt", "issuer.name", "issuer.$id" ] ) ]
+    );
+    return result.documents
+  }
+
+  async getOrgCredentials ( orgId: string ): Promise<VCDocument[]>
+  {
+    if ( !orgId ) throw new Error( "invalid Request" )
+    const identifier = `did:web:675d93dc69da7be75efd.appwrite.global/issuers/${orgId}`
+    const result = await this.databases.listDocuments<VCDocument>(
+      conf.appwrtieDBId,
+      conf.appwriteVCsCollID,
+      [ Query.equal( "identifier", identifier ), Query.orderDesc( "$id" ), Query.select( [ "$id", "identifier", "$createdAt", "issuer.name", "issuer.$id" ] ) ]
     );
     return result.documents
   }
@@ -896,8 +920,9 @@ class AppwriteService
     return { uploadedFile, url: `https://cloud.appwrite.io/v1/storage/buckets/${conf.appwriteBucketId}/files/${uploadedFile.$id}/view?project=${conf.appwrtieProjectId}` }
   }
 
-  async listVCContexts():Promise<{name:string,url:string}[]>{
-    const result = await this.databases.listDocuments(conf.appwrtieDBId,conf.appwriteContextsCollID)
+  async listVCContexts (): Promise<{ name: string, url: string }[]>
+  {
+    const result = await this.databases.listDocuments( conf.appwrtieDBId, conf.appwriteContextsCollID )
     return result.documents as any
   }
 

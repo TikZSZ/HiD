@@ -11,26 +11,65 @@ import AppwriteService, {
   VCDocument,
   VCStoreDocument,
 } from "@/HiD/appwrite/service";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ErrorComponent from "@/components/ErrorComponent";
 
 
 
 // Main Manage Verifiable Credentials Page
-const VPsPage: React.FC = () =>
+const OrgVPsPage: React.FC = () =>
 {
-  const { userId } = useKeyContext();
-  // const { data: orgs = [], isLoading: isLoadingOrgs } = useOrgsList();
+  const navigate = useNavigate();
 
-  // Fetch VCs for the selected organization
+  const { orgId } = useParams<{ orgId: string }>();
+  const { userId, useOrgsList } = useKeyContext();
+  const { data: orgs = [], isLoading: isLoadingOrgs } = useOrgsList();
+
+  const [ selectedOrgId, setSelectedOrgId ] = useState( orgId || "" );
+  const [ isIssueVCModalOpen, setIsIssueVCModalOpen ] = useState( false );
+
+  // Fetch VPs for the selected organization
   const {
     data: vps = [],
     isLoading: isLoadingVPs,
     refetch: refetchVCs
   } = useQuery<PresentationDocument[]>( {
-    queryKey: [ 'userVPs', userId ],
-    queryFn: () => AppwriteService.getPresentations( userId ),
-    enabled: !!userId,
+    queryKey: [ 'orgVPs', orgId ],
+    queryFn: () => AppwriteService.getPresentationsForOrg( orgId! ),
+    enabled: !!orgId,
   } );
-  const [ vcId, setVcId ] = useState( '' )
+
+  // Effects to handle organization selection
+  useEffect( () =>
+  {
+    if ( orgId && orgId !== "undefined" ) setSelectedOrgId( orgId )
+    else navigate( `/dashboard/orgs/vps` );
+  }, [ orgId ] );
+
+  useEffect( () =>
+  {
+    // If no org selected, choose first available org
+    if ( !selectedOrgId && orgs.length > 0 )
+    {
+      const firstOrgId = orgs[ 0 ].$id;
+      setSelectedOrgId( firstOrgId );
+      navigate( `/dashboard/orgs/${firstOrgId}/vps` );
+    }
+  }, [ orgs, selectedOrgId, navigate ] );
+
+  // Organization change handler
+  const handleOrgChange = ( value: string ) =>
+  {
+    setSelectedOrgId( value );
+    navigate( `/dashboard/orgs/${value}/vps` );
+  };
+
+  // Find selected organization
+  const selectedOrg = orgs.find( ( org ) => org.$id === selectedOrgId );
+  // const { data: orgs = [], isLoading: isLoadingOrgs } = useOrgsList();
+
+
+
 
   return (
     <div className="relative h-full flex flex-col p-4 min-h-[90vh]">
@@ -39,9 +78,29 @@ const VPsPage: React.FC = () =>
         description="View Verifiable Presentations"
       />
 
+      <div className="mb-6">
+        <Select
+          onValueChange={handleOrgChange}
+          value={selectedOrgId}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select an organization" />
+          </SelectTrigger>
+          <SelectContent>
+            {orgs.length > 0 ? orgs.map( ( org ) => (
+              <SelectItem key={org.$id} value={org.$id}>
+                {org.name}
+              </SelectItem>
+            ) ) : <div className="p-2 text-center text-muted-foreground">
+              No organizations found
+            </div>}
+          </SelectContent>
+        </Select>
+      </div>
+
 
       {/* Verifiable Credentials Section */}
-      <div className="mb-6">  
+      <div className="mb-6">
         {isLoadingVPs ? (
           <div className="flex justify-center items-center p-4">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -63,7 +122,7 @@ const VPsPage: React.FC = () =>
                   <TableCell>{vc.$id}</TableCell>
                   <TableCell>{vc.vcId}</TableCell>
                   <TableCell>
-                    <span className="text-muted-foreground">{vc.signedBy.name}</span>#{vc.signedBy.publicKey.substring(0,20)}...
+                    <span className="text-muted-foreground">{vc.signedBy.name}</span>#{vc.signedBy.publicKey.substring( 0, 20 )}...
                   </TableCell>
                   <TableCell>
                     {new Date( vc.$createdAt ).toLocaleString()}
@@ -78,15 +137,11 @@ const VPsPage: React.FC = () =>
                             <Eye className="h-4 w-4 mr-2" /> View Stores
                           </Button>
                         </div> */}
-                    <NavLink to={`/dashboard/wallet/vps/${vc.$id}`}>
+                    <NavLink to={`/dashboard/orgs/${orgId}/vps/${vc.$id}`}>
                       <div className="flex space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                          {
-                            setVcId( vc.$id )
-                          }}
                         >
                           <Eye className="h-4 w-4 mr-2" /> View VP
                         </Button>
@@ -101,9 +156,8 @@ const VPsPage: React.FC = () =>
           <p className="text-muted-foreground mt-4">No verifiable presentations found.</p>
         )}
       </div>
-
     </div>
   );
 };
 
-export default VPsPage;
+export default OrgVPsPage;

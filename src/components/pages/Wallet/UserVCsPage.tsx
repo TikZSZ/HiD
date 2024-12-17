@@ -13,10 +13,10 @@ import AppwriteService, {
 
 
 
-// Main Manage Verifiable Credentials Page
+// Manage User Verifiable Credentials Page
 const UserVCsPage: React.FC = () =>
 {
-  const { userId, useOrgsList } = useKeyContext();
+  const { userId } = useKeyContext();
   // const { data: orgs = [], isLoading: isLoadingOrgs } = useOrgsList();
 
   // Fetch VCs for the selected organization
@@ -29,7 +29,6 @@ const UserVCsPage: React.FC = () =>
     queryFn: () => AppwriteService.getCredentialsForUser( userId ),
     enabled: !!userId,
   } );
-  const [ vcId, setVcId ] = useState( '' )
 
   return (
     <div className="relative h-full flex flex-col p-4 min-h-[90vh]">
@@ -73,10 +72,6 @@ const UserVCsPage: React.FC = () =>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                          {
-                            setVcId( vc.$id )
-                          }}
                         >
                           <Eye className="h-4 w-4 mr-2" /> View VC
                         </Button>

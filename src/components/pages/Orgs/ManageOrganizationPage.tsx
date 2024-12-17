@@ -505,156 +505,159 @@ const ManageOrganizationPage: React.FC = () =>
           </SelectContent>
         </Select>
       </div>
-
-      {selectedOrg && (
-        <>
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Organization Details</CardTitle>
-              <p className="text-muted-foreground text-xl"> {selectedOrg.name}</p>
-            </CardHeader>
-            <CardContent>
-              <p className="max-w-[70%] text-lg"> {selectedOrg.description || "No description provided."}</p>
-            </CardContent>
-          </Card>
-
-          {/* Members Section */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Members</h3>
-              <div className="flex space-x-2">
-                {/* <Button
-                  variant="outline"
-                  onClick={() => refetchMembers()}
-                  disabled={isLoadingMembers}
-                >
-                  {isLoadingMembers ? "Fetching Members..." : "Fetch Members"}
-                </Button> */}
-                <Button onClick={() => setIsAddMemberModalOpen( true )}>
-                  Add Member
-                </Button>
-              </div>
-            </div>
-            {isLoadingMembers ? (
+{isLoadingOrgs ? (
               <div className="flex justify-center items-center p-4">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-            ) : members.length > 0 ? (
-              <Table className="mt-4">
-                <TableHeader>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Roles</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {members.map( ( member, i ) => (
-                    <TableRow key={member.$id}>
-                      <TableCell>{member.name}</TableCell>
-                      <TableCell>{member.email}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-2">
-                          {member.roles.map( ( role ) => (
-                            <Badge key={role} className={roleColors[ role ]}>
-                              {role}
-                            </Badge>
-                          ) )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {
-                          i === 0 ? null : <Button
-                            variant="outline"
-                            onClick={() => handleRemoveMember( member.$id )}
-                            disabled={removeMemberMutation.isPending}
-                          >
-                            {removeMemberMutation.isPending ? "Removing..." : "Remove Member"}
-                          </Button>
-                        }
-                      </TableCell>
-                    </TableRow>
-                  ) )}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-muted-foreground mt-4">No members found.</p>
+            ):selectedOrg && (
+              <>
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>Organization Details</CardTitle>
+                    <p className="text-muted-foreground text-xl"> {selectedOrg.name}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="max-w-[70%] text-lg"> {selectedOrg.description || "No description provided."}</p>
+                  </CardContent>
+                </Card>
+      
+                {/* Members Section */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Members</h3>
+                    <div className="flex space-x-2">
+                      {/* <Button
+                        variant="outline"
+                        onClick={() => refetchMembers()}
+                        disabled={isLoadingMembers}
+                      >
+                        {isLoadingMembers ? "Fetching Members..." : "Fetch Members"}
+                      </Button> */}
+                      <Button onClick={() => setIsAddMemberModalOpen( true )}>
+                        Add Member
+                      </Button>
+                    </div>
+                  </div>
+                  {isLoadingMembers ? (
+                    <div className="flex justify-center items-center p-4">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                  ) : members.length > 0 ? (
+                    <Table className="mt-4">
+                      <TableHeader>
+                        <TableRow>
+                          <TableCell>Name</TableCell>
+                          <TableCell>Email</TableCell>
+                          <TableCell>Roles</TableCell>
+                          <TableCell>Actions</TableCell>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {members.map( ( member, i ) => (
+                          <TableRow key={member.$id}>
+                            <TableCell>{member.name}</TableCell>
+                            <TableCell>{member.email}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-2">
+                                {member.roles.map( ( role ) => (
+                                  <Badge key={role} className={roleColors[ role ]}>
+                                    {role}
+                                  </Badge>
+                                ) )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {
+                                i === 0 ? null : <Button
+                                  variant="outline"
+                                  onClick={() => handleRemoveMember( member.$id )}
+                                  disabled={removeMemberMutation.isPending}
+                                >
+                                  {removeMemberMutation.isPending ? "Removing..." : "Remove Member"}
+                                </Button>
+                              }
+                            </TableCell>
+                          </TableRow>
+                        ) )}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-muted-foreground mt-4">No members found.</p>
+                  )}
+                </div>
+      
+                {/* Keys Section */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Keys</h3>
+                    <div className="flex space-x-2">
+                      {/* <Button
+                        variant="outline"
+                        onClick={() => refetchKeys()}
+                        disabled={isLoadingKeys}
+                      >
+                        {isLoadingKeys ? "Fetching Keys..." : "Fetch Keys"}
+                      </Button> */}
+                      <Button onClick={() => setIsAddKeyModalOpen( true )}>
+                        Link Key
+                      </Button>
+                    </div>
+                  </div>
+                  {isLoadingKeys ? (
+                    <div className="flex justify-center items-center p-4">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                  ) : keys.length > 0 ? (
+                    <Table className="mt-4">
+                      <TableHeader>
+                        <TableRow>
+                          <TableCell>User</TableCell>
+                          <TableCell>Name</TableCell>
+                          <TableCell>Key Type</TableCell>
+                          <TableCell>Actions</TableCell>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {keys.map( ( key ) => (
+                          <TableRow key={key.$id}>
+                            <TableCell>{key.owner.name}</TableCell>
+                            <TableCell>{key.name}</TableCell>
+                            <TableCell><div className="gap-x-2">
+                              {key.keyType.map( ( keyType ) => (
+                                <Badge key={keyType} className={keyTypesColors[ keyType ] + " mx-1"}>
+                                  {keyType}
+                                </Badge>
+                              ) )}</div></TableCell>
+                            {/* <TableCell>{key.keyPurposes.join( ", " )}</TableCell> */}
+                            <TableCell>
+                              <Button variant="outline" size="sm">
+                                View Details
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ) )}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-muted-foreground mt-4">No keys found.</p>
+                  )}
+                </div>
+      
+                {/* Add Member Modal */}
+                <AddMemberModal
+                  isOpen={isAddMemberModalOpen}
+                  onOpenChange={setIsAddMemberModalOpen}
+                  orgId={selectedOrgId}
+                />
+      
+                {/* Add Key Modal */}
+                <AddKeyModal
+                  isOpen={isAddKeyModalOpen}
+                  onOpenChange={setIsAddKeyModalOpen}
+                  orgId={selectedOrgId}
+                />
+              </>
             )}
-          </div>
-
-          {/* Keys Section */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Keys</h3>
-              <div className="flex space-x-2">
-                {/* <Button
-                  variant="outline"
-                  onClick={() => refetchKeys()}
-                  disabled={isLoadingKeys}
-                >
-                  {isLoadingKeys ? "Fetching Keys..." : "Fetch Keys"}
-                </Button> */}
-                <Button onClick={() => setIsAddKeyModalOpen( true )}>
-                  Link Key
-                </Button>
-              </div>
-            </div>
-            {isLoadingKeys ? (
-              <div className="flex justify-center items-center p-4">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : keys.length > 0 ? (
-              <Table className="mt-4">
-                <TableHeader>
-                  <TableRow>
-                    <TableCell>User</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Key Type</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {keys.map( ( key ) => (
-                    <TableRow key={key.$id}>
-                      <TableCell>{key.owner.name}</TableCell>
-                      <TableCell>{key.name}</TableCell>
-                      <TableCell><div className="gap-x-2">
-                        {key.keyType.map( ( keyType ) => (
-                          <Badge key={keyType} className={keyTypesColors[ keyType ] + " mx-1"}>
-                            {keyType}
-                          </Badge>
-                        ) )}</div></TableCell>
-                      {/* <TableCell>{key.keyPurposes.join( ", " )}</TableCell> */}
-                      <TableCell>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ) )}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-muted-foreground mt-4">No keys found.</p>
-            )}
-          </div>
-
-          {/* Add Member Modal */}
-          <AddMemberModal
-            isOpen={isAddMemberModalOpen}
-            onOpenChange={setIsAddMemberModalOpen}
-            orgId={selectedOrgId}
-          />
-
-          {/* Add Key Modal */}
-          <AddKeyModal
-            isOpen={isAddKeyModalOpen}
-            onOpenChange={setIsAddKeyModalOpen}
-            orgId={selectedOrgId}
-          />
-        </>
-      )}
     </div>
   );
 };

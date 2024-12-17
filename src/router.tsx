@@ -14,13 +14,14 @@ const KeysPage = lazy( () => import( "@/components/pages/Wallet/KeysPage" ) );
 const DIDsPage = lazy( () => import( "@/components/pages/Wallet/DIDsPage" ) );
 const UserVCsPage = lazy( () => import( "@/components/pages/Wallet/UserVCsPage" ) );
 const UserVPsPage = lazy( () => import( "@/components/pages/Wallet/VPsPage" ) );
+const ViewVCPage = lazy( () => import( "./components/pages/Wallet/VCView" ) )
+const ViewVPPage = lazy( () => import( "./components/pages/VPView" ) )
 
 const OrganizationsPage = lazy( () => import( "./components/pages/Orgs/OrgsPage" ) )
 const ManageOrganizationPage = lazy( () => import( "./components/pages/Orgs/ManageOrganizationPage" ) )
-const OrgVCsPage = lazy( () => import( "./components/pages/Orgs/VCsPage" ) )
-const VCViewPage = lazy( () => import( "./components/pages/Orgs/VCViewPage" ) )
-const ViewVCPage = lazy( () => import( "./components/pages/Wallet/VCView" ) )
-const ViewVPPage = lazy( () => import( "./components/pages/Wallet/VPView" ) )
+const OrgVCsPage = lazy( () => import( "./components/pages/Orgs/OrgVCsPage" ) )
+const OrgVCViewPage = lazy( () => import( "./components/pages/Orgs/OrgVCViewPage" ) )
+const OrgVPsPage = lazy( () => import( "@/components/pages/Orgs/OrgVPsPage" ) );
 
 
 
@@ -134,38 +135,21 @@ export const router = createBrowserRouter( [
           {
             path: "orgs/:orgId?/vcs/:vcId",
             element: <PageWrapper>
-              <VCViewPage />
+              <OrgVCViewPage />
             </PageWrapper>,
           },
-          // {
-          //   path: "orgs/manage",
-          //   element: <PageWrapper>
-          //     <ManageOrganizationPage />
-          //   </PageWrapper>,
-          // },
-          // {
-          //   path:"/dashboard/tokens",
-          //   children:[
-          //     {
-          //       index: true,
-          //       element: <PageWrapper><TokensPage /></PageWrapper>,
-          //     },
-          //     {
-          //       path: ":tokenId",
-          //       element: <PageWrapper><TokenDetailPage /></PageWrapper>,
-
-          //     },
-          //   ]
-          // },
-          // {
-          //   path:"account",
-          //   element: (
-          //     <PageWrapper>
-          //       <AccountPage/>
-          //     </PageWrapper>
-          //   ),
-
-          // },
+          {
+            path: "orgs/:orgId?/vps",
+            element: <PageWrapper>
+              <OrgVPsPage />
+            </PageWrapper>,
+          },
+          {
+            path: "orgs/:orgId/vps/:vpId",
+            element: <PageWrapper>
+              <ViewVPPage />
+            </PageWrapper>,
+          },
         ],
       },
     ],
