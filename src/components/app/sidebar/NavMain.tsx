@@ -22,7 +22,7 @@ import
 } from "@/components/ui/sidebar"
 import { Link, NavLink, useLocation, matchPath } from "react-router-dom"
 import { cn } from "@/lib/utils"
-import { useEffect } from "react"
+import { useEffect,useState } from "react"
 // Helper function to create a more flexible route matcher
 const isActiveRoute = (currentPath: string, routePattern: string) => {
   // Exact match
@@ -46,6 +46,7 @@ const isActiveRoute = (currentPath: string, routePattern: string) => {
 export function NavMain ( {
   items,
 }: {
+  
   items: {
     title: string
     url: string
@@ -59,6 +60,7 @@ export function NavMain ( {
   }[]
 } )
 {
+  const [selected,setSelected] = useState('')
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -89,7 +91,11 @@ export function NavMain ( {
                       {item.items?.map( ( subItem ) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to={subItem.url} key={subItem.url} className={location.pathname && matchPath( subItem.url, location.pathname ) ? " bg-secondary " : " "}
+                            <NavLink to={subItem.url} key={subItem.url}
+                            className={selected === subItem.url ? " bg-muted " : ' '}
+                            onClick={(e)=>{
+                              setSelected(subItem.url)
+                            }}
                             >
                               {subItem.icon && <subItem.icon />}
                               <span>{subItem.title}</span>

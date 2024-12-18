@@ -72,7 +72,7 @@ const AddKeyModal: React.FC<{
           queryKey: [ 'orgKeys', orgId ],
         } );
         queryClient.invalidateQueries( {
-          queryKey: [ 'orgKeys', orgId ],
+          queryKey: [ 'keys', userId ],
         } );
         queryClient.invalidateQueries( {
           queryKey: [ 'orgMemberKeys', userId, orgId ],
