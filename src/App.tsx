@@ -1,9 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
-import { useWallet } from "./contexts/hashconnect";
 const Navbar = lazy( () => import( "@/components/app/Navbar" ) );
-import { Client, LedgerId, PrivateKey, AccountId } from "@hashgraph/sdk"
-import { useToast } from "./hooks/use-toast";
 import { Toaster } from "./components/ui/toaster";
 import * as Bls12381Multikey from "@digitalbazaar/bls12-381-multikey"
 import * as ED25519Multikey from "@digitalbazaar/ed25519-multikey"
@@ -12,8 +9,6 @@ import {base58_to_binary,binary_to_base58} from "base58-js"
 function App ()
 {
   let location = useLocation();
-  const { isConnected, accountIds, selectedAccount, getHederaClient, hashconnect } = useWallet()
-  const {toast} = useToast()
   useEffect(()=>{
     (async () => {
       // const keyPair2 = await Bls12381Multikey.generateBbsKeyPair({

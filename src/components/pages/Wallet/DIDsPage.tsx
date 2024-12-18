@@ -72,10 +72,8 @@ export const DIDCreatePage: React.FC = () =>
       {
         try
         {
-          console.log( KeyPair )
           const privateKey = PrivateKey.fromBytesED25519( ( KeyPair as KeyPair ).secretKey )
           const signer = getSigner();
-          console.log( signer )
           // @ts-ignore
           let didDocument = createDidDocument( { privateKey: privateKey as PrivateKey, signer: signer! } );
           didDocument = await registerDidDocument( didDocument );

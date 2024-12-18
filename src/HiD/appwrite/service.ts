@@ -413,7 +413,6 @@ class AppwriteService
     keyData: CreateKeyDto
   ): Promise<KeyDocument>
   {
-    console.log( userId, keyData )
     try
     {
       // Create key document

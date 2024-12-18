@@ -19,5 +19,3 @@ export const conf = {
   appwriteBucketId:String(import.meta.env["VITE_APPWRITE_BUCKET_ID"]),
   appwriteFunctionId:String(import.meta.env["VITE_APPWRITE_FUNCTION_ID"])
 }
-
-console.log(conf)

@@ -138,7 +138,6 @@ export class HcsDidTransaction
         } );
 
         const envelope = this.message;
-        console.log( envelope )
         const messageContent = !envelope.getSignature()
             ? envelope.sign( this.signer )
             : ArraysUtils.fromString( envelope.toJSON() );
@@ -178,7 +177,6 @@ export class HcsDidTransaction
                 } );
             }
         }
-        console.log( "came here" )
         const tx = new TopicMessageSubmitTransaction().setTopicId( this.topicId ).setMessage( messageContent );
 
         let transactionId;

@@ -116,10 +116,8 @@ export class HcsDid
                     .setSubmitKey( this.privateKey.publicKey )
                     .freezeWithSigner( this.signer )
 
-                console.log(this.signer)
                 const sigTx = await topicCreateTransaction.sign( this.privateKey );
                 const txId = await sigTx.executeWithSigner( this.signer );
-                console.log(this.signer)
 
                 const topicId = ( await txId.getReceiptWithSigner( this.signer ) ).topicId;
                 this.topicId = topicId;
@@ -607,7 +605,6 @@ export class HcsDid
     {
         const message = new HcsDidMessage( didMethodOperation, this.getIdentifier(), event );
         const envelope = new MessageEnvelope( message );
-        console.log(envelope)
         const transaction = new HcsDidTransaction( envelope, this.getTopicId() );
 
         if(this.signer){

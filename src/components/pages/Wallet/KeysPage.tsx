@@ -102,7 +102,6 @@ export const KeyManagementOverlay: React.FC = () =>
 
   const onSubmit = ( data: KeyFormValues ) =>
   {
-    console.log( "Form Submitted:", data );
     handleGenerateKey( data )
   };
 

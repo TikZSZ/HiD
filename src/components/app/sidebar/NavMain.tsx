@@ -59,12 +59,6 @@ export function NavMain ( {
   }[]
 } )
 {
-  const location = useLocation()
-  useEffect( () =>
-  {
-    // console.log( location )
-    // matchPath()
-  }, [ location ] )
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>

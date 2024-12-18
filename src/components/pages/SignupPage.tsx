@@ -51,7 +51,7 @@ export function SignupPage() {
     try {
       const user = await signup(values.name, values.email, values.password);
       await AppwriteService.createUser({name:values.name,email:values.email},user!.$id)
-      console.log(user);
+      // console.log(user);
       navigate("/")
       // Handle successful signup (e.g., redirect to dashboard)
     } catch (error: unknown) {
