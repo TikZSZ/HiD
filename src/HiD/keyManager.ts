@@ -228,7 +228,6 @@ export async function retrieveKey ( userId: string, id: string, password: string
   );
   let keyPair:KeyPair
   const privateKey = binary_to_base58( new Uint8Array(decryptedPrivateKey) )
-  console.log(publicKey,privateKey)
   if ( storedKey.keyAlgorithm === KeyAlgorithm.ED25519 )
   {
     keyPair = await ED25519Multikey.from( { secretKeyMultibase: privateKey, publicKeyMultibase: publicKey } )
@@ -236,33 +235,8 @@ export async function retrieveKey ( userId: string, id: string, password: string
   {
     keyPair = await Bls12381Multikey.from( { secretKeyMultibase: privateKey, publicKeyMultibase: publicKey } )
   }
+  // @ts-ignore
   if(!keyPair) throw new Error("keyPair not found")
-  // if ( storedKey.metadata.type === KeyType.SIGNING )
-  // {
-
-  // } 
-  //else
-  // {
-  //   const importedPrivateKey = await window.crypto.subtle.importKey(
-  //     "pkcs8",
-  //     decryptedPrivateKey,
-  //     { name: "RSA-PSS" },
-  //     true,
-  //     [ "sign" ]
-  //   );
-
-  //   const importedPublicKey = await window.crypto.subtle.importKey(
-  //     "spki",
-  //     publicKey,
-  //     { name: "RSA-PSS" },
-  //     true,
-  //     [ "verify" ]
-  //   );
-  // }
-
-  // return { privateKey: importedPrivateKey, publicKey: importedPublicKey };
-  // const privateKey = PrivateKey.fromBytes(new Uint8Array(decryptedPrivateKey))
-  // return { privateKey: privateKey, publicKey: privateKey.publicKey };
   return { privateKey, publicKey: publicKey, keyPair };
 }
 

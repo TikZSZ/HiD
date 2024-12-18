@@ -5,7 +5,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { SignModalProvider } from "../../app/SignModal";
 import { Sidebar } from "@/components/app/sidebar/Sidebar";
 import { Outlet } from "react-router-dom";
-
+import
+{
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
 const DashboardLayout = () =>
 {
@@ -14,7 +19,10 @@ const DashboardLayout = () =>
     <KeyProviderWrapper userId={user!.$id} >
       <SignModalProvider>
         <Sidebar>
+          <>
+          <SidebarTrigger className="ml-2" />
           <Outlet />
+          </>
         </Sidebar>
       </SignModalProvider>
     </KeyProviderWrapper>

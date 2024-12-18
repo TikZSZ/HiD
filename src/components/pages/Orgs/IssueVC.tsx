@@ -46,6 +46,7 @@ interface ImportedContext
       description?: string;
       value?: any
       mandatory?: boolean
+      options?: string[]
     }
   };
 }
@@ -94,7 +95,7 @@ import { documentLoader } from "@/HiD/jsonld-contexts";
 const { purposes: { AssertionProofPurpose } } = jsigs;
 
 // Dynamic Input Component
-const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?: string, dataType: string, required: boolean }> = ( { field, dataType, fieldName, fieldDescription = "", required } ) =>
+const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?: string, dataType: string, required: boolean, options: string[] }> = ( { field, dataType, fieldName, fieldDescription = "", required, options } ) =>
 {
   // console.log( field )
   {
@@ -131,13 +132,40 @@ const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?:
             </FormDescription>
           </FormItem>
         );
-      case 'boolean':
+      // case 'boolean':
+      //   return (
+      //     <div>
+      //       <Switch onCheckedChange={field.onChange} checked={field.value} />
+      //       <Label htmlFor="airplane">{fieldName}</Label>
+      //     </div>
+      //   );
+      case 'enum':
         return (
-          <div>
-            <Switch checked={field.value} onCheckedChange={field.onChange} id="airplane" />
-            <Label htmlFor="airplane">Mandatory</Label>
-          </div>
-        );
+          <FormItem>
+            <FormLabel>{fieldName}</FormLabel>
+            <FormControl>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a key to link" />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map( ( val, i ) => (
+                    <SelectItem key={i} value={val}>
+                      {val}
+                    </SelectItem>
+                  ) )}
+
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormDescription>
+              {fieldDescription}
+            </FormDescription>
+          </FormItem>
+        )
       default:
         return (
           <FormItem>
@@ -159,9 +187,9 @@ const VCCreationSchema = z.object( {
   // description: z.string().nonempty( "Name is required" ),
   identifier: z.string().refine( ( identifier ) =>
   {
-    if(!identifier) return false
+    if ( !identifier ) return false
     if ( identifier.split( ":" ).length < 3 ) return false
-    if(identifier.split( ":" )[0] !== "did" && !(identifier.split( ":" )[1].includes("hedera") && identifier.split( ":" )[1].includes("web")) ) return false
+    if ( identifier.split( ":" )[ 0 ] !== "did" && !( identifier.split( ":" )[ 1 ].includes( "hedera" ) && identifier.split( ":" )[ 1 ].includes( "web" ) ) ) return false
     // if ( identifier.split( ":" )[ 3 ].split( "_" ).length !== 2 ) return false
     // if ( identifier.split( ":" )[ 3 ].split( "_" )[ 1 ].split( "." ).length !== 3 ) return false
     return true
@@ -193,7 +221,8 @@ const VCCreationSchema = z.object( {
       name: z.string(),
       description: z.string().optional(),
       contextRef: z.string().optional(),
-      dataType: z.string().optional()
+      dataType: z.string().optional(),
+      options: z.array( z.string() ).optional()
     } )
   ).default( [] )
 } );
@@ -220,12 +249,12 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
   // URL Import Mutation
   const importUrlMutation = useMutation(
     {
-      mutationFn: async ( data:{url: string,name:string} ): Promise<any> =>
+      mutationFn: async ( data: { url: string, name: string } ): Promise<any> =>
       {
         const response = await fetch( data.url );
         if ( !response.ok ) throw new Error( 'Failed to fetch context' );
         const jsonStr = await response.text();
-        return addJSONContext( jsonStr, { name:data.name } );
+        return addJSONContext( jsonStr, { name: data.name } );
       },
       onError: ( error ) =>
       {
@@ -283,7 +312,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
   } = useQuery( {
     queryKey: [ 'cloudContexts' ], queryFn: () => AppwriteService.listVCContexts(),
     retry: 2,
-    enabled:activeTab === "cloud"
+    enabled: activeTab === "cloud"
   },
   );
 
@@ -302,7 +331,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
       );
       const fileName = file.name + "#" + hash
       // Check for duplicate contexts
-      if ( contextsFields.find( ( cont ) => cont.originalFile?.split("#")[1] === hash ) )
+      if ( contextsFields.find( ( cont ) => cont.originalFile?.split( "#" )[ 1 ] === hash ) )
       {
         toast( {
           title: "Duplicate Context",
@@ -363,7 +392,8 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
             contextRef: contextType,
             dataType: details.type || 'string',
             description: details.description,
-            name: details.name
+            name: details.name,
+            options: details.options || []
           } );
         }
       } );
@@ -441,7 +471,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
       const { contexts, identifier, keyId: keyID, credentialSubject, validFrom, validUntil } = data
       console.log( data )
       // const document = await documentLoader(identifier)
-  
+
       // const didDocument = await resolveDID( identifier )
       // if ( didDocument && !didDocument.hasOwner() )
       // {
@@ -494,6 +524,12 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                   }
                 }
               }
+              contextMetadata[ "issuanceDate" ] = {
+                name: "Issuance Date",
+                description: "Date the certificate was issued",
+                mandatory: false,
+                type: "date"
+              }
               // prepare the VC Document 
               const vcId = ID.unique()
               const credential: any = {
@@ -515,8 +551,21 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                   ...credentialSubjectData
                 }
               }
-              if ( validFrom ) credential[ "validFrom" ] = new Date( validFrom ).toISOString()
-              if ( validUntil ) credential[ "validUntil" ] = new Date( validUntil ).toISOString()
+              if ( validFrom )
+              {
+                credential[ "validFrom" ] = new Date( validFrom ).toISOString()
+                contextMetadata[ "validFrom" ] = {
+                  name: "Valid From",
+                  description: "From when is certificate valid",
+                  mandatory: false,
+                  type: "date"
+                }
+              }
+              if ( validUntil )
+              {
+                credential[ "validUntil" ] = new Date( validUntil ).toISOString()
+                mandatoryPointers.push( "/validUntil" )
+              }
               console.log( credential, mandatoryPointers )
 
               // sign the vc document
@@ -561,12 +610,15 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                     userId,
                     keyID
                   )
-                  queryClient.invalidateQueries({queryKey:['orgReceivedVCs', orgId]})
-                  queryClient.invalidateQueries({queryKey:['orgIssuedVCs', orgId ]})
-                  queryClient.invalidateQueries({queryKey:['userVCs']})
+                  queryClient.invalidateQueries( { queryKey: [ 'orgReceivedVCs', orgId ] } )
+                  queryClient.invalidateQueries( { queryKey: [ 'orgIssuedVCs', orgId ] } )
+                  queryClient.invalidateQueries( { queryKey: [ 'userVCs' ] } )
                   console.log( vcDocument )
                   toast( { title: "VC Issued", description: "VC was issued successfully to" + " " + identifier.substring( 0, 20 ), variant: "default" } );
                   res( vcDocument )
+                } else
+                {
+                  throw new Error( result.error )
                 }
               }
             } catch ( err )
@@ -582,7 +634,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
           onClose: () =>
           {
             console.error( "Signing failed", "User Rejected" );
-            rej(new Error("Signing failed User Rejected"))
+            rej( new Error( "Signing failed User Rejected" ) )
             // setIsCreating( false );
           },
         } );
@@ -675,7 +727,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                         </FormControl>
                         <SelectContent>
                           {filteredKeys && filteredKeys.map( ( key ) => (
-                            <SelectItem key={key.$id} value={key.$id}>
+                            <SelectItem key={key.$id} value={key.$id} disabled={key.owner.$id !== userId}>
                               {key.name} {key.keyType.map( ( keyType ) => (
                                 <Badge key={keyType} className={keyTypesColors[ keyType ] + " mx-1"}>
                                   {keyType}
@@ -786,8 +838,8 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                           onChange={( e ) => setCloudImportUrl( e.target.value )}
                         />
                         <Button
-                        type="button"
-                          onClick={() => importUrlMutation.mutate( {name:cloudImportUrl,url:cloudImportUrl} )}
+                          type="button"
+                          onClick={() => importUrlMutation.mutate( { name: cloudImportUrl, url: cloudImportUrl } )}
                           disabled={!cloudImportUrl}
                         >
                           <Link className="mr-2 h-4 w-4" /> Import
@@ -807,12 +859,12 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                               <CardContent className="p-4 flex justify-between items-center">
                                 <div>
                                   <p className="font-medium">{context.name}</p>
-                                  <p className="text-sm text-gray-500">{context.url.split("/")[8]}</p>
+                                  <p className="text-sm text-gray-500">{context.url.split( "/" )[ 8 ]}</p>
                                 </div>
                                 <Button
-                                type="button"
+                                  type="button"
                                   variant="default"
-                                  onClick={() => importUrlMutation.mutate( {url:context.url,name:context.name} )}
+                                  onClick={() => importUrlMutation.mutate( { url: context.url, name: context.name } )}
                                 >
                                   Import
                                 </Button>
@@ -884,6 +936,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                           fieldName={field.name}
                           fieldDescription={field.description}
                           required={!field.optional}
+                          options={field.options}
                         />
                       )}
                     />

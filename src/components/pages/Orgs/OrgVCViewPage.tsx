@@ -90,6 +90,7 @@ export const OrganizationVCViewPage: React.FC = () =>
         name: string;
       };
       issuanceDate: string;
+      validUntil?:string
       credentialSubject: Record<string, any> & { id: string };
       proof: {
         type: string;
@@ -116,7 +117,7 @@ export const OrganizationVCViewPage: React.FC = () =>
     refetch: refetchKeys
   } = useQuery<KeyDocument[]>( {
     queryKey: [ 'orgKeys', orgId ],
-    queryFn: () => AppwriteService.getKeysForOrganization( orgId! ),
+    queryFn: () => AppwriteService.getKeysForOrgAndUser( userId, orgId! ),
     enabled: !!orgId,
   } );
 
@@ -183,6 +184,19 @@ export const OrganizationVCViewPage: React.FC = () =>
     const finalSelectedFields = [
       ...new Set( [ ...mandatoryFields, ...selectedFields ] )
     ];
+    
+    const selectivePointers = finalSelectedFields.map( ( field ) =>
+      {
+        switch ( field )
+        {
+          case "issuanceDate":
+            return `/${field}`
+          case "validFrom":
+            return `/${field}`
+          default:
+            return `/credentialSubject/${field}`
+        }
+      } )
 
     openSignModal( selectedKey, "key-retrieval", {
       purpose: "DID Creation",
@@ -194,9 +208,7 @@ export const OrganizationVCViewPage: React.FC = () =>
 
           // Create revealed document
           const discloseCryptosuite = createDiscloseCryptosuite( {
-            selectivePointers: finalSelectedFields.map(
-              ( field ) => `/credentialSubject/${field}`
-            )
+            selectivePointers: selectivePointers
           } );
           const discloseSuite = new DataIntegrityProof( {
             cryptosuite: discloseCryptosuite,
@@ -354,6 +366,9 @@ export const OrganizationVCViewPage: React.FC = () =>
               <CardDescription>
                 Issued by <span className='text-muted-foreground'>{vcData.signedCredential.issuer.name}</span> on {' '}
                 <span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.issuanceDate ), 'PPP' )}</span>
+                {vcData.signedCredential.validUntil && 
+                  <p>Valid until<span className='text-muted-foreground'>{format(new Date(vcData.signedCredential.validUntil),'PPP')}</span> on {' '}</p>
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -424,7 +439,7 @@ export const OrganizationVCViewPage: React.FC = () =>
               <div className="flex justify-end mt-5">
                 <Button
                   onClick={() => setIsVPDialogOpen( true )}
-                  variant="secondary"
+                  variant="outline"
                 >
                   <FileSignature className="mr-2" />
                   Create Verifiable Presentation
@@ -497,7 +512,7 @@ export const OrganizationVCViewPage: React.FC = () =>
                             No unlinked keys available
                           </div>
                         ) : availableKeys && availableKeys.map( ( key ) => (
-                          <SelectItem key={key.$id} value={key.$id}>
+                          <SelectItem disabled={key.owner.$id !== userId} key={key.$id} value={key.$id}>
                             {key.name} - {key.$id.slice( 0, 10 )}...{key.keyType.map( ( keyType ) => (
                               <Badge key={keyType} className={keyTypesColors[ keyType ] + " mx-1"}>
                                 {keyType}

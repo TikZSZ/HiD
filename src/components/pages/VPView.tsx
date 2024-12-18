@@ -57,6 +57,7 @@ interface VCredential
     name: string;
   };
   issuanceDate: string;
+  validUntil?:string
   credentialSubject: Record<string, any> & { id: string };
   proof: {
     type: string;
@@ -136,7 +137,7 @@ export const ViewVCPage: React.FC = (
     switch ( metadata?.type )
     {
       case 'date':
-        return format( new Date( value ), 'PPP' );
+        return format( new Date( value ), 'PPPP' );
       case 'number':
         return value.toLocaleString();
       default:
@@ -207,7 +208,7 @@ export const ViewVCPage: React.FC = (
               <CardDescription>
                 Holder: {vpData.presentation.holder}
                 <br />
-                Created on {format( vp?.$createdAt!, 'PPP' )}
+                Created on {format( vp?.$createdAt!, 'PPPP' )}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -250,6 +251,8 @@ export const ViewVCPage: React.FC = (
                               {credential.issuer.name}
                             </Badge>
                           </div>
+                          
+
                           <Button
                             variant="ghost"
                             size="icon"
@@ -259,7 +262,9 @@ export const ViewVCPage: React.FC = (
                           </Button>
                         </CardTitle>
                         <CardDescription>
-                          {credential.issuanceDate && `Issued on ${format( new Date( credential.issuanceDate ), 'PPP' )}`}
+                          <p>Issuer: {credential.issuer.id}</p>
+                          {credential.issuanceDate && `Issued on ${format( new Date( credential.issuanceDate ), 'PPPP' )}`}
+                          {credential.validUntil && <p>Valid until <span className='text-muted-foreground'>{format(new Date(credential.validUntil),'PPPP')}</span></p>}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -342,6 +347,15 @@ export const ViewVCPage: React.FC = (
           >
             <Download className="mr-2 h-4 w-4" />
             Download Presentation
+          </Button>
+          <Button
+            variant="outline"
+            onClick={()=>{
+              copyToClipboard(vp.location)
+            }}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            Copy Presentation Link
           </Button>
           <Button
             onClick={handleVerifyPresentation}

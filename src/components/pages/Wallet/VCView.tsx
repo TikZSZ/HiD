@@ -68,6 +68,7 @@ interface VCViewProps
         type: string;
         cryptosuite: string;
       };
+      validUntil:string
     };
     contextMetadata: Record<string, {
       name: string;
@@ -154,7 +155,20 @@ export const ViewVCPage: React.FC = (
       ...new Set( [ ...mandatoryFields, ...selectedFields ] )
     ];
 
-    console.log( finalSelectedFields, selectedKey )
+    
+    const selectivePointers = finalSelectedFields.map( ( field ) =>
+    {
+      switch ( field )
+      {
+        case "issuanceDate":
+          return `/${field}`
+        case "validFrom":
+          return `/${field}`
+        default:
+          return `/credentialSubject/${field}`
+      }
+    } )
+    console.log( finalSelectedFields, selectivePointers )
     openSignModal( selectedKey, "key-retrieval", {
       purpose: "DID Creation",
       onSuccess: async ( keyPair ) =>
@@ -166,7 +180,7 @@ export const ViewVCPage: React.FC = (
           let revealed
           {
             const cryptosuite = createDiscloseCryptosuite( {
-              selectivePointers: finalSelectedFields.map( ( field ) => `/credentialSubject/${field}` )
+              selectivePointers: selectivePointers
             } );
             const suite = new DataIntegrityProof( { cryptosuite, date: new Date() } );
             revealed = await vc.derive( { verifiableCredential: vcData.signedCredential, suite: suite, documentLoader: documentLoader } )
@@ -319,7 +333,10 @@ export const ViewVCPage: React.FC = (
               </CardTitle>
               <CardDescription>
                 Issued by <span className='text-muted-foreground'>{vcData.signedCredential.issuer.name}</span> on {' '}
-                <span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.issuanceDate ), 'PPP' )}</span>
+                <span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.issuanceDate ), 'PPPP' )}</span>
+                {vcData.signedCredential.validUntil && 
+                  <p>Valid until <span className='text-muted-foreground'>{format(new Date(vcData.signedCredential.validUntil),'PPPP')}</span></p>
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -384,7 +401,7 @@ export const ViewVCPage: React.FC = (
             </CardContent>
           </Card>
 
-        </div>: <ErrorComponent message='VC Not Found' /> )}
+        </div> : <ErrorComponent message='VC Not Found' /> )}
 
 
 
@@ -393,7 +410,7 @@ export const ViewVCPage: React.FC = (
         vcData && <div className="flex justify-end">
           <Button
             onClick={() => setIsVPDialogOpen( true )}
-            variant="secondary"
+            variant="outline"
           >
             <FileSignature className="mr-2" />
             Create Verifiable Presentation
