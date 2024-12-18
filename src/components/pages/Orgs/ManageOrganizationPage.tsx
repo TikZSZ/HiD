@@ -72,7 +72,10 @@ const AddKeyModal: React.FC<{
           queryKey: [ 'orgKeys', orgId ],
         } );
         queryClient.invalidateQueries( {
-          queryKey: [ 'keys', userId ],
+          queryKey: [ 'orgKeys', orgId ],
+        } );
+        queryClient.invalidateQueries( {
+          queryKey: [ 'orgMemberKeys', userId, orgId ],
         } );
 
         // Close modal and show success toast
@@ -405,7 +408,7 @@ const ManageOrganizationPage: React.FC = () =>
     queryFn: () => AppwriteService.getOrgMembers( selectedOrgId ),
     enabled: !!selectedOrgId,
   } );
-
+  const currentMember = members.find((member) => member.$id === userId)
   // Fetch Keys Query
   const {
     data: keys = [],
@@ -568,7 +571,7 @@ const ManageOrganizationPage: React.FC = () =>
                             </TableCell>
                             <TableCell>
                               {
-                                i === 0 ? null : <Button
+                                i === 0 || (!currentMember!.roles.includes(OrganizationRole.ADMIN) && !currentMember!.roles.includes(OrganizationRole.OWNER) )? null : <Button
                                   variant="outline"
                                   onClick={() => handleRemoveMember( member.$id )}
                                   disabled={removeMemberMutation.isPending}

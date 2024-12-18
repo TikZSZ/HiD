@@ -1,6 +1,6 @@
 import dataIntegrityContext from '@digitalbazaar/data-integrity-context';
 import multikeyContext from '@digitalbazaar/multikey-context';
-import { Ed25519PubCodec, HcsDid } from '../src/HiD/did-sdk/index';
+import { Ed25519PubCodec, HcsDid } from './src/HiD/did-sdk/index';
 import { base58_to_binary, binary_to_base58 } from 'base58-js';
 import
 {
@@ -17,14 +17,16 @@ const { purposes: { AssertionProofPurpose } } = jsigs;
 export type JSONValue = string | number | boolean | JSONObject | JSONArray;
 
 const trustedOrgs: string[] = []
-function isTrustedUrl(trustedOrgs: string[], urlToCheck: string): boolean {
-  return trustedOrgs.some(trustedUrl => {
+function isTrustedUrl ( trustedOrgs: string[], urlToCheck: string ): boolean
+{
+  return trustedOrgs.some( trustedUrl =>
+  {
     // Escape special characters in the trusted URL to use it in a regex
-    const escapedUrl = trustedUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedUrl = trustedUrl.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
     // Build a strict regex: the trusted URL must be the prefix and allow only #, ?, or / after
-    const regex = new RegExp(`^${escapedUrl}(?:[#?/].*|$)`);
-    return regex.test(urlToCheck);
-  });
+    const regex = new RegExp( `^${escapedUrl}(?:[#?/].*|$)` );
+    return regex.test( urlToCheck );
+  } );
 }
 export interface JSONObject
 {
@@ -811,11 +813,11 @@ export async function documentLoader ( url: string )
           didUrl = didUrl.replace( "https://", "" ).replace( "http://", "" )
         }
 
-        if (!isTrustedUrl( trustedOrgs, url ) )
+        if ( !isTrustedUrl( trustedOrgs, url ) )
         {
-          console.log( "Untrusted Org Detected aborting verification",trustedOrgs, didUrl )
-          
-          return {document:null}
+          console.log( "Untrusted Org Detected aborting verification", trustedOrgs, didUrl )
+
+          return { document: null }
         }
         const response = await fetch( `https://${didUrl}` );
         if ( !response.ok )
@@ -854,17 +856,88 @@ async function main ()
   try
   {
     // note that the Trusted Org isnt for who the certificate was issued to but rather who issued the certificate meaning "issuer"
-    trustedOrgs.push( "did:web:675d93dc69da7be75efd.appwrite.global/issuers/6761539b002297cdce52","did:web:675d93dc69da7be75efd.appwrite.global/issuers/6761a5ae001d1f018cd1" )
+    trustedOrgs.push( "did:web:675d93dc69da7be75efd.appwrite.global/issuers/67628c2f000bc5f99803" )
 
     // const vpURL = "https://cloud.appwrite.io/v1/storage/buckets/675369170001613e4498/files/6761b26c000d6e65b6fd/view?project=674ff4ff003453a735a9"
 
-    const vpURL = "https://cloud.appwrite.io/v1/storage/buckets/675369170001613e4498/files/6762924400259dab2b73/view?project=674ff4ff003453a735a9"
+    // const vpURL = "https://cloud.appwrite.io/v1/storage/buckets/675369170001613e4498/files/6762924400259dab2b73/view?project=674ff4ff003453a735a9"
 
-    const vpData: { presentation: any } = await ( await fetch( vpURL ) ).json() as any
-    if ( !vpData.presentation ) throw new Error( "VP not found" )
+    // const vpData: { presentation: any } = await ( await fetch( vpURL ) ).json() as any
+    // if ( !vpData.presentation ) throw new Error( "VP not found" )
 
-    const {presentation} = vpData
-    
+    // const {presentation} = vpData
+
+    const presentation = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2"
+      ],
+      "type": [
+        "VerifiablePresentation"
+      ],
+      "verifiableCredential": [
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://www.w3.org/ns/credentials/examples/v2",
+            {
+              "@protected": true,
+              "StudentCredential": "urn:example:StudentCredential",
+              "studentName": "https://schema.org#studentName",
+              "universityName": "https://schema.org#universityName",
+              "enrollmentStatus": "https://schema.org#enrollmentStatus",
+              "studentID": "https://schema.org#studentID",
+              "dateOfBirth": "https://schema.org#dateOfBirth",
+              "graduationDate": "https://schema.org#graduationDate",
+              "enrollmentDate": "https://schema.org#enrollmentDate"
+            },
+            {
+              "@protected": true,
+              "degree": "https://schema.org#degree",
+              "major": "https://schema.org#major"
+            }
+          ],
+          "id": "http://localhost:5173/dashboard/orgs/67628c2f000bc5f99803/vcs/67633942001b11a669b5",
+          "type": [
+            "VerifiableCredential",
+            "StudentCredential",
+            "MajorCredential"
+          ],
+          "issuer": {
+            "id": "did:web:675d93dc69da7be75efd.appwrite.global/issuers/67628c2f000bc5f99803",
+            "name": "Institute of Technology"
+          },
+          "credentialSubject": {
+            "id": "did:hedera:testnet:z2iKAijnPoaJgB92f9ujZ1tJgQWXrncxtcCqTamDfW6Tv_0.0.5287571",
+            "universityName": "Institute of Technology",
+            "enrollmentStatus": "Full-Time"
+          },
+          "validUntil": "2024-12-27T21:04:00.000Z",
+          "proof": {
+            "type": "DataIntegrityProof",
+            "verificationMethod": "did:web:675d93dc69da7be75efd.appwrite.global/issuers/67628c2f000bc5f99803#67628c470033689aa364",
+            "cryptosuite": "bbs-2023",
+            "proofPurpose": "assertionMethod",
+            "proofValue": "u2V0DhVkCUJBXcnSVPCuFjNNLrLtULZiprGRiJ2j8iIzyQp9MjhARJaQxElW6NavrP2M7A6yuuqR-c69bnuFsIBHWHfvgSpzo0yj20fI-pNTqg04R3KRFFeEpkXF4wzbQMnu7rG7dQZcBG1WcAV7p73QaU9tWLx7BItgNLHvsywePQVs4nIsYxkbmqiCkEvbClL7C0xhfPFPzdrj0Z5EuCijDIoPw9Nnlm2Wv0VBttWcX_FRq2fUYCFuFZ6Ii6MENNaNANmMMSqVqDJXHOp84G1poE_Ye0XwH_aUPd58q0BPFXR9oI8AdTOhZsSE_Z-u2aZUB__rvqm5LMQv0hBr3N_cXHEVt2MHr9olukH1-hiWlLXgo1th4OCLYXjxxLSET9n1vhm69wzrG7DwdVQP1S1V7s7uk9cFhgdZaWt18_47E9FolUJoPS5gW7OvjHGgz1Q1-tfTyjm1RhVZC8ts-vgrGwZVLLuqYtMeQiGis0sXgPzVs8BmzHC4Czhi6LaQFayZkaxtt006ItAuFyDDOLq2p3zChAg0tKFRs5ixhZy8RbIa7DgEcT_grVtsxI30lpVUBZFcHf3PNlVQuBha9V9f3NUTtRS3xw1HAzADKt-aY75-hWFqJGWeqLD7mXFquvdWYPdOcNsbD77aa-89GyU6ey-Wwxe4yWK2GlQ590EYYn4QG2FkcTpSupQraZCWfUg0KGQ62N2AkKKtv_mBkP4vXGAZK5VIMEjQNDFm2d8l2UMUehH96ImP7-MhGweCQy--WmpzqP5IIFm8GUF_d_6tdgLlwgzigiQABAgMEBQYHCIBA"
+          }
+        }
+      ],
+      "id": "http://localhost:5173/dashboard/wallets/vps/676339cb0029a80b40f1",
+      "holder": "did:hedera:testnet:z2iKAijnPoaJgB92f9ujZ1tJgQWXrncxtcCqTamDfW6Tv_0.0.5287571",
+      "proof": {
+        "type": "DataIntegrityProof",
+        "created": "2024-12-18T21:08:27Z",
+        "verificationMethod": "did:hedera:testnet:z2iKAijnPoaJgB92f9ujZ1tJgQWXrncxtcCqTamDfW6Tv_0.0.5287571#did-root-key",
+        "cryptosuite": "eddsa-rdfc-2022",
+        "proofPurpose": "assertionMethod",
+        "proofValue": "z5TRmz3fo8PvCVUtu3q8Tj9q65Xr95yuEzd8jmRMGCdhrvPv9o5gJ3P1fQkwAWuiP61mgvAcz9gcuVNy3GBVqSwcV"
+      }
+    }
+
+    // check if holder is the owner of VC
+    if (
+      !( presentation.verifiableCredential as any[] ).every( ( vc ) => vc.credentialSubject.id === presentation.holder )
+      &&
+      presentation.proof.verificationMethod.split( "#" )[ 0 ] !== presentation.holder ) throw new Error( "VP Verfication failed, holder does not own the VC" )
     // setup crypto suites and verfier
     const cryptosuite = createVerifyCryptosuite();
     const suite = new DataIntegrityProof( { cryptosuite: cryptosuite } );

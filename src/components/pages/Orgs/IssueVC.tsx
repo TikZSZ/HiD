@@ -270,7 +270,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
     data: keys = [],
     isLoading: isLoadingKeys
   } = useQuery( {
-    queryKey: [ 'orgKeys', orgId ],
+    queryKey: [ 'orgMemberKeys', orgId,userId ],
     queryFn: () => AppwriteService.getKeysForOrgAndUser( userId, orgId! ),
     enabled: isOpen
   } );
@@ -695,7 +695,7 @@ export const CreateVCModal: React.FC<CreateVCModalProps> = ( {
                   control={form.control}
                   render={( { field } ) => (
                     <FormItem>
-                      <FormLabel>Credential Identifier</FormLabel>
+                      <FormLabel>Holder Identifier</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter unique identifier" {...field} />
                         {/* {didDocument?.toJSON()} */}

@@ -116,7 +116,7 @@ export const OrganizationVCViewPage: React.FC = () =>
     isLoading: isLoadingKeys,
     refetch: refetchKeys
   } = useQuery<KeyDocument[]>( {
-    queryKey: [ 'orgKeys', orgId ],
+    queryKey: [ 'orgMemberKeys', orgId,userId ],
     queryFn: () => AppwriteService.getKeysForOrgAndUser( userId, orgId! ),
     enabled: !!orgId,
   } );

@@ -141,6 +141,7 @@ async function main ( credential: object, selectivePointers: string[], nullObj: 
     const cryptosuite = createVerifyCryptosuite();
     const suite = new DataIntegrityProof( { cryptosuite:cryptosuite } );
     const suite2 = new DataIntegrityProof( { cryptosuite:eddsaRdfc2022CryptoSuite } );
+    if(!(vp.verifiableCredential as any[]).every((vc) => vc.credentialSubject.id === vp.holder)) throw new Error("VP Verfication failed, holder does not own the VC")
     const result = await vc.verify( { presentation: vp, suite: [suite,suite2], documentLoader, presentationPurpose: new AssertionProofPurpose() } );
     console.dir( { error, vp: { ...vp, ...nullObj } }, { depth: null } )
     console.log( result.verified,result.error )

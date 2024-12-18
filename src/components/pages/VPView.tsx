@@ -76,6 +76,7 @@ interface VPViewProps
       proof: {
         type: string;
         cryptosuite: string;
+        verificationMethod:string;
       }
     }
     contextMetadatas: Record<string, {
@@ -154,6 +155,7 @@ export const ViewVCPage: React.FC = (
       const cryptosuite = createVerifyCryptosuite();
       const suite = new DataIntegrityProof( { cryptosuite: cryptosuite } );
       const suite2 = new DataIntegrityProof( { cryptosuite: eddsaRdfc2022CryptoSuite } );
+      if(!(vpData?.presentation!.verifiableCredential as any[]).every((vc) => vc.credentialSubject.id === vpData!.presentation.holder) && vpData!.presentation.proof.verificationMethod.split( "#" )[ 0 ] !== vpData!.presentation.holder) throw new Error("VP Verfication failed, holder does not own the VC")
       const result = await vc.verify( { presentation: vpData?.presentation, suite: [ suite, suite2 ], documentLoader, presentationPurpose: new AssertionProofPurpose() } );
       setVerificationResult( result.verified );
       toast( {
@@ -167,7 +169,7 @@ export const ViewVCPage: React.FC = (
     {
       toast( {
         title: "Verification Error",
-        description: "An error occurred during verification.",
+        description: "An error occurred during verification. "+error.message ,
         variant: "destructive"
       } );
     } finally

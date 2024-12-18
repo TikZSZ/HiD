@@ -922,7 +922,7 @@ class AppwriteService
 
   async listVCContexts (): Promise<{ name: string, url: string }[]>
   {
-    const result = await this.databases.listDocuments( conf.appwrtieDBId, conf.appwriteContextsCollID )
+    const result = await this.databases.listDocuments( conf.appwrtieDBId, conf.appwriteContextsCollID,[Query.orderDesc("$id")] )
     return result.documents as any
   }
 
