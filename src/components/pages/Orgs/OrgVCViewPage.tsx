@@ -90,7 +90,7 @@ export const OrganizationVCViewPage: React.FC = () =>
         name: string;
       };
       issuanceDate: string;
-      validUntil?:string
+      validUntil?: string
       credentialSubject: Record<string, any> & { id: string };
       proof: {
         type: string;
@@ -184,19 +184,19 @@ export const OrganizationVCViewPage: React.FC = () =>
     const finalSelectedFields = [
       ...new Set( [ ...mandatoryFields, ...selectedFields ] )
     ];
-    
+
     const selectivePointers = finalSelectedFields.map( ( field ) =>
+    {
+      switch ( field )
       {
-        switch ( field )
-        {
-          case "issuanceDate":
-            return `/${field}`
-          case "validFrom":
-            return `/${field}`
-          default:
-            return `/credentialSubject/${field}`
-        }
-      } )
+        case "issuanceDate":
+          return `/${field}`
+        case "validFrom":
+          return `/${field}`
+        default:
+          return `/credentialSubject/${field}`
+      }
+    } )
 
     openSignModal( selectedKey, "key-retrieval", {
       purpose: "DID Creation",
@@ -366,8 +366,8 @@ export const OrganizationVCViewPage: React.FC = () =>
               <CardDescription>
                 Issued by <span className='text-muted-foreground'>{vcData.signedCredential.issuer.name}</span> on {' '}
                 <span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.issuanceDate ), 'PPP' )}</span>
-                {vcData.signedCredential.validUntil && 
-                  <p>Valid until<span className='text-muted-foreground'>{format(new Date(vcData.signedCredential.validUntil),'PPP')}</span> on {' '}</p>
+                {vcData.signedCredential.validUntil &&
+                  <p>Valid until<span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.validUntil ), 'PPP' )}</span> on {' '}</p>
                 }
               </CardDescription>
             </CardHeader>
@@ -430,20 +430,28 @@ export const OrganizationVCViewPage: React.FC = () =>
               </div>
             </CardContent>
           </Card>
-          
-
-
-          {vcData.signedCredential.credentialSubject.id.split( "/" ).at( -1 ) === orgId &&
+          {
             <>
               {/* Create Verifiable Presentation Button */}
               <div className="flex justify-end mt-5">
                 <Button
+                  variant="outline"
+                  onClick={() =>
+                  {
+                    copyToClipboard( vcStores[ 0 ].location )
+                  }}
+                  className='mr-3'
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Credential Link
+                </Button>
+                {vcData.signedCredential.credentialSubject.id.split( "/" ).at( -1 ) === orgId && <Button
                   onClick={() => setIsVPDialogOpen( true )}
                   variant="outline"
                 >
                   <FileSignature className="mr-2" />
                   Create Verifiable Presentation
-                </Button>
+                </Button>}
               </div>
               {/* Verifiable Presentation Creation Dialog */}
               <Dialog open={isVPDialogOpen} onOpenChange={setIsVPDialogOpen}>

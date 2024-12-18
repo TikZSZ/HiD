@@ -118,6 +118,17 @@ export const Navbar = () =>
           </Button>
         </NavLink>
 
+        <NavLink
+          to="usecases"
+          className={( { isActive } ) =>
+            ( isActive ? "text-muted-foreground" : "dark:text-primary-foreground text-secondary-foreground" )
+          }
+        >
+          <Button variant="ghost" className="text-foreground mr-4">
+            Use Cases
+          </Button>
+        </NavLink>
+
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger className="mr-4 md:mr-0" asChild>

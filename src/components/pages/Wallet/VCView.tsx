@@ -68,7 +68,7 @@ interface VCViewProps
         type: string;
         cryptosuite: string;
       };
-      validUntil:string
+      validUntil: string
     };
     contextMetadata: Record<string, {
       name: string;
@@ -155,7 +155,7 @@ export const ViewVCPage: React.FC = (
       ...new Set( [ ...mandatoryFields, ...selectedFields ] )
     ];
 
-    
+
     const selectivePointers = finalSelectedFields.map( ( field ) =>
     {
       switch ( field )
@@ -334,8 +334,8 @@ export const ViewVCPage: React.FC = (
               <CardDescription>
                 Issued by <span className='text-muted-foreground'>{vcData.signedCredential.issuer.name}</span> on {' '}
                 <span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.issuanceDate ), 'PPPP' )}</span>
-                {vcData.signedCredential.validUntil && 
-                  <p>Valid until <span className='text-muted-foreground'>{format(new Date(vcData.signedCredential.validUntil),'PPPP')}</span></p>
+                {vcData.signedCredential.validUntil &&
+                  <p>Valid until <span className='text-muted-foreground'>{format( new Date( vcData.signedCredential.validUntil ), 'PPPP' )}</span></p>
                 }
               </CardDescription>
             </CardHeader>
@@ -409,13 +409,26 @@ export const ViewVCPage: React.FC = (
       {
         vcData && <div className="flex justify-end">
           <Button
+            variant="outline"
+            onClick={() =>
+            {
+              copyToClipboard( vcStores[0].location )
+            }}
+            className='mr-3'
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            Copy Credential Link
+          </Button>
+          <Button
             onClick={() => setIsVPDialogOpen( true )}
             variant="outline"
           >
             <FileSignature className="mr-2" />
             Create Verifiable Presentation
           </Button>
+          
         </div>
+
       }
 
       {/* Verifiable Presentation Creation Dialog */}

@@ -1,264 +1,257 @@
-import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  MessageSquare,
-  Code,
-  Zap,
-  Database,
-  Shield,
-  Layers,
-  Upload,
-  Globe,
-  Users,
-} from "lucide-react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import
+  {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription
+  } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import
+  {
+    ShieldCheck,
+    Globe,
+    Lock,
+    Users,
+    Activity,
+    Zap,
+    Layers,
+    CheckCircle,
+    ArrowRight
+  } from 'lucide-react';
+import { Badge } from '../ui/badge';
+import { Link } from 'react-router-dom';
 
-gsap.registerPlugin(ScrollTrigger);
+const HidLandingPage: React.FC = () =>
+{
+  const [ activeFeature, setActiveFeature ] = useState<number | null>( null );
 
-import { Link } from "react-router-dom";
+  const features = [
+    {
+      icon: <ShieldCheck className="w-10 h-10 text-primary" />,
+      title: "Decentralized Identity",
+      description: "Secure, private identity management powered by cutting-edge cryptography",
+      details: "BBS-2023 Ready"
+    },
+    {
+      icon: <Lock className="w-10 h-10 text-primary" />,
+      title: "Selective Disclosure",
+      description: "Control exactly what personal information you share",
+      details: "Privacy Guaranteed"
+    },
+    {
+      icon: <Users className="w-10 h-10 text-primary" />,
+      title: "Enterprise & Individual Support",
+      description: "Seamless solutions for both organizations and individuals",
+      details: "Scalable Approach"
+    },
+    {
+      icon: <Globe className="w-10 h-10 text-primary" />,
+      title: "Global Compatibility",
+      description: "Built on open standards for seamless interoperability",
+      details: "Industry Standards"
+    }
+  ];
 
-const LandingPage = () => {
-  const titleRef = useRef(null);
-  const subtitleRef = useRef(null);
-  const buttonRef = useRef(null);
-  const heroRef = useRef(null);
-  const cardsRef = useRef([]);
-  const particlesRef = useRef(null);
+  const workflowSteps = [
+    {
+      icon: <CheckCircle className="w-12 h-12 text-blue-600" />,
+      title: "Create Identity",
+      description: "Establish your secure digital identity with ease"
+    },
+    {
+      icon: <ArrowRight className="w-12 h-12 text-purple-600" />,
+      title: "Issue Credentials",
+      description: "Securely issue and manage verifiable credentials"
+    },
+    {
+      icon: <Globe className="w-12 h-12 text-green-600" />,
+      title: "Share Selectively",
+      description: "Control and share your information precisely"
+    }
+  ];
 
-  useEffect(() => {
-    gsap.fromTo(
-      [titleRef.current, subtitleRef.current, buttonRef.current],
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, stagger: 0.2, duration: 1, ease: "power2.out" }
-    );
-
-    gsap.fromTo(
-      heroRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        duration: 1.5,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: "top center",
-        },
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        delayChildren: 0.3,
+        staggerChildren: 0.2
       }
-    );
+    }
+  };
 
-    cardsRef.current.forEach((card, index) => {
-      gsap.fromTo(
-        card,
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          stagger: 0.2,
-          duration: 1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: card,
-            start: "top 80%",
-          },
-          onComplete: () => {
-            gsap.to(card, {
-              y: Math.random() * 20,
-              duration: 7,
-              ease: "power1.inOut",
-              yoyo: true,
-              repeat: -1,
-            });
-          },
-        }
-      );
-    });
-    // Animate background gradient
-    gsap.to(heroRef.current, {
-      backgroundPosition: "100% 100%",
-      duration: 10,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-    });
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1
+    }
+  };
 
-    // Animate particles
-    const particles = particlesRef.current!.children!;
-    gsap.to(particles, {
-      y: "random(-20, 20)",
-      x: "random(-20, 20)",
-      rotation: "random(-15, 15)",
-      duration: "random(3, 5)",
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      stagger: {
-        each: 0.1,
-        from: "random",
-      },
-    });
-  }, []);
-
+  const heroVariants = {
+    initial: { opacity: 0, y: 50 },
+    animate: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: "easeOut"
+      }
+    }
+  };
   return (
-    <div
-      ref={heroRef}
-      className="relative min-h-screen bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--primary)/0.1)] to-[hsl(var(--background))]  bg-[length:400%_400%] flex items-center overflow-hidden"
-    >
-      <div ref={particlesRef} className="absolute inset-0 pointer-events-none">
-        {[...Array(50)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 bg-[hsl(var(--primary)/0.3)] rounded-full"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-            }}
-          ></div>
-        ))}
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <motion.section
+        initial="initial"
+        animate="animate"
+        variants={heroVariants}
+        className="relative h-screen flex flex-col justify-center items-center text-center px-4 bg-gradient-to-br from-background via-background to-primary/10"
+      >
+        <motion.h1
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          className="text-5xl md:text-6xl font-bold text-foreground mb-6"
+        >
+          Democratizing Decentralized Identity
+        </motion.h1>
 
-      <main className="max-w-6xl mx-auto flex flex-col justify-center items-center py-20 px-4 text-center">
-        <section className="mb-16 min-h-[50vh] md:min-h-[85vh]">
-          <div className="mt-12 md:mt-56">
-            <h2
-              ref={titleRef}
-              className="text-5xl md:text-6xl font-extrabold text-[hsl(var(--foreground))] leading-tight mb-6"
-            >
-              Empower Your{" "}
-              <span className="text-[hsl(var(--primary))]">Hedera dApp</span>{" "}
-              with AI Chat
-            </h2>
-            <p
-              ref={subtitleRef}
-              className="text-xl text-center text-[hsl(var(--muted-foreground))] ml-auto mr-auto max-w-2xl"
-            >
-              Add intelligent conversations and Web3 actions to your application
-              with just a few lines of code. Unlock the power of AI-driven
-              blockchain interactions.
-            </p>
-            <div ref={buttonRef} className="space-x-4 mt-6">
-              <a
-                href="https://www.youtube.com/watch?v=Fbj2GuQgGTw"
-                target="_blank"
-              >
-                <Button
-                  size="lg"
-                  className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] hover:scale-105 transition-transform duration-300 text-[hsl(var(--primary-foreground))]"
-                >
-                  Try Demo
-                </Button>
-              </a>
-              <a href="https://github.com/TikZSZ/hedera-chat" target="_blank">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-[hsl(var(--foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:scale-105 transition-transform duration-300"
-                >
-                  View on GitHub
-                </Button>
-              </a>
-            </div>
-          </div>
-        </section>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="text-xl max-w-2xl mx-auto text-muted-foreground mb-8"
+        >
+          HiD: Secure, Simple Verifiable Credentials for Enterprises and Individuals
+        </motion.p>
 
-        <section className="mb-16">
-          <h3 className="text-3xl font-bold mb-8">Features</h3>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "AI-Powered Chat",
-                description:
-                  "Engage users with an intelligent chatbot that understands Web3 concepts and Hedera specifics.",
-                icon: <MessageSquare className="mr-2" />,
-              },
-              {
-                title: "Easy Integration",
-                description:
-                  "Implement our SDK with just a few lines of code. No complex setup required.",
-                icon: <Code className="mr-2" />,
-              },
-              {
-                title: "Web3 Actions",
-                description:
-                  "Allow your AI assistant to perform blockchain actions via MetaMask integration.",
-                icon: <Zap className="mr-2" />,
-              },
-              {
-                title: "Token Management",
-                description:
-                  "Easily manage token creation, transfers, and queries directly within the chat interface.",
-                icon: <Database className="mr-2" />,
-              },
-              {
-                title: "Secure Transactions",
-                description:
-                  "Ensure the safety of your assets with a fully transparent, user-verified transaction process.",
-                icon: <Shield className="mr-2" />,
-              },
-              {
-                title: "Customizable Tools",
-                description:
-                  "Access a marketplace of tools, customizable to suit your business needs.",
-                icon: <Layers className="mr-2" />,
-              },
-              {
-                title: "Over-the-Air Updates",
-                description:
-                  "Deploy updates to your tools and prompts seamlessly with cloud-based CI/CD support.",
-                icon: <Upload className="mr-2" />,
-              },
-              {
-                title: "Real-World Asset Tokenization",
-                description:
-                  "Tokenize and manage real-world assets with ease, connecting physical and digital worlds.",
-                icon: <Globe className="mr-2" />,
-              },
-              {
-                title: "Community Driven",
-                description:
-                  "Join a growing community of developers and users driving innovation on Hedera.",
-                icon: <Users className="mr-2" />,
-              },
-            ].map((feature, index) => (
-              <Card
+        <div className="flex space-x-4">
+          <Link to={"/docs"}>
+            <Button size="lg" variant="outline">Learn More</Button>
+          </Link >
+          <Link to={"/dashboard"}>
+            <Button size="lg" variant="default">Get Started</Button>
+          </Link>
+        </div>
+      </motion.section>
+
+      {/* Key Features Section */}
+      <section className="py-16 px-4 bg-secondary/10">
+        <div className="container mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={containerVariants}
+            className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+          >
+            {features.map( ( feature, index ) => (
+              <motion.div
                 key={index}
-                ref={(el) => (cardsRef.current[index] = el)}
-                className="transition-transform transform hover:scale-105"
+                variants={itemVariants}
+                whileHover={{ scale: 1.05 }}
+                className="bg-secondary/30 p-6 rounded-xl shadow-md hover:shadow-xl transition-all"
               >
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    {feature.icon}
-                    {feature.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>{feature.description}</CardContent>
-              </Card>
-            ))}
+                <div className="mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground mb-4">{feature.description}</p>
+                <Badge variant="secondary">{feature.details}</Badge>
+              </motion.div>
+            ) )}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-16 bg-gradient-to-r from-primary/10 to-primary/20">
+        <div className="container mx-auto text-center">
+          <h2 className="text-4xl font-bold mb-12 text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">
+            Your Journey with HiD
+          </h2>
+          <div className="flex justify-center space-x-8">
+            {workflowSteps.map( ( step, index ) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.6,
+                  delay: index * 0.2
+                }}
+                className="text-center max-w-xs"
+              >
+                <div className="flex justify-center mb-4">
+                  {step.icon}
+                </div>
+                <h3 className="text-2xl font-semibold mb-2 text-foreground">{step.title}</h3>
+                <p className="text-muted-foreground">{step.description}</p>
+                {index < workflowSteps.length - 1 && (
+                  <div className="h-12 border-r-2 border-primary/30 my-4 mx-auto" />
+                )}
+              </motion.div>
+            ) )}
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="mb-16 min-w-full">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <MessageSquare className="mr-2" />
-                See it in Action
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              
-            </CardContent>
-          </Card>
-        </section>
+      {/* Benefits Section */}
+      <section className="py-16 bg-secondary/5">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-3 gap-8">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-blue-50/50 p-6 rounded-xl text-center dark:bg-secondary/30"
+            >
+              <Lock className="mx-auto w-12 h-12 text-blue-600 mb-4" />
+              <h3 className="text-2xl font-bold mb-2 text-foreground">Security First</h3>
+              <p className="text-muted-foreground">PBKDF-secured keys and robust cryptographic standards.</p>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-green-50/50 p-6 rounded-xl text-center dark:bg-secondary/30"
+            >
+              <Layers className="mx-auto w-12 h-12 text-green-600 mb-4" />
+              <h3 className="text-2xl font-bold mb-2 text-foreground">Scalable Solutions</h3>
+              <p className="text-muted-foreground">From individuals to enterprises, we've got you covered.</p>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-purple-50/50 p-6 rounded-xl text-center dark:bg-secondary/30"
+            >
+              <Globe className="mx-auto w-12 h-12 text-purple-600 mb-4" />
+              <h3 className="text-2xl font-bold mb-2 text-foreground">Global Compatibility</h3>
+              <p className="text-muted-foreground">Built on open standards for seamless interoperability.</p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
-        <section className="text-center mb-16">
-          <h3 className="text-2xl font-bold mb-4">Ready to get started?</h3>
-          <Link to="/signup"><Button size="lg">Sign Up for Free</Button></Link>
-        </section>
-      </main>
+      {/* Previous CTA Section */}
+      <section className="bg-primary/10 py-16 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h2 className="text-3xl font-bold mb-6">Start Your Decentralized Identity Journey</h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+            Join HiD and take control of your digital identity with enterprise-grade security and user-friendly design.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <Link to={"/signup"}>
+            <Button size="lg" variant="default">Create Account</Button>      
+            </Link>
+            <Button size="lg" variant="outline">Book Demo</Button>
+          </div>
+        </motion.div>
+      </section>
     </div>
   );
 };
 
-export default LandingPage;
+export default HidLandingPage;

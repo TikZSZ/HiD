@@ -57,7 +57,7 @@ interface VCredential
     name: string;
   };
   issuanceDate: string;
-  validUntil?:string
+  validUntil?: string
   credentialSubject: Record<string, any> & { id: string };
   proof: {
     type: string;
@@ -207,6 +207,13 @@ export const ViewVCPage: React.FC = (
               </CardTitle>
               <CardDescription>
                 Holder: {vpData.presentation.holder}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => copyToClipboard( vpData.presentation.holder )}
+                >
+                  <Copy className="h-4 w-4 text-gray-500 " />
+                </Button>
                 <br />
                 Created on {format( vp?.$createdAt!, 'PPPP' )}
               </CardDescription>
@@ -251,7 +258,7 @@ export const ViewVCPage: React.FC = (
                               {credential.issuer.name}
                             </Badge>
                           </div>
-                          
+
 
                           <Button
                             variant="ghost"
@@ -262,9 +269,19 @@ export const ViewVCPage: React.FC = (
                           </Button>
                         </CardTitle>
                         <CardDescription>
-                          <p>Issuer: {credential.issuer.id}</p>
+
+                          <div className='-mt-5'>Issuer: {credential.issuer.id}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => copyToClipboard( credential.issuer.id )}
+                            >
+                              <Copy className="h-4 w-4 text-gray-500" />
+                            </Button></div>
                           {credential.issuanceDate && `Issued on ${format( new Date( credential.issuanceDate ), 'PPPP' )}`}
-                          {credential.validUntil && <p>Valid until <span className='text-muted-foreground'>{format(new Date(credential.validUntil),'PPPP')}</span></p>}
+
+
+                          {credential.validUntil && <p>Valid until <span className='text-muted-foreground'>{format( new Date( credential.validUntil ), 'PPPP' )}</span></p>}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -350,8 +367,9 @@ export const ViewVCPage: React.FC = (
           </Button>
           <Button
             variant="outline"
-            onClick={()=>{
-              copyToClipboard(vp.location)
+            onClick={() =>
+            {
+              copyToClipboard( vp.location )
             }}
           >
             <Copy className="mr-2 h-4 w-4" />

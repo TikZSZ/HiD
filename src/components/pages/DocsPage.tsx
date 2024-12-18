@@ -16,7 +16,7 @@ import
 } from "@/components/ui/accordion";
 
 import React, { useState } from 'react';
-import { Copy, Icon } from 'lucide-react';
+import { ClipboardPaste, Copy, Icon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
@@ -78,9 +78,9 @@ export const DIDIdentifier: React.FC = () =>
             onChange={( e ) => setOrgId( e.target.value )}
             className="flex-grow"
           />
-          {/* <Button variant="outline" size="icon" onClick={handlePaste}>
-            <PasteIcon className="h-4 w-4" />
-          </Button> */}
+          <Button variant="outline" size="icon" onClick={handlePaste}>
+            <ClipboardPaste className="h-4 w-4" />
+          </Button>
           <Button onClick={handleGenerate}>Generate</Button>
         </div>
 
@@ -131,9 +131,9 @@ const DocumentationPage: React.FC = () =>
         <div className="gap-8 flex flex-col mb-12">
 
           <div>
-            <h1 className="text-4xl font-bold mb-4 text-primary">
+            {/* <h1 className="text-4xl font-bold mb-4 text-primary">
               HiD
-            </h1>
+            </h1> */}
             <p className="text-muted-foreground mb-6">
               A comprehensive platform for managing Verifiable Credentials and Decentralized Identifiers
             </p>
@@ -155,7 +155,7 @@ const DocumentationPage: React.FC = () =>
           <DIDIdentifier />
         </div>
         <HidDocumentation />
-        <section className="grid md:grid-cols-2 gap-6">
+        {/* <section className="grid md:grid-cols-2 gap-6">
           {[
             {
               title: "Quick Integration",
@@ -177,14 +177,8 @@ const DocumentationPage: React.FC = () =>
               </CardContent>
             </Card>
           ) )}
-        </section>
+        </section> */}
       </main>
-
-      <footer className="bg-secondary py-4">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">
-          © 2024 VC DID Platform. All rights reserved.
-        </div>
-      </footer>
     </div>
   );
 };

@@ -40,11 +40,11 @@ function App ()
         <Outlet />
         <Toaster />
         {!location.pathname.includes( "dashboard" ) ? (
-          <footer className="bg-muted py-8">
-            <div className="max-w-6xl mx-auto px-4 text-center text-muted-foreground">
-              © 2024 HederaDID. All rights reserved.
-            </div>
-          </footer>
+          <footer className="py-8 bg-background border-t text-center">
+          <p className="text-muted-foreground">
+            &copy; {new Date().getFullYear()} HiD. All rights reserved.
+          </p>
+        </footer>
         ) : null}
       </div>
     </>

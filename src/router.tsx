@@ -11,7 +11,7 @@ const RouterErrorPage = lazy( () => import( "@/components/pages/ErrorPage" ) );
 const DashboardLayout = lazy( () => import( "@/components/pages/Layouts/DashboardLayout" ) );
 const DashboardPage = lazy( () => import( "@/components/pages/Dashboard" ) );
 const DocsPage = lazy( () => import( "@/components/pages/DocsPage" ) );
-
+const UseCasesPage = lazy( () => import( "@/components/pages/Usecases" ) );
 const KeysPage = lazy( () => import( "@/components/pages/Wallet/KeysPage" ) );
 const DIDsPage = lazy( () => import( "@/components/pages/Wallet/DIDsPage" ) );
 const UserVCsPage = lazy( () => import( "@/components/pages/Wallet/UserVCsPage" ) );
@@ -57,6 +57,12 @@ export const router = createBrowserRouter( [
         path: "/docs",
         element: (
             <DocsPage />
+        ),
+      },
+      {
+        path: "/usecases",
+        element: (
+            <UseCasesPage />
         ),
       },
       {

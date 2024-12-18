@@ -20,7 +20,7 @@ const DashboardLayout = () =>
       <SignModalProvider>
         <Sidebar>
           <>
-          <SidebarTrigger className="ml-2" />
+          <SidebarTrigger className="ml-2 mt-2" />
           <Outlet />
           </>
         </Sidebar>
