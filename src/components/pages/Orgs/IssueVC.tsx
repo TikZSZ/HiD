@@ -105,7 +105,7 @@ const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?:
       case 'date':
         return (
           <div>
-            <FormItem>
+            <FormItem className="w-full">
               <FormLabel>{fieldName}</FormLabel>
               <FormControl>
                 <Input
@@ -122,7 +122,7 @@ const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?:
         );
       case 'number':
         return (
-          <FormItem>
+          <FormItem className="w-full">
             <FormLabel>{fieldName}</FormLabel>
             <FormControl>
               <Input type="number" {...field} required={required} />
@@ -141,7 +141,7 @@ const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?:
       //   );
       case 'enum':
         return (
-          <FormItem>
+          <FormItem className="w-full">
             <FormLabel>{fieldName}</FormLabel>
             <FormControl>
               <Select
@@ -168,7 +168,7 @@ const DynamicInput: React.FC<{ field: any, fieldName: string, fieldDescription?:
         )
       default:
         return (
-          <FormItem>
+          <FormItem className="w-full">
             <FormLabel>{fieldName}</FormLabel>
             <FormControl>
               <Input {...field} required={required} />

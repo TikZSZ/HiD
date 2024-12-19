@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import
-  {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription
-  } from '@/components/ui/card';
+{
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import
-  {
-    ShieldCheck,
-    Globe,
-    Lock,
-    Users,
-    Activity,
-    Zap,
-    Layers,
-    CheckCircle,
-    ArrowRight
-  } from 'lucide-react';
+{
+  ShieldCheck,
+  Globe,
+  Lock,
+  Users,
+  Activity,
+  Zap,
+  Layers,
+  CheckCircle,
+  ArrowRight
+} from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Link } from 'react-router-dom';
 
@@ -198,7 +198,21 @@ const HidLandingPage: React.FC = () =>
           </div>
         </div>
       </section>
+      {/* Technology Highlight */}
+      <section className="py-16 bg-card">
+        <div className="container mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6">Powered by Advanced Cryptography</h2>
+          <div className="max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground mb-8">
+              Our platform leverages BBS+ signature schemes to enable unprecedented levels of
+              selective disclosure, ensuring privacy, efficiency, and granular control over
+              credential sharing.
+            </p>
 
+            <Button variant="outline" ><a target='_blank' href="https://identity.foundation/bbs-signature/draft-irtf-cfrg-bbs-signatures.html">Learn About Our Technology</a></Button>
+          </div>
+        </div>
+      </section>
       {/* Benefits Section */}
       <section className="py-16 bg-secondary/5">
         <div className="container mx-auto">
@@ -244,7 +258,7 @@ const HidLandingPage: React.FC = () =>
           </p>
           <div className="flex justify-center space-x-4">
             <Link to={"/signup"}>
-            <Button size="lg" variant="default">Create Account</Button>      
+              <Button size="lg" variant="default">Create Account</Button>
             </Link>
             <Button size="lg" variant="outline">Book Demo</Button>
           </div>

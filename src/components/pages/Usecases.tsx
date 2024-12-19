@@ -125,7 +125,7 @@ const UseCasesPage: React.FC = () => {
             HiD enables secure, privacy-preserving credential verification across multiple domains, 
             revolutionizing how organizations and individuals share sensitive information.
           </p>
-          <Button size="lg" variant="default">Explore Potential</Button>
+          <Button size="lg" disabled={true} variant="default">Explore Potential</Button>
         </div>
       </motion.section>
 
@@ -168,7 +168,7 @@ const UseCasesPage: React.FC = () => {
       </section>
 
       {/* Technology Highlight */}
-      <section className="py-16 bg-primary/10">
+      <section className="py-16 bg-card">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-6">Powered by Advanced Cryptography</h2>
           <div className="max-w-3xl mx-auto">
@@ -177,7 +177,8 @@ const UseCasesPage: React.FC = () => {
               selective disclosure, ensuring privacy, efficiency, and granular control over 
               credential sharing.
             </p>
-            <Button variant="outline">Learn About Our Technology</Button>
+            
+            <Button variant="outline" ><a target='_blank' href="https://identity.foundation/bbs-signature/draft-irtf-cfrg-bbs-signatures.html">Learn About Our Technology</a></Button>
           </div>
         </div>
       </section>
